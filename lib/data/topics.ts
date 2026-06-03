@@ -144,6 +144,86 @@ export const topicGroups: TopicGroup[] = [
     name: "Histology — Lymphoid Organs",
     topics: ["Histology - Lymphoid Organs"],
   },
+
+  // ── Biochemistry ──
+  {
+    id: "sub-biochemistry-jaundice",
+    moduleId: "sub-biochemistry",
+    name: "Jaundice & Bilirubin Metabolism",
+    topics: ["Jaundice & Bilirubin Metabolism"],
+  },
+  {
+    id: "sub-biochemistry-vitamink",
+    moduleId: "sub-biochemistry",
+    name: "Vitamin K",
+    topics: ["Vitamin K"],
+  },
+  {
+    id: "sub-biochemistry-iron",
+    moduleId: "sub-biochemistry",
+    name: "Iron Metabolism",
+    topics: ["Iron Metabolism"],
+  },
+  {
+    id: "sub-biochemistry-hb",
+    moduleId: "sub-biochemistry",
+    name: "Hemoglobin Structure & Function",
+    topics: ["Hemoglobin Structure & Function"],
+  },
+  {
+    id: "sub-biochemistry-b12folate",
+    moduleId: "sub-biochemistry",
+    name: "Hematopoietic Vitamins (B12 & Folate)",
+    topics: ["Hematopoietic Vitamins (B12 & Folate)"],
+  },
+  {
+    id: "sub-biochemistry-heme-disorders",
+    moduleId: "sub-biochemistry",
+    name: "Inherited Disorders of Heme",
+    topics: ["Inherited Disorders of Heme"],
+  },
+  {
+    id: "sub-biochemistry-porphyria",
+    moduleId: "sub-biochemistry",
+    name: "Heme Synthesis & Porphyrias",
+    topics: ["Heme Synthesis & Porphyrias"],
+  },
+  {
+    id: "sub-biochemistry-membranes",
+    moduleId: "sub-biochemistry",
+    name: "Cell Membranes & Organelles",
+    topics: ["Cell Membranes & Organelles"],
+  },
+  {
+    id: "sub-biochemistry-enzymes-markers",
+    moduleId: "sub-biochemistry",
+    name: "Marker Enzymes",
+    topics: ["Marker Enzymes"],
+  },
+  {
+    id: "sub-biochemistry-nucleicacids",
+    moduleId: "sub-biochemistry",
+    name: "Chemistry of Nucleic Acids",
+    topics: ["Chemistry of Nucleic Acids"],
+  },
+  {
+    id: "sub-biochemistry-dnarna",
+    moduleId: "sub-biochemistry",
+    name: "DNA and RNA",
+    topics: ["DNA and RNA"],
+  },
+  {
+    id: "sub-biochemistry-carbs",
+    moduleId: "sub-biochemistry",
+    name: "Carbohydrate Chemistry",
+    topics: ["Carbohydrate Chemistry"],
+  },
+  {
+    id: "sub-biochemistry-enzymes",
+    moduleId: "sub-biochemistry",
+    name: "Enzymes",
+    topics: ["Enzymes"],
+  },
 ];
 
 export function getTopicGroupsByModuleId(moduleId: string): TopicGroup[] {
