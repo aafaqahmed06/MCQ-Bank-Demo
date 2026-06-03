@@ -126,6 +126,24 @@ export const topicGroups: TopicGroup[] = [
     name: "General Anatomy",
     topics: ["General Anatomy - Terms, Bones, Joints, Muscles"],
   },
+  {
+    id: "sub-anatomy-histology-epithelium",
+    moduleId: "sub-anatomy",
+    name: "Histology — Basic Tissues & Epithelium",
+    topics: ["Histology - Basic Tissues & Epithelium"],
+  },
+  {
+    id: "sub-anatomy-histology-junctions",
+    moduleId: "sub-anatomy",
+    name: "Histology — Cell Junctions & Glands",
+    topics: ["Histology - Cell Junctions & Glands"],
+  },
+  {
+    id: "sub-anatomy-histology-lymphoid",
+    moduleId: "sub-anatomy",
+    name: "Histology — Lymphoid Organs",
+    topics: ["Histology - Lymphoid Organs"],
+  },
 ];
 
 export function getTopicGroupsByModuleId(moduleId: string): TopicGroup[] {
