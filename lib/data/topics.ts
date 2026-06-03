@@ -23,6 +23,7 @@ export const topicGroups: TopicGroup[] = [
       "Coagulation Disorders - Hemophilia",
       "Coagulation Disorders - Hemophilia B",
       "Von Willebrand Disease",
+      "Coagulation",
     ],
   },
   {
@@ -63,6 +64,54 @@ export const topicGroups: TopicGroup[] = [
       "Nutritional Factors - Vitamin B12 and Folate",
       "Polycythaemia",
     ],
+  },
+  {
+    id: "sub-physiology-general",
+    moduleId: "sub-physiology",
+    name: "General Physiology",
+    topics: ["General Physiology"],
+  },
+  {
+    id: "sub-physiology-homeostasis",
+    moduleId: "sub-physiology",
+    name: "Homeostasis",
+    topics: ["Homeostasis"],
+  },
+  {
+    id: "sub-physiology-feedback",
+    moduleId: "sub-physiology",
+    name: "Feedback Mechanisms",
+    topics: ["Feedback Mechanisms"],
+  },
+  {
+    id: "sub-physiology-organ-systems",
+    moduleId: "sub-physiology",
+    name: "Organ Systems in Homeostasis",
+    topics: ["Organ Systems in Homeostasis"],
+  },
+  {
+    id: "sub-physiology-cell",
+    moduleId: "sub-physiology",
+    name: "Cell Physiology",
+    topics: ["Cell Physiology"],
+  },
+  {
+    id: "sub-physiology-erythropoiesis",
+    moduleId: "sub-physiology",
+    name: "Erythropoiesis & EPO",
+    topics: ["Erythropoiesis & EPO"],
+  },
+  {
+    id: "sub-physiology-rbc",
+    moduleId: "sub-physiology",
+    name: "RBC Indices & Anemia",
+    topics: ["RBC Indices & Anemia"],
+  },
+  {
+    id: "sub-physiology-immunity",
+    moduleId: "sub-physiology",
+    name: "WBC & Immunity",
+    topics: ["WBC & Immunity"],
   },
 
   // ── Anatomy ──
