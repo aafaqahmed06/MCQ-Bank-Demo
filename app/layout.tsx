@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "MCQ Bank | MBBS Practice",
+  title: "DiagKnow | MBBS Practice",
   description: "MCQ practice for MBBS students — blocks, modules, and exams",
 };
 

@@ -17,7 +17,7 @@ export default function Navbar() {
     <nav className="border-b border-cyan-400/20 bg-[#0b0f1a]/70 backdrop-blur-xl">
       <div className="mx-auto mt-2 flex max-w-4xl items-center justify-between rounded-xl border border-cyan-300/20 bg-[#0f1528]/60 p-3 md:px-6 md:py-3">
         <Link href="/home" className="text-lg font-semibold tracking-wide text-[#e6f6ff]">
-          MCQ Bank
+          DiagKnow
         </Link>
         <ul className="flex gap-1 sm:gap-4">
           {navLinks.map(({ href, label }) => {

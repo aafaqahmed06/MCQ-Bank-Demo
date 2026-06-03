@@ -10,7 +10,7 @@ export const MOCK_COLLEGES = [
 
 export const YEAR_OPTIONS = [1, 2, 3, 4, 5] as const;
 
-export const USER_STORAGE_KEY = "mcq-bank-user-profile";
+export const USER_STORAGE_KEY = "diagnknow-user-profile";
 
 export const defaultUserProfile: UserProfile = {
   college: "",

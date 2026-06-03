@@ -9,7 +9,7 @@ export default function LandingPage() {
           <p className="text-sm font-medium uppercase tracking-wide text-cyan-300">
             MBBS Practice
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-[#f2f8ff]">MCQ Bank</h1>
+          <h1 className="mt-2 text-3xl font-bold text-[#f2f8ff]">DiagKnow</h1>
           <p className="hud-muted mx-auto mt-3 max-w-2xl">
             Structured practice by block and module. Build clinical knowledge one
             question at a time.
