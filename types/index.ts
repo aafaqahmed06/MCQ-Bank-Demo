@@ -15,6 +15,14 @@ export interface Module {
   name: string;
 }
 
+export interface TopicGroup {
+  id: string;
+  moduleId: string;
+  name: string;
+  /** The exact topic strings that belong to this group */
+  topics: string[];
+}
+
 /** Structure only — no MCQ data populated yet */
 export interface MCQ {
   id: string;

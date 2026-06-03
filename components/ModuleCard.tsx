@@ -4,7 +4,7 @@ import type { Module } from "@/types";
 export default function ModuleCard({ module: mod }: { module: Module }) {
   return (
     <Link
-      href={`/practice/${mod.id}`}
+      href={`/topics/${mod.id}`}
       className="hud-card hud-card-hover block rounded-xl p-5"
     >
       <div className="space-y-3">
