@@ -273,6 +273,86 @@ export const topicGroups: TopicGroup[] = [
     name: "Enzymes",
     topics: ["Enzymes"],
   },
+
+  // ── Minor Subjects ──
+  {
+    id: "sub-minor-bps",
+    moduleId: "sub-minor",
+    name: "BPS Model & Integrated Health",
+    topics: ["BPS Model & Integrated Health"],
+  },
+  {
+    id: "sub-minor-pif",
+    moduleId: "sub-minor",
+    name: "Professional Identity Formation",
+    topics: ["Professional Identity Formation"],
+  },
+  {
+    id: "sub-minor-professionalism",
+    moduleId: "sub-minor",
+    name: "Professionalism",
+    topics: ["Professionalism"],
+  },
+  {
+    id: "sub-minor-neurochemistry",
+    moduleId: "sub-minor",
+    name: "Neurochemistry of Behavior",
+    topics: ["Neurochemistry of Behavior"],
+  },
+  {
+    id: "sub-minor-enzymes-markers",
+    moduleId: "sub-minor",
+    name: "Enzymes as Diagnostic Markers",
+    topics: ["Enzymes as Diagnostic Markers"],
+  },
+  {
+    id: "sub-minor-ultrasound",
+    moduleId: "sub-minor",
+    name: "Ultrasound in Fetal Examination",
+    topics: ["Ultrasound in Fetal Examination"],
+  },
+  {
+    id: "sub-minor-teratogenesis",
+    moduleId: "sub-minor",
+    name: "Teratogenesis",
+    topics: ["Teratogenesis"],
+  },
+  {
+    id: "sub-minor-hypersensitivity",
+    moduleId: "sub-minor",
+    name: "Hypersensitivity",
+    topics: ["Hypersensitivity"],
+  },
+  {
+    id: "sub-minor-hemoglobinopathy",
+    moduleId: "sub-minor",
+    name: "Haemoglobinopathies",
+    topics: ["Haemoglobinopathies"],
+  },
+  {
+    id: "sub-minor-bloodborne",
+    moduleId: "sub-minor",
+    name: "Blood-Borne Diseases & Transfusion",
+    topics: ["Blood-Borne Diseases & Transfusion"],
+  },
+  {
+    id: "sub-minor-anemia",
+    moduleId: "sub-minor",
+    name: "Anemia",
+    topics: ["Anemia"],
+  },
+  {
+    id: "sub-minor-pharmacokinetics",
+    moduleId: "sub-minor",
+    name: "Pharmacokinetics & Pharmacodynamics",
+    topics: ["Pharmacokinetics & Pharmacodynamics"],
+  },
+  {
+    id: "sub-minor-parasitology",
+    moduleId: "sub-minor",
+    name: "Parasitology & Bacteriology",
+    topics: ["Parasitology & Bacteriology"],
+  },
 ];
 
 export function getTopicGroupsByModuleId(moduleId: string): TopicGroup[] {
