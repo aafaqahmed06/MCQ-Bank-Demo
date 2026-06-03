@@ -102,6 +102,30 @@ export const topicGroups: TopicGroup[] = [
     name: "Thymus, Spleen & Hematopoiesis",
     topics: ["Embryology - Thymus, Spleen, Hematopoiesis"],
   },
+  {
+    id: "sub-anatomy-clinical-embryo",
+    moduleId: "sub-anatomy",
+    name: "Clinical Embryology",
+    topics: ["Embryology - Clinical Embryology"],
+  },
+  {
+    id: "sub-anatomy-spleen",
+    moduleId: "sub-anatomy",
+    name: "Spleen",
+    topics: ["Gross Anatomy - Spleen"],
+  },
+  {
+    id: "sub-anatomy-tonsils",
+    moduleId: "sub-anatomy",
+    name: "Palatine Tonsils & Waldeyer's Ring",
+    topics: ["Gross Anatomy - Palatine Tonsils & Waldeyer's Ring"],
+  },
+  {
+    id: "sub-anatomy-general",
+    moduleId: "sub-anatomy",
+    name: "General Anatomy",
+    topics: ["General Anatomy - Terms, Bones, Joints, Muscles"],
+  },
 ];
 
 export function getTopicGroupsByModuleId(moduleId: string): TopicGroup[] {
