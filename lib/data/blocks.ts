@@ -1,7 +1,7 @@
 import type { Block } from "@/types";
 
 export const blocks: Block[] = [
-  { id: "block-one", name: "Block One", year: 2 },
+  { id: "block-one", name: "Block One", year: 1 },
 ];
 
 export function getBlockById(blockId: string) {
