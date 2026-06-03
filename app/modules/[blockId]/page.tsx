@@ -30,11 +30,11 @@ export default async function ModulesPage({ params }: PageProps) {
             ← Back to blocks
           </Link>
           <h1 className="text-3xl font-bold text-[#f2f8ff]">{block.name}</h1>
-          <p className="text-[#8ca3c5]">Year {block.year} · Select a module</p>
+          <p className="text-[#8ca3c5]">Year {block.year} · Select a subject</p>
         </div>
         {blockModules.length === 0 ? (
           <p className="hud-card rounded-xl border-dashed p-6 text-center text-[#8ca3c5]">
-            No modules available for this block yet.
+            No subjects available for this block yet.
           </p>
         ) : (
           <ul className="grid gap-3 sm:grid-cols-2">

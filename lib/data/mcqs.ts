@@ -3,8 +3,8 @@ import type { MCQ } from "@/types";
 export const mcqs: MCQ[] = [
   {
     id: "heme_coag_001",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Coagulation Cascade",
     question: "Which sequence correctly describes hemostasis?",
     options: [
@@ -21,8 +21,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_002",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Coagulation Cascade - Extrinsic Pathway",
     question:
       "Tissue factor (Factor III) combines with which factor to initiate the extrinsic pathway?",
@@ -34,8 +34,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_003",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Coagulation Cascade - Intrinsic Pathway",
     question:
       "Blood clots in a glass tube after several minutes. Which factor initiates this intrinsic pathway process?",
@@ -53,8 +53,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_004",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Coagulation Cascade - Common Pathway",
     question:
       "Extrinsic and intrinsic pathways converge at activation of which factor?",
@@ -66,8 +66,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_005",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Thrombin - Actions",
     question: "Which is NOT a direct action of thrombin?",
     options: [
@@ -84,8 +84,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_006",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Fibrin Clot Formation",
     question:
       "What fragments are removed from fibrinogen to produce fibrin monomers?",
@@ -103,8 +103,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_007",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Clot Retraction",
     question: "Which platelet proteins are responsible for clot retraction?",
     options: [
@@ -121,8 +121,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_008",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Fate of a Thrombus",
     question:
       "A fragment of DVT breaks off and travels to lungs. This process is called:",
@@ -140,8 +140,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_009",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Coagulation Factors",
     question:
       "In the mnemonic 'From Pakistan The Cat...', what factor does 'Pakistan' represent?",
@@ -159,8 +159,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_010",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Coagulation Disorders - Hemophilia",
     question:
       "Boy with recurrent hemarthroses has high PTT and normal PT. Most likely deficient factor?",
@@ -178,8 +178,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_011",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Coagulation Disorders - Hemophilia B",
     question: "A defect in Christmas Factor indicates deficiency of:",
     options: ["Factor VIII", "Factor IX", "Factor X", "Factor XI", "Factor XII"],
@@ -189,8 +189,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_012",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Vitamin K and Coagulation",
     question: "Vitamin K deficiency mainly reduces which coagulation factors?",
     options: [
@@ -207,8 +207,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_013",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Von Willebrand Disease",
     question:
       "Heavy menstrual bleeding with prolonged bleeding time, normal PT, borderline PTT, mild low factor VIII suggests:",
@@ -226,8 +226,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_014",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Positive Feedback in Coagulation",
     question:
       "How does thrombin positively feedback to accelerate its own production?",
@@ -245,8 +245,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_coag_015",
-    blockId: "block-heme",
-    moduleId: "mod-coagulation-cascade",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Fibrinolysis",
     question: "Which enzyme primarily breaks down the fibrin mesh?",
     options: ["Thrombin", "Plasmin", "Factor XIIIa", "Prekallikrein", "Tissue Factor"],
@@ -256,8 +256,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_016",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Leukocytes - Overview",
     question:
       "Which shared feature distinguishes all leukocytes from mature RBCs?",
@@ -275,8 +275,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_017",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "WBC Differential Count",
     question:
       "Descending order of WBC percentage by mnemonic 'Never Let Monkeys Eat Bananas' is:",
@@ -294,8 +294,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_018",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Haematopoiesis",
     question: "The common precursor for all blood cells is:",
     options: [
@@ -312,8 +312,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_019",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Neutrophils - Structure",
     question:
       "Cell with 2-5 lobed nucleus and fine neutral-staining granules is:",
@@ -325,8 +325,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_020",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Neutrophil Migration - Diapedesis",
     question:
       "After margination and firm adhesion to endothelium, the next step is:",
@@ -338,8 +338,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_021",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Neutrophil Killing Mechanisms",
     question:
       "In phagolysosomes, bacteria are mainly destroyed by:",
@@ -357,8 +357,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_022",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "NETosis",
     question: "Release of DNA nets from dying neutrophils is called:",
     options: ["Phagocytosis", "Degranulation", "Chemotaxis", "NETosis", "Opsonization"],
@@ -369,8 +369,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_023",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Neutrophilia",
     question: "Most likely cause of marked neutrophilia in infected abscess:",
     options: [
@@ -387,8 +387,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_024",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Basophils - Structure",
     question:
       "Cell with deep blue-purple granules obscuring nucleus, 0.5-1% of WBCs is:",
@@ -400,8 +400,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_025",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Basophils - Allergic Reaction",
     question:
       "Basophil mediator causing prolonged bronchoconstriction and key in asthma is:",
@@ -419,8 +419,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_026",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Eosinophils - Structure",
     question: "Correct eosinophil description is:",
     options: [
@@ -437,8 +437,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_027",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Eosinophils - Anti-Parasitic Function",
     question: "How do eosinophils kill parasites too large to phagocytose?",
     options: [
@@ -455,8 +455,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_028",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Eosinophils - Moderating Allergic Reactions",
     question:
       "Why are eosinophils recruited to allergic sites by eosinophilic chemotactic factor?",
@@ -474,8 +474,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_029",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Eosinophilia",
     question:
       "Child with wheeze and eosinophils 8% most likely has:",
@@ -493,8 +493,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_wbc_030",
-    blockId: "block-heme",
-    moduleId: "mod-wbc-granulocytes",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Lymphocytes",
     question:
       "Primary roles of B and T lymphocytes are:",
@@ -512,8 +512,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_031",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Blood Composition",
     question:
       "On centrifugation, the upper 55% clear/straw layer represents:",
@@ -531,8 +531,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_032",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Plasma vs Serum",
     question: "Key plasma-serum difference is:",
     options: [
@@ -549,8 +549,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_033",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Plasma Proteins",
     question:
       "Main plasma protein maintaining colloid osmotic pressure is:",
@@ -562,8 +562,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_034",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "RBC Structure",
     question: "Main advantage of biconcave RBC shape is:",
     options: [
@@ -580,8 +580,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_035",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Haematocrit and RBC Indices",
     question:
       "Hb 8 g/dL, MCV 110 fL, MCHC 34% suggests:",
@@ -599,8 +599,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_036",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Haematopoiesis - Fetal",
     question: "Primitive fetal haematopoiesis first begins in:",
     options: ["Liver", "Spleen", "Bone marrow", "Yolk sac", "Thymus"],
@@ -611,8 +611,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_037",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Erythropoietin (EPO)",
     question:
       "At high altitude, increased hemoglobin occurs primarily because:",
@@ -630,8 +630,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_038",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "EPO in Renal Failure",
     question: "In CKD with anaemia and low EPO, the main reason is:",
     options: [
@@ -648,8 +648,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_039",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Nutritional Factors - Vitamin B12 and Folate",
     question:
       "Vegan with macrocytosis and hypersegmented neutrophils has defect of:",
@@ -667,8 +667,8 @@ export const mcqs: MCQ[] = [
   },
   {
     id: "heme_blood_040",
-    blockId: "block-heme",
-    moduleId: "mod-blood-composition-erythropoiesis",
+    blockId: "block-one",
+    moduleId: "sub-physiology",
     topic: "Polycythaemia",
     question:
       "Renal cell carcinoma with high Hb, high RBC count, high EPO, normal oxygen saturation indicates:",
