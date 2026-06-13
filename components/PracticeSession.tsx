@@ -18,11 +18,11 @@ export default function PracticeSession({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
+  const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
-  const [totalAnswered, setTotalAnswered] = useState(0);
 
   const currentQuestion = questions[currentIndex];
-  const completed = totalAnswered === questions.length;
+  const completed = finished;
 
   const progressCurrent = useMemo(() => {
     if (completed) {
@@ -37,7 +37,6 @@ export default function PracticeSession({
     }
 
     setAnswered(true);
-    setTotalAnswered((prev) => prev + 1);
 
     if (selectedAnswer === currentQuestion.correctAnswer) {
       setScore((prev) => prev + 1);
@@ -51,6 +50,7 @@ export default function PracticeSession({
 
     const isLastQuestion = currentIndex === questions.length - 1;
     if (isLastQuestion) {
+      setFinished(true);
       return;
     }
 
@@ -63,8 +63,8 @@ export default function PracticeSession({
     setCurrentIndex(0);
     setSelectedAnswer(null);
     setAnswered(false);
+    setFinished(false);
     setScore(0);
-    setTotalAnswered(0);
   };
 
   return (
