@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { MCQ } from "@/types";
 
 type MCQCardProps = {
@@ -49,6 +50,8 @@ export default function MCQCard({
   onNext,
   isLastQuestion,
 }: MCQCardProps) {
+  const touchStartY = useRef(0);
+
   return (
     <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
       <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
@@ -71,9 +74,15 @@ export default function MCQCard({
               answered,
               mcq.correctAnswer
             )}
-            onClick={() => onSelect(index)}
+            onClick={() => {
+              if (Math.abs(touchStartY.current) < 10) onSelect(index);
+              touchStartY.current = 0;
+            }}
+            onTouchStart={(e) => { touchStartY.current = e.changedTouches[0].clientY; }}
             onTouchEnd={(e) => {
-              if (!answered) { e.preventDefault(); onSelect(index); }
+              const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+              if (!answered && dy < 10) { e.preventDefault(); onSelect(index); }
+              touchStartY.current = 0;
             }}
             disabled={answered}
           >
@@ -97,8 +106,11 @@ export default function MCQCard({
           <button
             type="button"
             onClick={onSubmit}
+            onTouchStart={(e) => { touchStartY.current = e.changedTouches[0].clientY; }}
             onTouchEnd={(e) => {
-              if (selectedAnswer !== null && !answered) { e.preventDefault(); onSubmit(); }
+              const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+              if (selectedAnswer !== null && !answered && dy < 10) { e.preventDefault(); onSubmit(); }
+              touchStartY.current = 0;
             }}
             disabled={selectedAnswer === null}
             className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium disabled:cursor-not-allowed"
@@ -109,7 +121,12 @@ export default function MCQCard({
           <button
             type="button"
             onClick={onNext}
-            onTouchEnd={(e) => { e.preventDefault(); onNext(); }}
+            onTouchStart={(e) => { touchStartY.current = e.changedTouches[0].clientY; }}
+            onTouchEnd={(e) => {
+              const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+              if (dy < 10) { e.preventDefault(); onNext(); }
+              touchStartY.current = 0;
+            }}
             className="hud-primary-btn pulse-soft rounded-xl px-5 py-3 text-sm font-medium"
           >
             {isLastQuestion ? "Finish" : "Next Question"}
