@@ -21,15 +21,25 @@ export default function PracticeSession({
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
 
-  const currentQuestion = questions[currentIndex];
+  const shuffled = useMemo(() => {
+    const arr = [...questions];
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }, [questions]);
+
+  const currentQuestion = shuffled[currentIndex];
+  const totalQuestions = shuffled.length;
   const completed = finished;
 
   const progressCurrent = useMemo(() => {
     if (completed) {
-      return questions.length;
+      return totalQuestions;
     }
     return currentIndex + 1;
-  }, [completed, currentIndex, questions.length]);
+  }, [completed, currentIndex, totalQuestions]);
 
   const handleSubmit = () => {
     if (selectedAnswer === null || answered) {
@@ -48,7 +58,7 @@ export default function PracticeSession({
       return;
     }
 
-    const isLastQuestion = currentIndex === questions.length - 1;
+    const isLastQuestion = currentIndex === totalQuestions - 1;
     if (isLastQuestion) {
       setFinished(true);
       return;
@@ -69,12 +79,12 @@ export default function PracticeSession({
 
   return (
     <div className="space-y-6">
-      <QuestionProgress current={progressCurrent} total={questions.length} score={score} />
+      <QuestionProgress current={progressCurrent} total={totalQuestions} score={score} />
 
       {completed ? (
         <ResultSummary
           correct={score}
-          total={questions.length}
+          total={totalQuestions}
           onRestart={handleRestart}
           backHref={backHref}
         />
@@ -86,7 +96,7 @@ export default function PracticeSession({
           onSelect={setSelectedAnswer}
           onSubmit={handleSubmit}
           onNext={handleNext}
-          isLastQuestion={currentIndex === questions.length - 1}
+          isLastQuestion={currentIndex === totalQuestions - 1}
         />
       )}
     </div>
