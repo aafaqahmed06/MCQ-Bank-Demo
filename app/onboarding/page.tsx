@@ -6,7 +6,7 @@ export default function OnboardingPage() {
     <LayoutWrapper>
       <div className="space-y-6">
         <section className="hud-card fade-in mx-auto w-full max-w-2xl rounded-xl p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-[#f2f8ff]">Set up your profile</h1>
+          <h1 className="text-3xl font-bold text-[var(--text-heading)]">Set up your profile</h1>
           <p className="hud-muted mt-1">
             Select your college and year to personalize your dashboard.
           </p>

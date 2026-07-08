@@ -22,10 +22,10 @@ export default function HomeDashboard() {
   return (
     <div className="space-y-6">
       <section className="hud-card fade-in rounded-xl p-6">
-        <h1 className="text-3xl font-bold text-[#f2f8ff]">Welcome back</h1>
+        <h1 className="text-3xl font-bold text-[var(--text-heading)]">Welcome back</h1>
         {profile ? (
           <p className="hud-muted mt-2">
-            <span className="font-medium text-[#e6f6ff]">{profile.college}</span>
+            <span className="font-medium text-[var(--text-body)]">{profile.college}</span>
             {" · "}
             Year {profile.year}
           </p>

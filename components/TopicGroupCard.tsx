@@ -16,10 +16,10 @@ export default function TopicGroupCard({
       className="hud-card hud-card-hover block rounded-xl p-5"
     >
       <div className="space-y-2">
-        <h3 className="text-lg font-semibold text-[#f2f8ff]">
+        <h3 className="text-lg font-semibold text-[var(--text-heading)]">
           {topicGroup.name}
         </h3>
-        <p className="text-sm text-[#8ca3c5]">{mcqCount} question{mcqCount !== 1 ? "s" : ""}</p>
+        <p className="text-sm text-[var(--text-muted)]">{mcqCount} question{mcqCount !== 1 ? "s" : ""}</p>
       </div>
     </Link>
   );

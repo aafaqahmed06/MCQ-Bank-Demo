@@ -9,8 +9,8 @@ export default function BlocksPage() {
       <RequireProfile>
         <div className="space-y-6">
           <div className="space-y-3">
-            <h1 className="text-3xl font-bold text-[#f2f8ff]">Blocks</h1>
-            <p className="text-[#8ca3c5]">
+            <h1 className="text-3xl font-bold text-[var(--text-heading)]">Blocks</h1>
+            <p className="text-[var(--text-muted)]">
               Choose a block to view its subjects.
             </p>
           </div>

@@ -62,10 +62,10 @@ export default function ExamPage() {
         <div className="space-y-6">
           {phase === "select" && (
             <section className="hud-card fade-in mx-auto w-full max-w-lg rounded-xl p-6 sm:p-8 text-center">
-              <h1 className="text-3xl font-bold text-[#f2f8ff]">
+              <h1 className="text-3xl font-bold text-[var(--text-heading)]">
                 Exam Simulation
               </h1>
-              <p className="mt-2 text-[#8ca3c5]">
+              <p className="mt-2 text-[var(--text-muted)]">
                 {mcqs.length} questions available. Select the number of
                 questions for your exam.
               </p>

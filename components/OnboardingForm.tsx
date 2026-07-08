@@ -26,7 +26,7 @@ export default function OnboardingForm() {
       <div className="space-y-3">
         <label
           htmlFor="college"
-          className="block text-sm font-medium text-[#dceaff]"
+          className="block text-sm font-medium text-[var(--text-label)]"
         >
           College
         </label>
@@ -34,7 +34,7 @@ export default function OnboardingForm() {
           id="college"
           value={college}
           onChange={(e) => setCollege(e.target.value)}
-          className="w-full rounded-xl border border-cyan-300/25 bg-[#111a31]/70 px-4 py-3.5 text-base text-[#e6f6ff] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25"
+          className="w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25"
         >
           {MOCK_COLLEGES.map((c) => (
             <option key={c} value={c}>
@@ -47,7 +47,7 @@ export default function OnboardingForm() {
       <div className="space-y-3">
         <label
           htmlFor="year"
-          className="block text-sm font-medium text-[#dceaff]"
+          className="block text-sm font-medium text-[var(--text-label)]"
         >
           Year
         </label>
@@ -55,7 +55,7 @@ export default function OnboardingForm() {
           id="year"
           value={year}
           onChange={(e) => setYear(Number(e.target.value))}
-          className="w-full rounded-xl border border-cyan-300/25 bg-[#111a31]/70 px-4 py-3.5 text-base text-[#e6f6ff] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25"
+          className="w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25"
         >
           {YEAR_OPTIONS.map((y) => (
             <option key={y} value={y}>
