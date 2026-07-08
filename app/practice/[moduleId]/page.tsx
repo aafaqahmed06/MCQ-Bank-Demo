@@ -48,15 +48,15 @@ export default async function PracticePage({
           <div className="space-y-3">
             <Link
               href={backHref}
-              className="text-sm text-cyan-300 hover:underline"
+              className="text-sm text-[var(--accent-cyan)] hover:underline"
             >
               ← Back to {group ? "topics" : "subjects"}
             </Link>
-            <h1 className="text-3xl font-bold text-[#f2f8ff]">{heading}</h1>
+            <h1 className="text-3xl font-bold text-[var(--text-heading)]">{heading}</h1>
           </div>
 
           {moduleMcqs.length === 0 ? (
-            <p className="hud-card rounded-xl border-dashed p-6 text-center text-[#8ca3c5]">
+            <p className="hud-card rounded-xl border-dashed p-6 text-center text-[var(--text-muted)]">
               No MCQs added for this topic yet
             </p>
           ) : (

@@ -27,15 +27,15 @@ export default async function ModulesPage({ params }: PageProps) {
           <div className="space-y-3">
             <Link
               href="/blocks"
-              className="text-sm text-cyan-300 hover:underline"
+              className="text-sm text-[var(--accent-cyan)] hover:underline"
             >
               ← Back to blocks
             </Link>
-            <h1 className="text-3xl font-bold text-[#f2f8ff]">{block.name}</h1>
-            <p className="text-[#8ca3c5]">Year {block.year} · Select a subject</p>
+            <h1 className="text-3xl font-bold text-[var(--text-heading)]">{block.name}</h1>
+            <p className="text-[var(--text-muted)]">Year {block.year} · Select a subject</p>
           </div>
           {blockModules.length === 0 ? (
-            <p className="hud-card rounded-xl border-dashed p-6 text-center text-[#8ca3c5]">
+            <p className="hud-card rounded-xl border-dashed p-6 text-center text-[var(--text-muted)]">
               No subjects available for this block yet.
             </p>
           ) : (
