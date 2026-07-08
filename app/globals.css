@@ -102,10 +102,13 @@ body::before {
     linear-gradient(rgba(170, 199, 255, 0.09) 1px, transparent 1px),
     linear-gradient(90deg, rgba(170, 199, 255, 0.09) 1px, transparent 1px);
   background-size: 48px 48px;
+  background-position: 0 0;
+  animation: gridShift 30s linear infinite;
 }
 
 [data-theme="light"] body::before {
   opacity: 0.04;
+  animation: none;
   background-image:
     linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
@@ -181,6 +184,16 @@ body::before {
   transform: translateY(-1px);
 }
 
+@media (pointer: fine) {
+  .hud-primary-btn:hover:not(:disabled) {
+    transform: scale(1.03);
+  }
+}
+
+.hud-primary-btn:active:not(:disabled) {
+  transform: scale(1.03);
+}
+
 .hud-primary-btn:disabled {
   opacity: 0.5;
   box-shadow: none;
@@ -192,6 +205,11 @@ body::before {
 
 .pulse-soft {
   animation: pulseSoft 2.4s ease-in-out infinite;
+}
+
+@keyframes gridShift {
+  from { background-position: 0 0; }
+  to { background-position: 48px 48px; }
 }
 
 @keyframes fadeIn {
