@@ -10,7 +10,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       onTouchEnd={(e) => { e.preventDefault(); toggle(); }}
-      className="rounded-lg p-2 text-sm text-[var(--text-muted-light)] transition-colors hover:bg-cyan-400/10 hover:text-cyan-200 active:bg-cyan-400/10 active:text-cyan-200"
+      className="rounded-lg p-2 text-sm text-[var(--text-muted-light)] transition-colors hover:bg-cyan-400/10 hover:text-[var(--accent-cyan-strong)] active:bg-cyan-400/10 active:text-[var(--accent-cyan-strong)]"
       aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
     >
       {theme === "dark" ? (

@@ -6,7 +6,7 @@ export default function LandingPage() {
     <LayoutWrapper>
       <div className="space-y-6">
         <section className="hud-card fade-in rounded-xl p-6 text-center sm:p-8">
-          <p className="text-sm font-medium uppercase tracking-wide text-cyan-300">
+          <p className="text-sm font-medium uppercase tracking-wide text-[var(--accent-cyan)]">
             MBBS Practice
           </p>
           <h1 className="mt-2 text-3xl font-bold text-[var(--text-heading)]">DiagKnow</h1>
@@ -23,7 +23,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/home"
-              className="rounded-xl border border-violet-300/30 bg-[var(--bg-landing-btn)]/60 px-8 py-4 font-medium text-[var(--text-btn-landing)] transition-colors hover:border-cyan-300/40 hover:text-cyan-200 active:border-cyan-300/40 active:text-cyan-200"
+              className="rounded-xl border border-violet-300/30 bg-[var(--bg-landing-btn)]/60 px-8 py-4 font-medium text-[var(--text-btn-landing)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
             >
               Go to Dashboard
             </Link>

@@ -32,7 +32,7 @@ export default function HomeDashboard() {
         ) : (
           <p className="hud-muted mt-2">
             Complete{" "}
-            <Link href="/onboarding" className="text-cyan-300 hover:underline">
+            <Link href="/onboarding" className="text-[var(--accent-cyan)] hover:underline">
               onboarding
             </Link>{" "}
             to save your college and year.
@@ -45,19 +45,19 @@ export default function HomeDashboard() {
           href="/blocks"
           className="hud-card hud-card-hover rounded-xl p-4 text-center"
         >
-          <span className="font-semibold text-cyan-200">Start Practice</span>
+          <span className="font-semibold text-[var(--accent-cyan-strong)]">Start Practice</span>
         </Link>
         <Link
           href="/exam"
           className="hud-card hud-card-hover rounded-xl p-4 text-center"
         >
-          <span className="font-semibold text-cyan-200">Exam Simulation</span>
+          <span className="font-semibold text-[var(--accent-cyan-strong)]">Exam Simulation</span>
         </Link>
         <Link
           href="/leaderboard"
           className="hud-card hud-card-hover rounded-xl p-4 text-center"
         >
-          <span className="font-semibold text-cyan-200">Leaderboard</span>
+          <span className="font-semibold text-[var(--accent-cyan-strong)]">Leaderboard</span>
         </Link>
       </section>
     </div>

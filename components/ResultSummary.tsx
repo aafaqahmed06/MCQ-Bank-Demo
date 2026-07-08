@@ -55,7 +55,7 @@ export default function ResultSummary({
         </button>
         <Link
           href={backHref}
-          className="rounded-xl border border-violet-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-cyan-200 active:border-cyan-300/40 active:text-cyan-200"
+          className="rounded-xl border border-violet-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
         >
           Back to modules
         </Link>

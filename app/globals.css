@@ -26,6 +26,10 @@
   --text-body-alt: #d4e4ff;
   --text-btn-secondary: #d8e5ff;
   --text-btn-landing: #cfdcff;
+
+  --accent-cyan: #67e8f9;
+  --accent-cyan-strong: #a5f3fc;
+  --accent-violet: #c4b5fd;
 }
 
 [data-theme="light"] {
@@ -54,6 +58,10 @@
   --text-body-alt: #475569;
   --text-btn-secondary: #1e293b;
   --text-btn-landing: #334155;
+
+  --accent-cyan: #0891b2;
+  --accent-cyan-strong: #06b6d4;
+  --accent-violet: #7c3aed;
 }
 
 html {

@@ -31,8 +31,8 @@ export default function Navbar() {
                     href={href}
                     className={`rounded-md px-3 py-2 text-sm font-medium sm:px-4 sm:py-2.5 transition-colors ${
                       isActive
-                        ? "border border-cyan-300/40 bg-cyan-400/10 text-cyan-200 shadow-[0_0_18px_rgba(0,224,255,0.2)]"
-                        : "text-[var(--text-muted-light)] hover:bg-cyan-400/8 hover:text-cyan-200 active:bg-cyan-400/8 active:text-cyan-200"
+                        ? "border border-cyan-300/40 bg-cyan-400/10 text-[var(--accent-cyan-strong)] shadow-[0_0_18px_rgba(0,224,255,0.2)]"
+                        : "text-[var(--text-muted-light)] hover:bg-cyan-400/8 hover:text-[var(--accent-cyan-strong)] active:bg-cyan-400/8 active:text-[var(--accent-cyan-strong)]"
                     }`}
                   >
                     {label}

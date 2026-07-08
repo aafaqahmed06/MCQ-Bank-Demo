@@ -56,7 +56,7 @@ export default function ExamSession({
       </div>
 
       <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
-        <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
+        <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
           Topic: {currentQuestion.topic}
         </p>
         <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">

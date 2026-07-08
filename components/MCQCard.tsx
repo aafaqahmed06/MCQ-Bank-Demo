@@ -54,7 +54,7 @@ export default function MCQCard({
 
   return (
     <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
-      <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
+      <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
         Topic: {mcq.topic}
       </p>
       <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
@@ -94,7 +94,7 @@ export default function MCQCard({
 
       {answered && (
         <div className="mt-5 rounded-xl border border-violet-300/35 bg-violet-400/10 p-4 fade-in">
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-200">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-violet)]">
             Explanation
           </p>
           <p className="mt-1 text-sm text-[var(--text-body-alt)] sm:text-base">{mcq.explanation}</p>

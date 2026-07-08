@@ -57,7 +57,7 @@ export default function ExamResult({
         </div>
 
         <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
-          <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-cyan-200">
+          <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
             Topic: {q.topic}
           </p>
           <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
@@ -106,7 +106,7 @@ export default function ExamResult({
           </div>
 
           <div className="mt-5 rounded-xl border border-violet-300/35 bg-violet-400/10 p-4 fade-in">
-            <p className="text-xs font-semibold uppercase tracking-wide text-violet-200">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-violet)]">
               Explanation
             </p>
             <p className="mt-1 text-sm text-[var(--text-body-alt)] sm:text-base">
@@ -119,7 +119,7 @@ export default function ExamResult({
               type="button"
               onClick={() => setReviewIndex((prev) => Math.max(0, prev - 1))}
               disabled={reviewIndex === 0}
-              className="rounded-xl border border-cyan-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-cyan-200 active:border-cyan-300/40 active:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl border border-cyan-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               ← Previous
             </button>
@@ -129,7 +129,7 @@ export default function ExamResult({
                 onClick={() =>
                   setReviewIndex((prev) => Math.min(total - 1, prev + 1))
                 }
-                className="rounded-xl border border-cyan-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-cyan-200 active:border-cyan-300/40 active:text-cyan-200"
+                className="rounded-xl border border-cyan-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
               >
                 Next →
               </button>
@@ -194,7 +194,7 @@ export default function ExamResult({
             e.preventDefault();
             onStartNew();
           }}
-          className="rounded-xl border border-violet-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-cyan-200 active:border-cyan-300/40 active:text-cyan-200"
+          className="rounded-xl border border-violet-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
         >
           Start New Exam
         </button>
