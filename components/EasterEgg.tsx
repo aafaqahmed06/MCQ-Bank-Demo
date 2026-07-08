@@ -72,6 +72,11 @@ export default function EasterEggTrigger({
   const countRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const dismiss = useCallback(() => {
+    setShow(false);
+    setDone(true);
+  }, []);
+
   const handleDone = useCallback(() => {
     setDone(true);
     setTimeout(() => {
@@ -102,9 +107,18 @@ export default function EasterEggTrigger({
       {show && (
         <>
           <Confetti onDone={handleDone} />
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--bg-page)]/95 backdrop-blur-sm p-6">
-            <div className="max-w-lg rounded-2xl border border-cyan-400/30 bg-[var(--bg-card)] p-8 shadow-2xl text-center space-y-6">
-              <div className="text-5xl">🎉</div>
+          <div className="fixed inset-0 z-40 flex items-center justify-center bg-[var(--bg-page)]/95 backdrop-blur-sm p-6" onClick={dismiss}>
+            <div onClick={(e) => e.stopPropagation()} className="max-w-lg rounded-2xl border border-cyan-400/30 bg-[var(--bg-card)] p-8 shadow-2xl text-center space-y-6 relative">
+              <button
+                onClick={dismiss}
+                className="absolute top-2 left-2 size-8 flex items-center justify-center rounded-full text-[var(--text-muted-light)] hover:text-[var(--text-body)] hover:bg-cyan-400/10 active:bg-cyan-400/10 transition-colors"
+                aria-label="Close"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                  <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z" />
+                </svg>
+              </button>
+              <div className="text-5xl pt-4">🎉</div>
               <p className="text-[var(--text-body)] leading-relaxed whitespace-pre-line">
                 Dear User,{"\n\n"}
                 Thank you for using DiagKnow, the app that makes MBBS just a bit
@@ -117,10 +131,7 @@ export default function EasterEggTrigger({
                 Aafaq Ahmed
               </p>
               <button
-                onClick={() => {
-                  setShow(false);
-                  setDone(true);
-                }}
+                onClick={dismiss}
                 className="hud-primary-btn rounded-lg px-6 py-2 text-sm font-semibold text-white"
               >
                 Dismiss
