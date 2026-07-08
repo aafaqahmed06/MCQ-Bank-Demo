@@ -20,6 +20,7 @@ export default function PracticeSession({
   const [answered, setAnswered] = useState(false);
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
+  const [restartCount, setRestartCount] = useState(0);
 
   const shuffled = useMemo(() => {
     const arr = [...questions];
@@ -28,18 +29,32 @@ export default function PracticeSession({
       [arr[i], arr[j]] = [arr[j], arr[i]];
     }
     return arr;
-  }, [questions]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questions, restartCount]);
 
-  const currentQuestion = shuffled[currentIndex];
+  const displayedQuestion = useMemo(() => {
+    const q = shuffled[currentIndex];
+    const indices = q.options.map((_, i) => i);
+    for (let i = indices.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [indices[i], indices[j]] = [indices[j], indices[i]];
+    }
+    return {
+      ...q,
+      options: indices.map((i) => q.options[i]),
+      correctAnswer: indices.indexOf(q.correctAnswer),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shuffled[currentIndex].id]);
+
   const totalQuestions = shuffled.length;
   const completed = finished;
 
-  const progressCurrent = useMemo(() => {
-    if (completed) {
-      return totalQuestions;
-    }
-    return currentIndex + 1;
-  }, [completed, currentIndex, totalQuestions]);
+  const answeredCount = useMemo(() => {
+    if (finished) return totalQuestions;
+    if (answered) return currentIndex + 1;
+    return currentIndex;
+  }, [finished, answered, currentIndex, totalQuestions]);
 
   const handleSubmit = () => {
     if (selectedAnswer === null || answered) {
@@ -48,7 +63,7 @@ export default function PracticeSession({
 
     setAnswered(true);
 
-    if (selectedAnswer === currentQuestion.correctAnswer) {
+    if (selectedAnswer === displayedQuestion.correctAnswer) {
       setScore((prev) => prev + 1);
     }
   };
@@ -75,11 +90,17 @@ export default function PracticeSession({
     setAnswered(false);
     setFinished(false);
     setScore(0);
+    setRestartCount((c) => c + 1);
   };
 
   return (
     <div className="space-y-6">
-      <QuestionProgress current={progressCurrent} total={totalQuestions} score={score} />
+      <QuestionProgress
+        current={currentIndex + 1}
+        answered={answeredCount}
+        total={totalQuestions}
+        score={score}
+      />
 
       {completed ? (
         <ResultSummary
@@ -90,7 +111,7 @@ export default function PracticeSession({
         />
       ) : (
         <MCQCard
-          mcq={currentQuestion}
+          mcq={displayedQuestion}
           selectedAnswer={selectedAnswer}
           answered={answered}
           onSelect={setSelectedAnswer}

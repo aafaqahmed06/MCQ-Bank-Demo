@@ -2,12 +2,14 @@
 
 type QuestionProgressProps = {
   current: number;
+  answered: number;
   total: number;
   score: number;
 };
 
 export default function QuestionProgress({
   current,
+  answered,
   total,
   score,
 }: QuestionProgressProps) {
@@ -22,7 +24,7 @@ export default function QuestionProgress({
       <div className="mt-3 h-2 rounded-full bg-[#121d36]">
         <div
           className="h-2 rounded-full bg-cyan-300 transition-all duration-300 shadow-[0_0_14px_rgba(0,224,255,0.35)]"
-          style={{ width: `${(current / total) * 100}%` }}
+          style={{ width: `${(answered / total) * 100}%` }}
         />
       </div>
     </div>

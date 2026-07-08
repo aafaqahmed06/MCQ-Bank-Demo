@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import PracticeSession from "@/components/PracticeSession";
+import RequireProfile from "@/components/RequireProfile";
 import { getModuleById } from "@/lib/data/modules";
 import {
   getMcqsByModuleId,
@@ -42,28 +43,30 @@ export default async function PracticePage({
 
   return (
     <LayoutWrapper>
-      <div className="space-y-6">
-        <div className="space-y-3">
-          <Link
-            href={backHref}
-            className="text-sm text-cyan-300 hover:underline"
-          >
-            ← Back to {group ? "topics" : "subjects"}
-          </Link>
-          <h1 className="text-3xl font-bold text-[#f2f8ff]">{heading}</h1>
-        </div>
+      <RequireProfile>
+        <div className="space-y-6">
+          <div className="space-y-3">
+            <Link
+              href={backHref}
+              className="text-sm text-cyan-300 hover:underline"
+            >
+              ← Back to {group ? "topics" : "subjects"}
+            </Link>
+            <h1 className="text-3xl font-bold text-[#f2f8ff]">{heading}</h1>
+          </div>
 
-        {moduleMcqs.length === 0 ? (
-          <p className="hud-card rounded-xl border-dashed p-6 text-center text-[#8ca3c5]">
-            No MCQs added for this topic yet
-          </p>
-        ) : (
-          <PracticeSession
-            questions={moduleMcqs}
-            backHref={backHref}
-          />
-        )}
-      </div>
+          {moduleMcqs.length === 0 ? (
+            <p className="hud-card rounded-xl border-dashed p-6 text-center text-[#8ca3c5]">
+              No MCQs added for this topic yet
+            </p>
+          ) : (
+            <PracticeSession
+              questions={moduleMcqs}
+              backHref={backHref}
+            />
+          )}
+        </div>
+      </RequireProfile>
     </LayoutWrapper>
   );
 }
