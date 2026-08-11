@@ -1,58 +1,79 @@
 "use client";
 
-import { useState } from "react";
-import { mcqs } from "@/lib/data/mcqs";
-import type { MCQ } from "@/types";
+import { useEffect, useState } from "react";
+import { startExam, getPublishedCount, submitExam } from "@/lib/exam";
+import type {
+  ExamAnswerSubmission,
+  ExamQuestionPayload,
+  SubmitExamResponse,
+} from "@/types";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import RequireProfile from "@/components/RequireProfile";
 import ExamSession from "@/components/ExamSession";
 import ExamResult from "@/components/ExamResult";
 
-function fisherYates<T>(arr: T[]): void {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-}
-
-function prepareQuestions(count: number): MCQ[] {
-  const available = [...mcqs];
-  fisherYates(available);
-  const selected = available.slice(0, Math.min(count, available.length));
-
-  return selected.map((q) => {
-    const indices = q.options.map((_, i) => i);
-    fisherYates(indices);
-    return {
-      ...q,
-      options: indices.map((i) => q.options[i]),
-      correctAnswer: indices.indexOf(q.correctAnswer),
-    };
-  });
-}
-
 type Phase = "select" | "exam" | "result";
 
 export default function ExamPage() {
   const [phase, setPhase] = useState<Phase>("select");
-  const [examQuestions, setExamQuestions] = useState<MCQ[] | null>(null);
-  const [examAnswers, setExamAnswers] = useState<(number | null)[] | null>(
-    null
-  );
+  const [starting, setStarting] = useState(false);
+  const [availableCount, setAvailableCount] = useState<number | null>(null);
+  const [examId, setExamId] = useState<string | null>(null);
+  const [examQuestions, setExamQuestions] = useState<
+    ExamQuestionPayload[] | null
+  >(null);
+  const [result, setResult] = useState<SubmitExamResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleStart = (count: number) => {
-    setExamQuestions(prepareQuestions(count));
-    setPhase("exam");
+  useEffect(() => {
+    let cancelled = false;
+    getPublishedCount()
+      .then((count) => {
+        if (!cancelled) setAvailableCount(count);
+      })
+      .catch(() => {
+        if (!cancelled) setAvailableCount(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleStart = async (count: number) => {
+    if (starting) return;
+    setError(null);
+    setStarting(true);
+    try {
+      const exam = await startExam({ questionCount: count });
+      setExamId(exam.exam_id);
+      setExamQuestions(exam.questions);
+      setPhase("exam");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to start exam");
+      setStarting(false);
+    }
   };
 
-  const handleFinish = (answers: (number | null)[]) => {
-    setExamAnswers(answers);
+  const handleSubmit = async (
+    answers: (number | null)[],
+  ): Promise<SubmitExamResponse> => {
+    if (!examId) throw new Error("No exam in progress");
+    const submissions: ExamAnswerSubmission[] = (examQuestions ?? []).map(
+      (q, index) => ({
+        mcq_id: q.mcq_id,
+        selected_answer: answers[index],
+      }),
+    );
+    const res = await submitExam(examId, submissions);
+    setResult(res);
     setPhase("result");
+    return res;
   };
 
   const handleStartNew = () => {
+    setExamId(null);
     setExamQuestions(null);
-    setExamAnswers(null);
+    setResult(null);
     setPhase("select");
   };
 
@@ -66,32 +87,39 @@ export default function ExamPage() {
                 Exam Simulation
               </h1>
               <p className="mt-2 text-[var(--text-muted)]">
-                {mcqs.length} questions available. Select the number of
-                questions for your exam.
+                {availableCount === null
+                  ? "Loading question bank…"
+                  : `${availableCount} questions available. Select the number of questions for your exam.`}
               </p>
+              {error && (
+                <p className="mt-3 rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 px-4 py-3 text-sm text-[#ffc3ce]">
+                  {error}
+                </p>
+              )}
               <div className="mt-6 flex flex-col gap-3">
-                {[50, 100, 150].map((n) => (
+                {[20, 50, 100].map((n) => (
                   <button
                     key={n}
                     type="button"
                     onClick={() => handleStart(n)}
-                    className="hud-primary-btn rounded-xl px-6 py-4 text-lg font-semibold"
+                    disabled={starting}
+                    className="hud-primary-btn rounded-xl px-6 py-4 text-lg font-semibold disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    {n} Questions
+                    {starting ? "Starting…" : `${n} Questions`}
                   </button>
                 ))}
               </div>
             </section>
           )}
 
-          {phase === "exam" && examQuestions && (
-            <ExamSession questions={examQuestions} onFinish={handleFinish} />
+          {phase === "exam" && examQuestions && examId && (
+            <ExamSession questions={examQuestions} onSubmit={handleSubmit} />
           )}
 
-          {phase === "result" && examQuestions && examAnswers && (
+          {phase === "result" && result && examId && (
             <ExamResult
-              questions={examQuestions}
-              answers={examAnswers}
+              examId={examId}
+              result={result}
               onStartNew={handleStartNew}
             />
           )}

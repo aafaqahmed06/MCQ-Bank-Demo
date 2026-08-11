@@ -1,37 +1,48 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { MCQ } from "@/types";
+import type { ExamQuestionPayload, SubmitExamResponse } from "@/types";
 
 type ExamSessionProps = {
-  questions: MCQ[];
-  onFinish: (answers: (number | null)[]) => void;
+  questions: ExamQuestionPayload[];
+  onSubmit: (answers: (number | null)[]) => Promise<SubmitExamResponse>;
 };
 
 export default function ExamSession({
   questions,
-  onFinish,
+  onSubmit,
 }: ExamSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>(
     Array(questions.length).fill(null)
   );
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const touchStartY = useRef(0);
 
   const total = questions.length;
   const currentQuestion = questions[currentIndex];
   const answeredCount = answers.filter((a) => a !== null).length;
 
-  const handleNext = () => {
-    if (selectedAnswer === null) return;
+  const handleNext = async () => {
+    if (selectedAnswer === null || submitting) return;
 
     const newAnswers = [...answers];
     newAnswers[currentIndex] = selectedAnswer;
     setAnswers(newAnswers);
 
     if (currentIndex === total - 1) {
-      onFinish(newAnswers);
+      setSubmitting(true);
+      setSubmitError(null);
+      try {
+        await onSubmit(newAnswers);
+      } catch (err) {
+        setSubmitError(
+          err instanceof Error ? err.message : "Failed to submit exam"
+        );
+        setSubmitting(false);
+      }
     } else {
       setCurrentIndex((prev) => prev + 1);
       setSelectedAnswer(null);
@@ -56,9 +67,11 @@ export default function ExamSession({
       </div>
 
       <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
-        <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
-          Topic: {currentQuestion.topic}
-        </p>
+        {currentQuestion.topic && (
+          <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
+            Topic: {currentQuestion.topic}
+          </p>
+        )}
         <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
           {currentQuestion.question}
         </h2>
@@ -102,6 +115,12 @@ export default function ExamSession({
           ))}
         </div>
 
+        {submitError && (
+          <p className="mt-4 rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 px-4 py-3 text-sm text-[#ffc3ce]">
+            {submitError}
+          </p>
+        )}
+
         <div className="mt-5 flex justify-end">
           <button
             type="button"
@@ -113,16 +132,20 @@ export default function ExamSession({
               const dy = Math.abs(
                 e.changedTouches[0].clientY - touchStartY.current
               );
-              if (selectedAnswer !== null && dy < 10) {
+              if (selectedAnswer !== null && !submitting && dy < 10) {
                 e.preventDefault();
                 handleNext();
               }
               touchStartY.current = 0;
             }}
-            disabled={selectedAnswer === null}
-            className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium disabled:cursor-not-allowed"
+            disabled={selectedAnswer === null || submitting}
+            className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {currentIndex === total - 1 ? "Finish Exam" : "Next Question"}
+            {submitting
+              ? "Submitting…"
+              : currentIndex === total - 1
+                ? "Finish Exam"
+                : "Next Question"}
           </button>
         </div>
       </section>

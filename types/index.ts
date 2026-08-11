@@ -45,3 +45,46 @@ export interface MCQ {
   explanation: string;
   difficulty: number;
 }
+
+// ── Exam engine (Supabase RPC payloads) ────────────────────────────────
+// Do NOT add `correct_answer`/`explanation` to these payloads: they must
+// never reach the client during an active exam.
+
+/** A single in-progress exam question (key-free by design). */
+export interface ExamQuestionPayload {
+  mcq_id: string;
+  question: string;
+  options: string[];
+  topic: string | null;
+  question_order: number;
+}
+
+export interface StartExamResponse {
+  exam_id: string;
+  questions: ExamQuestionPayload[];
+}
+
+export interface ExamAnswerSubmission {
+  mcq_id: string;
+  selected_answer: number | null;
+}
+
+export interface SubmitExamResponse {
+  exam_id: string;
+  total_questions: number;
+  correct_count: number;
+  score: number;
+  accuracy: number;
+}
+
+/** Review item returned only AFTER an exam is submitted. */
+export interface ExamReviewItem {
+  mcq_id: string;
+  question: string;
+  options: string[];
+  selected_answer: number | null;
+  correct_answer: number;
+  is_correct: boolean;
+  explanation: string;
+  question_order: number;
+}

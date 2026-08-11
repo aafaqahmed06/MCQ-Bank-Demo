@@ -1,75 +1,83 @@
 "use client";
 
-import { useState } from "react";
-import type { MCQ } from "@/types";
+import { useCallback, useState } from "react";
+import { getExamReview } from "@/lib/exam";
+import type { ExamReviewItem, SubmitExamResponse } from "@/types";
 
 type ExamResultProps = {
-  questions: MCQ[];
-  answers: (number | null)[];
+  examId: string;
+  result: SubmitExamResponse;
   onStartNew: () => void;
 };
 
 export default function ExamResult({
-  questions,
-  answers,
+  examId,
+  result,
   onStartNew,
 }: ExamResultProps) {
   const [showReview, setShowReview] = useState(false);
   const [reviewIndex, setReviewIndex] = useState(0);
+  const [review, setReview] = useState<ExamReviewItem[] | null>(null);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [loadingReview, setLoadingReview] = useState(false);
 
-  const total = questions.length;
-  const correct = questions.filter(
-    (q, i) => q.correctAnswer === answers[i]
-  ).length;
-  const percentage = total === 0 ? 0 : Math.round((correct / total) * 100);
+  const total = result.total_questions;
+  const correct = result.correct_count;
+  const percentage = result.score;
   const incorrect = total - correct;
 
-  if (showReview) {
-    const q = questions[reviewIndex];
-    const userAnswer = answers[reviewIndex];
-    const isCorrect = userAnswer === q.correctAnswer;
+  const loadReview = useCallback(async () => {
+    setReviewError(null);
+    setLoadingReview(true);
+    try {
+      const items = await getExamReview(examId);
+      setReview(items);
+      setReviewIndex(0);
+      setShowReview(true);
+    } catch (err) {
+      setReviewError(
+        err instanceof Error ? err.message : "Failed to load review"
+      );
+    } finally {
+      setLoadingReview(false);
+    }
+  }, [examId]);
+
+  if (showReview && review) {
+    const item = review[reviewIndex];
 
     return (
       <div className="space-y-6">
         <div className="hud-card rounded-xl p-4">
           <div className="flex items-center justify-between gap-4 text-sm text-[var(--text-muted-light)]">
             <p>
-              Question {reviewIndex + 1} of {total}
+              Question {reviewIndex + 1} of {review.length}
             </p>
-            {userAnswer !== null && (
-              <p
-                className={
-                  isCorrect ? "text-[#39ff90]" : "text-[#ff4d6d]"
-                }
-              >
-                {isCorrect ? "Correct" : "Incorrect"}
+            {item.selected_answer !== null && (
+              <p className={item.is_correct ? "text-[#39ff90]" : "text-[#ff4d6d]"}>
+                {item.is_correct ? "Correct" : "Incorrect"}
               </p>
             )}
           </div>
           <div className="mt-3 h-2 rounded-full bg-[var(--bg-progress-track)]">
             <div
               className="h-2 rounded-full bg-cyan-300 transition-all duration-300 shadow-[0_0_14px_rgba(0,224,255,0.35)]"
-              style={{
-                width: `${((reviewIndex + 1) / total) * 100}%`,
-              }}
+              style={{ width: `${((reviewIndex + 1) / review.length) * 100}%` }}
             />
           </div>
         </div>
 
         <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
-          <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
-            Topic: {q.topic}
-          </p>
           <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
-            {q.question}
+            {item.question}
           </h2>
 
           <div className="my-5 border-t border-cyan-300/20" />
 
           <div className="space-y-3">
-            {q.options.map((option, index) => {
-              const isUserAnswer = userAnswer === index;
-              const isCorrectAnswer = index === q.correctAnswer;
+            {item.options.map((option, index) => {
+              const isUserAnswer = item.selected_answer === index;
+              const isCorrectAnswer = index === item.correct_answer;
               let classes =
                 "w-full rounded-xl p-3 sm:p-4 text-left text-base sm:text-lg transition-all duration-200 border ";
 
@@ -110,7 +118,7 @@ export default function ExamResult({
               Explanation
             </p>
             <p className="mt-1 text-sm text-[var(--text-body-alt)] sm:text-base">
-              {q.explanation}
+              {item.explanation}
             </p>
           </div>
 
@@ -123,11 +131,11 @@ export default function ExamResult({
             >
               ← Previous
             </button>
-            {reviewIndex < total - 1 ? (
+            {reviewIndex < review.length - 1 ? (
               <button
                 type="button"
                 onClick={() =>
-                  setReviewIndex((prev) => Math.min(total - 1, prev + 1))
+                  setReviewIndex((prev) => Math.min(review.length - 1, prev + 1))
                 }
                 className="rounded-xl border border-cyan-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
               >
@@ -151,7 +159,9 @@ export default function ExamResult({
   return (
     <section className="hud-card fade-in rounded-xl p-6">
       <h2 className="text-3xl font-bold text-[var(--text-heading)]">Exam Complete</h2>
-      <p className="mt-1 text-[var(--text-muted)]">Here's how you performed.</p>
+      <p className="mt-1 text-[var(--text-muted)]">
+        Here&apos;s how you performed.
+      </p>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-cyan-300/25 bg-[var(--bg-card-alt)]/70 p-4">
@@ -176,16 +186,20 @@ export default function ExamResult({
         </div>
       </div>
 
+      {reviewError && (
+        <p className="mt-4 rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 px-4 py-3 text-sm text-[#ffc3ce]">
+          {reviewError}
+        </p>
+      )}
+
       <div className="mt-6 flex flex-wrap gap-3">
         <button
           type="button"
-          onClick={() => {
-            setReviewIndex(0);
-            setShowReview(true);
-          }}
-          className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium"
+          onClick={loadReview}
+          disabled={loadingReview}
+          className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Review Answers
+          {loadingReview ? "Loading…" : "Review Answers"}
         </button>
         <button
           type="button"
