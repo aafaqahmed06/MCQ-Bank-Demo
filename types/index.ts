@@ -3,6 +3,16 @@ export interface UserProfile {
   year: number;
 }
 
+export interface DBProfile {
+  id: string;
+  full_name: string | null;
+  college_id: string | null;
+  program_id: string | null;
+  academic_year_id: string | null;
+  role: "student" | "reviewer" | "admin" | "super_admin";
+  avatar_url: string | null;
+}
+
 export interface Block {
   id: string;
   name: string;

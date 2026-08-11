@@ -1,25 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { USER_STORAGE_KEY } from "@/lib/data/user";
-import type { UserProfile } from "@/types";
+import { useAuth } from "@/components/AuthProvider";
+import { useProfileInfo } from "@/components/useProfileInfo";
 
 export default function ContinueCard() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { user, isProfileComplete } = useAuth();
+  const info = useProfileInfo();
 
-  useEffect(() => {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (raw) {
-      try {
-        setProfile(JSON.parse(raw) as UserProfile);
-      } catch {
-        setProfile(null);
-      }
-    }
-  }, []);
-
-  if (!profile) return null;
+  if (!user || !isProfileComplete) return null;
 
   return (
     <Link
@@ -32,9 +21,11 @@ export default function ContinueCard() {
       <p className="mt-1 text-lg font-semibold text-[var(--text-heading)]">
         Go to Blocks &rarr;
       </p>
-      <p className="mt-1 text-sm text-[var(--text-muted)]">
-        {profile.college} &middot; Year {profile.year}
-      </p>
+      {info && (
+        <p className="mt-1 text-sm text-[var(--text-muted)]">
+          {info.collegeName} &middot; {info.yearName}
+        </p>
+      )}
     </Link>
   );
 }

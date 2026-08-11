@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { USER_STORAGE_KEY } from "@/lib/data/user";
+import { useAuth } from "@/components/AuthProvider";
 
 export default function RequireProfile({
   children,
@@ -10,16 +10,19 @@ export default function RequireProfile({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { loading, user, isProfileComplete } = useAuth();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (!raw) {
+    if (loading) return;
+    if (!user) {
+      router.replace("/auth");
+    } else if (!isProfileComplete) {
       router.replace("/onboarding");
     } else {
       setReady(true);
     }
-  }, [router]);
+  }, [loading, user, isProfileComplete, router]);
 
   if (!ready) return null;
   return <>{children}</>;

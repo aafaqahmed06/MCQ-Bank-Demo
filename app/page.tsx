@@ -1,28 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ContinueCard from "@/components/ContinueCard";
-import { USER_STORAGE_KEY } from "@/lib/data/user";
+import { useAuth } from "@/components/AuthProvider";
 import { TOTAL_MCQS, TOTAL_SUBJECTS } from "@/lib/data/stats";
-import type { UserProfile } from "@/types";
 
 export default function LandingPage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (raw) {
-      try {
-        setProfile(JSON.parse(raw) as UserProfile);
-      } catch {
-        setProfile(null);
-      }
-    }
-    setReady(true);
-  }, []);
+  const { loading, user, isProfileComplete } = useAuth();
+  const hasProfile = !!user && isProfileComplete;
 
   return (
     <LayoutWrapper>
@@ -39,9 +25,13 @@ export default function LandingPage() {
             question at a time.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            {!profile ? (
+            {loading ? (
+              <span className="hud-primary-btn rounded-xl px-8 py-4 font-medium opacity-70">
+                Loading…
+              </span>
+            ) : !hasProfile ? (
               <Link
-                href="/onboarding"
+                href="/auth"
                 className="hud-primary-btn rounded-xl px-8 py-4 font-medium"
               >
                 Get Started
@@ -54,7 +44,7 @@ export default function LandingPage() {
                 Go to Dashboard
               </Link>
             )}
-            {profile && (
+            {hasProfile && (
               <Link
                 href="/blocks"
                 className="rounded-xl border border-violet-300/30 bg-[var(--bg-landing-btn)]/60 px-8 py-4 font-medium text-[var(--text-btn-landing)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
@@ -63,7 +53,7 @@ export default function LandingPage() {
               </Link>
             )}
           </div>
-          {!ready && (
+          {loading && (
             <div className="mt-4 h-10" />
           )}
         </section>
@@ -89,7 +79,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {ready && <div className="mt-6 w-full"><ContinueCard /></div>}
+        {!loading && <div className="mt-6 w-full"><ContinueCard /></div>}
       </div>
     </LayoutWrapper>
   );

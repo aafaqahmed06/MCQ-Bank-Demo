@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import EasterEggTrigger from "@/components/EasterEgg";
+import { useAuth } from "@/components/AuthProvider";
 
 const navLinks = [
   { href: "/home", label: "Home" },
@@ -14,6 +15,8 @@ const navLinks = [
 
 export default function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, signOut } = useAuth();
 
   return (
     <nav className="border-b border-cyan-400/20 bg-[var(--bg-page)]/70 backdrop-blur-xl overflow-x-hidden">
@@ -50,6 +53,27 @@ export default function Navbar() {
             })}
           </ul>
           <ThemeToggle />
+          {user && (
+            <button
+              type="button"
+              onClick={() => {
+                void signOut().then(() => {
+                  router.replace("/");
+                  router.refresh();
+                });
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                void signOut().then(() => {
+                  router.replace("/");
+                  router.refresh();
+                });
+              }}
+              className="rounded-md px-1.5 py-1 text-xs sm:px-2 sm:py-2 sm:text-sm font-medium whitespace-nowrap text-[var(--text-muted-light)] hover:text-[var(--accent-cyan-strong)] active:text-[var(--accent-cyan-strong)] transition-colors"
+            >
+              Sign out
+            </button>
+          )}
         </div>
       </div>
     </nav>

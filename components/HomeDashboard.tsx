@@ -1,33 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { USER_STORAGE_KEY } from "@/lib/data/user";
-import type { UserProfile } from "@/types";
+import { useAuth } from "@/components/AuthProvider";
+import { useProfileInfo } from "@/components/useProfileInfo";
 
 export default function HomeDashboard() {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const { profile } = useAuth();
+  const info = useProfileInfo();
 
-  useEffect(() => {
-    const raw = localStorage.getItem(USER_STORAGE_KEY);
-    if (raw) {
-      try {
-        setProfile(JSON.parse(raw) as UserProfile);
-      } catch {
-        setProfile(null);
-      }
-    }
-  }, []);
+  const display =
+    info && profile
+      ? [info.collegeName, info.programName, info.yearName]
+          .filter(Boolean)
+          .join(" · ")
+      : null;
 
   return (
     <div className="space-y-6">
       <section className="hud-card fade-in rounded-xl p-6">
         <h1 className="text-3xl font-bold text-[var(--text-heading)]">Welcome back</h1>
-        {profile ? (
+        {profile?.full_name ? (
           <p className="hud-muted mt-2">
-            <span className="font-medium text-[var(--text-body)]">{profile.college}</span>
-            {" · "}
-            Year {profile.year}
+            <span className="font-medium text-[var(--text-body)]">{profile.full_name}</span>
+            {display ? ` · ${display}` : ""}
           </p>
         ) : (
           <p className="hud-muted mt-2">
@@ -35,7 +30,7 @@ export default function HomeDashboard() {
             <Link href="/onboarding" className="text-[var(--accent-cyan)] hover:underline">
               onboarding
             </Link>{" "}
-            to save your college and year.
+            to save your details.
           </p>
         )}
       </section>
