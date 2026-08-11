@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<DBProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  if (!supabaseRef.current) {
+  if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
   }
 

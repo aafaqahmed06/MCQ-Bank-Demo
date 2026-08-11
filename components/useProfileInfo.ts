@@ -42,6 +42,7 @@ export function useProfileInfo() {
     profile?.college_id,
     profile?.program_id,
     profile?.academic_year_id,
+    profile,
   ]);
 
   return info;

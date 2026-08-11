@@ -18,7 +18,7 @@ export default function AuthForm() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  if (!supabaseRef.current) {
+  if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
   }
 

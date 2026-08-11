@@ -27,7 +27,7 @@ export default function OnboardingForm() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!supabaseRef.current) {
+  if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
   }
 

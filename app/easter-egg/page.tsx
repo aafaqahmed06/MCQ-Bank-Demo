@@ -3,18 +3,31 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-function Confetti() {
-  const pieces = Array.from({ length: 60 }, (_, i) => ({
+type ConfettiPiece = {
+  id: number;
+  left: number;
+  delay: number;
+  duration: number;
+  color: string;
+  size: number;
+  rotation: number;
+};
+
+function makePieces(): ConfettiPiece[] {
+  const colors = ["#67e8f9", "#a5f3fc", "#c4b5fd", "#2dd4bf", "#f472b6", "#fbbf24"];
+  return Array.from({ length: 60 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,
     delay: Math.random() * 0.5,
     duration: 2 + Math.random() * 2,
-    color: ["#67e8f9", "#a5f3fc", "#c4b5fd", "#2dd4bf", "#f472b6", "#fbbf24"][
-      Math.floor(Math.random() * 6)
-    ],
+    color: colors[Math.floor(Math.random() * colors.length)],
     size: 6 + Math.random() * 8,
     rotation: Math.random() * 360,
   }));
+}
+
+function Confetti() {
+  const [pieces] = useState<ConfettiPiece[]>(makePieces);
 
   return (
     <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -62,6 +75,9 @@ export default function EasterEggPage() {
   useEffect(() => {
     const flag = sessionStorage.getItem("diagnknow-easter-egg-shown");
     if (flag) {
+      // Deliberate post-hydration sync: reading sessionStorage during render
+      // would cause a client/server mismatch, so gate on mount instead.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShow(false);
       router.replace("/home");
     }

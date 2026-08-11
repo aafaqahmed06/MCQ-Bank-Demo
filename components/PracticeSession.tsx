@@ -11,6 +11,15 @@ type PracticeSessionProps = {
   backHref: string;
 };
 
+function shuffle<T>(arr: readonly T[]): T[] {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
 export default function PracticeSession({
   questions,
   backHref,
@@ -22,30 +31,21 @@ export default function PracticeSession({
   const [score, setScore] = useState(0);
   const [restartCount, setRestartCount] = useState(0);
 
-  const shuffled = useMemo(() => {
-    const arr = [...questions];
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
+  const shuffled = useMemo(
+    () => shuffle(questions),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [questions, restartCount]);
+    [questions, restartCount],
+  );
 
   const displayedQuestion = useMemo(() => {
     const q = shuffled[currentIndex];
-    const indices = q.options.map((_, i) => i);
-    for (let i = indices.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [indices[i], indices[j]] = [indices[j], indices[i]];
-    }
+    const indices = shuffle(q.options.map((_, i) => i));
     return {
       ...q,
       options: indices.map((i) => q.options[i]),
       correctAnswer: indices.indexOf(q.correctAnswer),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shuffled[currentIndex].id]);
+  }, [shuffled, currentIndex]);
 
   const totalQuestions = shuffled.length;
   const completed = finished;
