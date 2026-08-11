@@ -2,6 +2,8 @@
 
 import { useRef } from "react";
 import type { MCQ } from "@/types";
+import BookmarkButton from "@/components/BookmarkButton";
+import ReportQuestionButton from "@/components/ReportQuestionButton";
 
 type MCQCardProps = {
   mcq: MCQ;
@@ -54,9 +56,15 @@ export default function MCQCard({
 
   return (
     <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
-      <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
-        Topic: {mcq.topic}
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
+          Topic: {mcq.topic}
+        </p>
+        <div className="flex items-center gap-2">
+          <BookmarkButton mcqId={mcq.id} />
+          <ReportQuestionButton mcqId={mcq.id} />
+        </div>
+      </div>
       <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
         {mcq.question}
       </h2>
