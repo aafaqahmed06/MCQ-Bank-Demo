@@ -5235,7 +5235,3 @@ export const mcqs: MCQ[] = [
     difficulty: 2,
   },
 ];
-
-export function getMcqsByModuleId(moduleId: string): MCQ[] {
-  return mcqs.filter((mcq) => mcq.moduleId === moduleId);
-}

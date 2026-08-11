@@ -3,11 +3,11 @@ import { notFound } from "next/navigation";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import RequireProfile from "@/components/RequireProfile";
 import TopicGroupCard from "@/components/TopicGroupCard";
-import { getModuleById } from "@/lib/data/modules";
 import {
   getTopicGroupsByModuleId,
-  getMcqsByTopicGroup,
-} from "@/lib/data/topics";
+} from "@/lib/topicGroups";
+import { getModuleById } from "@/lib/curriculum";
+import { getTopicGroupCounts } from "@/lib/curriculum";
 
 type PageProps = {
   params: Promise<{ moduleId: string }>;
@@ -15,13 +15,14 @@ type PageProps = {
 
 export default async function TopicsPage({ params }: PageProps) {
   const { moduleId } = await params;
-  const mod = getModuleById(moduleId);
+  const mod = await getModuleById(moduleId);
 
   if (!mod) {
     notFound();
   }
 
   const groups = getTopicGroupsByModuleId(moduleId);
+  const counts = await getTopicGroupCounts(moduleId, groups);
 
   if (groups.length === 0) {
     return (
@@ -66,7 +67,7 @@ export default async function TopicsPage({ params }: PageProps) {
               <li key={group.id}>
                 <TopicGroupCard
                   topicGroup={group}
-                  mcqCount={getMcqsByTopicGroup(group).length}
+                  mcqCount={counts[group.id] ?? 0}
                 />
               </li>
             ))}

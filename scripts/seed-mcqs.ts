@@ -2,10 +2,10 @@ import { readFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-import { mcqs as rawMcqs } from "@/lib/data/mcqs";
-import { blocks } from "@/lib/data/blocks";
-import { modules } from "@/lib/data/modules";
-import { MOCK_COLLEGES, YEAR_OPTIONS } from "@/lib/data/user";
+import { mcqs as rawMcqs } from "./seed/data/mcqs-data";
+import { blocks } from "./seed/data/blocks-data";
+import { modules } from "./seed/data/modules-data";
+import { MOCK_COLLEGES, YEAR_OPTIONS } from "./seed/data/user-data";
 
 // ---------------------------------------------------------------------------
 // Expected content shape (drift guard — fail loudly if the bank changes shape).

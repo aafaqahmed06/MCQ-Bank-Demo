@@ -3,12 +3,11 @@ import { notFound } from "next/navigation";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import PracticeSession from "@/components/PracticeSession";
 import RequireProfile from "@/components/RequireProfile";
-import { getModuleById } from "@/lib/data/modules";
+import { getModuleById } from "@/lib/curriculum";
+import { getPracticeQuestions } from "@/lib/curriculum";
 import {
-  getMcqsByModuleId,
-  getMcqsByTopicGroup,
   topicGroups,
-} from "@/lib/data/topics";
+} from "@/lib/topicGroups";
 
 type PageProps = {
   params: Promise<{ moduleId: string }>;
@@ -21,7 +20,7 @@ export default async function PracticePage({
 }: PageProps) {
   const { moduleId } = await params;
   const { topic } = await searchParams;
-  const mod = getModuleById(moduleId);
+  const mod = await getModuleById(moduleId);
 
   if (!mod) {
     notFound();
@@ -31,9 +30,7 @@ export default async function PracticePage({
     ? topicGroups.find((g) => g.moduleId === moduleId && g.name === topic) ?? null
     : null;
 
-  const moduleMcqs = group
-    ? getMcqsByTopicGroup(group)
-    : getMcqsByModuleId(moduleId);
+  const moduleMcqs = await getPracticeQuestions(moduleId, group?.topics);
 
   const backHref = group
     ? `/topics/${moduleId}`

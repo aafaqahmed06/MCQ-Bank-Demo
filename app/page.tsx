@@ -1,21 +1,46 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ContinueCard from "@/components/ContinueCard";
 import { useAuth } from "@/components/AuthProvider";
-import { TOTAL_MCQS, TOTAL_SUBJECTS } from "@/lib/data/stats";
+import { createClient } from "@/lib/supabase/client";
+
+type Stats = { mcqs: number; subjects: number; topics: number };
 
 export default function LandingPage() {
   const { loading, user, isProfileComplete } = useAuth();
+  const [stats, setStats] = useState<Stats | null>(null);
   const hasProfile = !!user && isProfileComplete;
+
+  useEffect(() => {
+    const supabase = createClient();
+    let active = true;
+    (async () => {
+      const [{ count: mcqs }, { count: subjects }, { count: topics }] =
+        await Promise.all([
+          supabase
+            .from("mcqs")
+            .select("id", { count: "exact", head: true })
+            .eq("status", "published"),
+          supabase.from("modules").select("id", { count: "exact", head: true }),
+          supabase.from("topics").select("id", { count: "exact", head: true }),
+        ]);
+      if (!active) return;
+      setStats({ mcqs: mcqs ?? 0, subjects: subjects ?? 0, topics: topics ?? 0 });
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <LayoutWrapper>
       <div className="flex flex-1 flex-col items-center justify-center py-8 md:py-12">
         <section className="hud-card fade-in w-full rounded-xl p-6 text-center sm:p-8">
           <p className="text-sm font-medium uppercase tracking-wide text-[var(--accent-cyan)]">
-            {TOTAL_MCQS} Practice Questions
+            {stats ? `${stats.mcqs} Practice Questions` : "Practice Questions"}
           </p>
           <h1 className="mt-2 text-3xl font-bold text-[var(--text-heading)]">
             DiagKnow
@@ -61,19 +86,19 @@ export default function LandingPage() {
         <div className="mt-6 grid w-full grid-cols-3 gap-3">
           <div className="rounded-xl border border-cyan-300/20 bg-[var(--bg-card)] p-4 text-center backdrop-blur-sm">
             <p className="text-2xl font-bold text-[var(--accent-cyan-strong)]">
-              {TOTAL_MCQS}
+              {stats ? stats.mcqs : "…"}
             </p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">MCQs</p>
           </div>
           <div className="rounded-xl border border-cyan-300/20 bg-[var(--bg-card)] p-4 text-center backdrop-blur-sm">
             <p className="text-2xl font-bold text-[var(--accent-cyan-strong)]">
-              {TOTAL_SUBJECTS}
+              {stats ? stats.subjects : "…"}
             </p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">Subjects</p>
           </div>
           <div className="rounded-xl border border-cyan-300/20 bg-[var(--bg-card)] p-4 text-center backdrop-blur-sm">
             <p className="text-2xl font-bold text-[var(--accent-cyan-strong)]">
-              {TOTAL_SUBJECTS * 3}
+              {stats ? stats.topics : "…"}
             </p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">Topics</p>
           </div>

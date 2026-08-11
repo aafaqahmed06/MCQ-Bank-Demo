@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ModuleCard from "@/components/ModuleCard";
 import RequireProfile from "@/components/RequireProfile";
-import { getBlockById } from "@/lib/data/blocks";
-import { getModulesByBlockId } from "@/lib/data/modules";
+import { getBlockById } from "@/lib/curriculum";
+import { getModulesByBlockId } from "@/lib/curriculum";
 
 type PageProps = {
   params: Promise<{ blockId: string }>;
@@ -12,13 +12,13 @@ type PageProps = {
 
 export default async function ModulesPage({ params }: PageProps) {
   const { blockId } = await params;
-  const block = getBlockById(blockId);
+  const block = await getBlockById(blockId);
 
   if (!block) {
     notFound();
   }
 
-  const blockModules = getModulesByBlockId(blockId);
+  const blockModules = await getModulesByBlockId(blockId);
 
   return (
     <LayoutWrapper>

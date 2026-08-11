@@ -1,5 +1,4 @@
-import type { MCQ, TopicGroup } from "@/types";
-import { mcqs } from "./mcqs";
+import type { TopicGroup } from "@/types";
 
 export const topicGroups: TopicGroup[] = [
   // ── Physiology ──
@@ -357,24 +356,4 @@ export const topicGroups: TopicGroup[] = [
 
 export function getTopicGroupsByModuleId(moduleId: string): TopicGroup[] {
   return topicGroups.filter((tg) => tg.moduleId === moduleId);
-}
-
-export function getMcqsByModuleIdAndTopic(
-  moduleId: string,
-  topic: string,
-): MCQ[] {
-  return mcqs.filter(
-    (mcq) => mcq.moduleId === moduleId && mcq.topic === topic,
-  );
-}
-
-export function getMcqsByModuleId(moduleId: string): MCQ[] {
-  return mcqs.filter((mcq) => mcq.moduleId === moduleId);
-}
-
-export function getMcqsByTopicGroup(group: TopicGroup): MCQ[] {
-  return mcqs.filter(
-    (mcq) =>
-      mcq.moduleId === group.moduleId && group.topics.includes(mcq.topic),
-  );
 }

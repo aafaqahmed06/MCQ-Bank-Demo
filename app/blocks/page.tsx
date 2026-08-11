@@ -1,9 +1,11 @@
 import BlockCard from "@/components/BlockCard";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import RequireProfile from "@/components/RequireProfile";
-import { blocks } from "@/lib/data/blocks";
+import { getBlocks } from "@/lib/curriculum";
 
-export default function BlocksPage() {
+export default async function BlocksPage() {
+  const blocks = await getBlocks();
+
   return (
     <LayoutWrapper>
       <RequireProfile>
