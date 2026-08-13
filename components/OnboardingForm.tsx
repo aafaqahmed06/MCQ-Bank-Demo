@@ -9,6 +9,8 @@ type College = { id: string; name: string; short_name: string | null };
 type Program = { id: string; college_id: string; name: string };
 type AcademicYear = { id: string; program_id: string; year_number: number; name: string };
 
+const HIDDEN_COLLEGE_IDS = new Set(["diagnknow-qb"]);
+
 export default function OnboardingForm() {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
@@ -46,30 +48,41 @@ export default function OnboardingForm() {
         .select("id, name, short_name")
         .order("name");
       if (!active) return;
-      if (cols && cols.length) {
-        setColleges(cols as College[]);
-        setCollegeId((cols[0] as College).id);
+      const visibleCols = (cols ?? []).filter(
+        (c) => !HIDDEN_COLLEGE_IDS.has(c.id as string),
+      );
+      if (visibleCols.length) {
+        setColleges(visibleCols as College[]);
+        setCollegeId((visibleCols[0] as College).id);
       }
 
+      const visibleCollegeIds = new Set(visibleCols.map((c) => c.id as string));
       const { data: progs } = await supabase
         .from("programs")
         .select("id, college_id, name")
         .order("name");
       if (!active) return;
-      if (progs && progs.length) {
-        setPrograms(progs as Program[]);
-        const first = progs[0] as Program;
+      const visibleProgs = (progs ?? []).filter((p) =>
+        visibleCollegeIds.has(p.college_id as string),
+      );
+      if (visibleProgs.length) {
+        setPrograms(visibleProgs as Program[]);
+        const first = visibleProgs[0] as Program;
         setProgramId(first.id);
       }
 
+      const visibleProgramIds = new Set(visibleProgs.map((p) => p.id as string));
       const { data: ys } = await supabase
         .from("academic_years")
         .select("id, program_id, year_number, name")
         .order("year_number");
       if (!active) return;
-      if (ys && ys.length) {
-        setYears(ys as AcademicYear[]);
-        setYearId((ys[0] as AcademicYear).id);
+      const visibleYears = (ys ?? []).filter((y) =>
+        visibleProgramIds.has(y.program_id as string),
+      );
+      if (visibleYears.length) {
+        setYears(visibleYears as AcademicYear[]);
+        setYearId((visibleYears[0] as AcademicYear).id);
       }
 
       if (active) setLoading(false);

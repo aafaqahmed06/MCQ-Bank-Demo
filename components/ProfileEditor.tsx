@@ -8,6 +8,8 @@ type College = { id: string; name: string; short_name: string | null };
 type Program = { id: string; college_id: string; name: string };
 type AcademicYear = { id: string; program_id: string; year_number: number; name: string };
 
+const HIDDEN_COLLEGE_IDS = new Set(["diagnknow-qb"]);
+
 export default function ProfileEditor() {
   const { user, profile, refreshProfile } = useAuth();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -43,9 +45,20 @@ export default function ProfileEditor() {
           .order("year_number"),
       ]);
       if (!active) return;
-      setColleges((cols.data ?? []) as College[]);
-      setPrograms((progs.data ?? []) as Program[]);
-      setYears((ys.data ?? []) as AcademicYear[]);
+      const visibleCols = (cols.data ?? []).filter(
+        (c) => !HIDDEN_COLLEGE_IDS.has(c.id as string),
+      );
+      const visibleCollegeIds = new Set(visibleCols.map((c) => c.id as string));
+      const visibleProgs = (progs.data ?? []).filter((p) =>
+        visibleCollegeIds.has(p.college_id as string),
+      );
+      const visibleProgramIds = new Set(visibleProgs.map((p) => p.id as string));
+      const visibleYears = (ys.data ?? []).filter((y) =>
+        visibleProgramIds.has(y.program_id as string),
+      );
+      setColleges(visibleCols as College[]);
+      setPrograms(visibleProgs as Program[]);
+      setYears(visibleYears as AcademicYear[]);
 
       setFullName(profile?.full_name ?? "");
       setCollegeId(profile?.college_id ?? "");
