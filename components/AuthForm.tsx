@@ -190,6 +190,16 @@ export default function AuthForm() {
           placeholder="At least 8 characters"
           className={inputClass}
         />
+        {mode === "signin" && (
+          <div className="flex justify-end">
+            <Link
+              href="/forgot-password"
+              className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)]"
+            >
+              Forgot password?
+            </Link>
+          </div>
+        )}
       </div>
 
       {error && (

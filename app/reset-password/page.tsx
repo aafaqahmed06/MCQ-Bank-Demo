@@ -1,42 +1,36 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LayoutWrapper from "@/components/LayoutWrapper";
-import AuthForm from "@/components/AuthForm";
+import ResetPasswordForm from "@/components/ResetPasswordForm";
 
-export default async function AuthPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ error?: string }>;
-}) {
+export const metadata: Metadata = {
+  title: "Set New Password | DiagKnow",
+  description: "Create a new password for your DiagKnow account.",
+};
+
+export default async function ResetPasswordPage() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user) redirect("/home");
-
-  const { error } = await searchParams;
+  // Only reachable via the recovery link → callback exchange establishes a
+  // session. A signed-out visitor has nothing to reset.
+  if (!user) redirect("/auth");
 
   return (
     <LayoutWrapper>
       <div className="flex flex-1 flex-col items-center justify-center py-8 md:py-12">
         <section className="hud-card fade-in w-full max-w-md rounded-xl p-6 sm:p-8">
           <h1 className="text-3xl font-bold text-[var(--text-heading)]">
-            DiagKnow
+            Set a new password
           </h1>
           <p className="hud-muted mt-1">
-            Sign in or create an account to start practicing.
+            Choose a strong password to secure your account.
           </p>
-          {error && (
-            <p
-              className="mt-3 rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 px-4 py-3 text-sm text-[#ffc3ce]"
-              role="alert"
-            >
-              We couldn&apos;t complete that sign-in. Please try again.
-            </p>
-          )}
           <div className="mt-6">
-            <AuthForm />
+            <ResetPasswordForm />
           </div>
         </section>
       </div>
