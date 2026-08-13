@@ -84,6 +84,7 @@ export default function AuthForm() {
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/home`,
+          queryParams: { prompt: "select_account" },
         },
       });
       if (err) {
