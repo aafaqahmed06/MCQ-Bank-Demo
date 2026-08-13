@@ -147,7 +147,7 @@ export default function AuthForm() {
             autoComplete="name"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Aafaq Ahmed"
+            placeholder="Your full name"
             className={inputClass}
           />
         </div>
