@@ -121,6 +121,15 @@ async function main(): Promise<void> {
       const count = async (table: "blocks" | "modules" | "topics", cols = "id") =>
         (await anon.from(table).select(cols)).data?.length ?? -1;
       record("anon reads blocks (1)", (await count("blocks")) === 1, `blocks=${await count("blocks")}`);
+      const { data: collegeRows } = await anon.from("colleges").select("name");
+      const collegeNames = (collegeRows ?? []).map((r) => (r as { name: string }).name);
+      record(
+        "seed college names correct (no 'Colleg' typo)",
+        collegeNames.length === 6 &&
+          collegeNames.includes("Foundation University Medical College") &&
+          !collegeNames.some((n) => n === "Foundation University Medical Colleg"),
+        `count=${collegeNames.length}`,
+      );
       record("anon reads modules (4)", (await count("modules")) === 4, `modules=${await count("modules")}`);
       record("anon reads topics (88)", (await count("topics")) === 88, `topics=${await count("topics")}`);
       const { count: published, error: pubErr } = await anon
@@ -303,6 +312,10 @@ async function main(): Promise<void> {
       record("u1 reads own reports", (repOwn?.length ?? 0) === 1, `rows=${repOwn?.length ?? 0}`);
       const { data: repU2 } = await u2c.from("question_reports").select("id").eq("user_id", u2.id);
       record("u2 reports isolated", (repU2?.length ?? 0) === 0, `rows=${repU2?.length ?? 0}`);
+      const { error: dupReportErr } = await u1c
+        .from("question_reports")
+        .insert({ user_id: u1.id, mcq_id: ARCHIVE_MCQ, reason: "ambiguous" });
+      record("duplicate open report rejected", !!dupReportErr, notSensitive(dupReportErr?.message));
       if (rep?.length) {
         const { error: resolveErr } = await u1c.from("question_reports").update({ status: "resolved" }).eq("id", rep[0].id);
         const { data: after } = await u1c.from("question_reports").select("status").eq("id", rep[0].id).single();
@@ -336,6 +349,8 @@ async function main(): Promise<void> {
         const leaked = cols.filter((k) => /user_id|email|refresh_token|correct_answer_in_order/i.test(k));
         record("leaderboard has no PII/key fields", leaked.length === 0, `cols=[${cols.join(",")}]`);
       }
+      const { data: lbBig, error: lbBigErr } = await u1c.rpc("get_leaderboard", { p_limit: 1000 });
+      record("leaderboard p_limit clamped", !lbBigErr && Array.isArray(lbBig) && (lbBig?.length ?? 0) <= 100, `rows=${String((lbBig as unknown[])?.length ?? "n/a")}`);
     }
     // ── Summary ────────────────────────────────────────────────────────
     const passCount = results.filter((r) => r.pass).length;

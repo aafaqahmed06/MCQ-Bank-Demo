@@ -2,7 +2,7 @@ import type { UserProfile } from "@/types";
 
 export const MOCK_COLLEGES = [
   "NUST School of Health Sciences",
-  "Foundation University Medical Colleg",
+  "Foundation University Medical College",
   "Army Medical College",
   "Wah Medical College",
   "CMH Lahore",
