@@ -159,6 +159,39 @@ async function main(): Promise<void> {
         .from("mcqs")
         .insert({ id: "pg8.rogue", question: "x", options: ["a", "b"], correct_answer: 0, explanation: "e", difficulty: 1 });
       record("student cannot insert mcq", !!mInsert, notSensitive(mInsert?.message));
+      // Answer key columns must NOT be readable via REST by anon or students.
+      // Migration 016 uses column-level grants to strip correct_answer/explanation.
+      const { error: anonKeyErr } = await anon
+        .from("mcqs")
+        .select("id, correct_answer")
+        .limit(1);
+      record("anon cannot read correct_answer via REST", !!anonKeyErr, notSensitive(anonKeyErr?.message));
+      const { error: studentKeyErr } = await u1c
+        .from("mcqs")
+        .select("id, correct_answer")
+        .limit(1);
+      record("authenticated cannot read correct_answer via REST", !!studentKeyErr, notSensitive(studentKeyErr?.message));
+      const { error: anonExplErr } = await anon
+        .from("mcqs")
+        .select("id, explanation")
+        .limit(1);
+      record("anon cannot read explanation via REST", !!anonExplErr, notSensitive(anonExplErr?.message));
+      const { error: studentExplErr } = await u1c
+        .from("mcqs")
+        .select("id, explanation")
+        .limit(1);
+      record("authenticated cannot read explanation via REST", !!studentExplErr, notSensitive(studentExplErr?.message));
+      // Non-key columns stay readable (question text + options).
+      const { data: pubRows, error: pubReadErr } = await anon
+        .from("mcqs")
+        .select("id, question, options, difficulty")
+        .eq("status", "published")
+        .limit(5);
+      record(
+        "non-key mcq columns still readable",
+        !pubReadErr && (pubRows?.length ?? 0) === 5,
+        `rows=${pubRows?.length ?? 0} ${notSensitive(pubReadErr?.message)}`,
+      );
     }
     // ── D. Exam engine ────────────────────────────────────────────────
     let u1ExamId = "";

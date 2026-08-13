@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { Block, MCQ, Module, TopicGroup } from "@/types";
 
 /**
@@ -107,14 +108,26 @@ export async function getTopicGroupCounts(
 /**
  * Published MCQs for practice. `topicNames` restricts to a topic group's
  * exact topic strings; otherwise all topics in the module are included.
+ *
+ * Answer keys are NOT exposed over REST (see migration 016: column-level
+ * grants remove correct_answer/explanation from anon + authenticated).
+ * This function therefore reads through the service-role client on the
+ * server, gated on an authenticated session, and always filters to
+ * published MCQs so students can never see drafts.
  */
 export async function getPracticeQuestions(
   moduleId: string,
   topicNames?: string[],
 ): Promise<MCQ[]> {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
 
-  let query = supabase
+  const admin = createAdminClient();
+
+  let query = admin
     .from("topics")
     .select("id, name, module_id")
     .eq("module_id", moduleId);
@@ -127,7 +140,7 @@ export async function getPracticeQuestions(
   const topicIds = (topicRows ?? []).map((t) => t.id as string);
   if (topicIds.length === 0) return [];
 
-  const { data: mcqRows, error: mErr } = await supabase
+  const { data: mcqRows, error: mErr } = await admin
     .from("mcqs")
     .select(
       "id, topic_id, question, options, correct_answer, explanation, difficulty",
@@ -137,7 +150,7 @@ export async function getPracticeQuestions(
   if (mErr) throw new Error(`mcqs: ${mErr.message}`);
 
   const moduleIds = [...new Set((topicRows ?? []).map((t) => t.module_id as string))];
-  const { data: moduleRows } = await supabase
+  const { data: moduleRows } = await admin
     .from("modules")
     .select("id, block_id")
     .in("id", moduleIds);
