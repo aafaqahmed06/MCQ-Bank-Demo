@@ -18,7 +18,12 @@ export default function OnboardingForm() {
   const [programs, setPrograms] = useState<Program[]>([]);
   const [years, setYears] = useState<AcademicYear[]>([]);
 
-  const [fullName, setFullName] = useState("");
+  const [fullName, setFullName] = useState(() => {
+    const raw = user?.user_metadata?.full_name;
+    if (typeof raw === "string") return raw;
+    if (Array.isArray(raw)) return (raw[0] as string) ?? "";
+    return "";
+  });
   const [collegeId, setCollegeId] = useState("");
   const [programId, setProgramId] = useState("");
   const [yearId, setYearId] = useState("");

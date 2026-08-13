@@ -19,7 +19,7 @@ export default async function AuthPage() {
             DiagKnow
           </h1>
           <p className="hud-muted mt-1">
-            Sign in or create an account to start practicing.
+            Sign in to start practicing.
           </p>
           <div className="mt-6">
             <AuthForm />
