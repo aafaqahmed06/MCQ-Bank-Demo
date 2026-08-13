@@ -5,12 +5,17 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
+type Mode = "signin" | "signup";
+
 export default function AuthForm() {
   const router = useRouter();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   if (supabaseRef.current == null) {
@@ -25,19 +30,44 @@ export default function AuthForm() {
   async function run() {
     setLoading(true);
     setError(null);
+    setInfo(null);
     const supabase = supabaseRef.current!;
 
     try {
-      const { error: err } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (err) {
-        setError(err.message);
-        return;
+      if (mode === "signup") {
+        const { data, error: err } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: fullName.trim() || null },
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=/home`,
+          },
+        });
+        if (err) {
+          setError(err.message);
+          return;
+        }
+        if (data.session) {
+          router.replace("/onboarding");
+          router.refresh();
+        } else {
+          setInfo(
+            "Check your inbox for a confirmation link, then sign in."
+          );
+          setMode("signin");
+        }
+      } else {
+        const { error: err } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (err) {
+          setError(err.message);
+          return;
+        }
+        router.replace("/home");
+        router.refresh();
       }
-      router.replace("/home");
-      router.refresh();
     } finally {
       setLoading(false);
     }
@@ -46,6 +76,7 @@ export default function AuthForm() {
   async function handleGoogle() {
     setLoading(true);
     setError(null);
+    setInfo(null);
     const supabase = supabaseRef.current!;
 
     try {
@@ -101,6 +132,26 @@ export default function AuthForm() {
         <span className="h-px flex-1 bg-cyan-300/20" />
       </div>
 
+      {mode === "signup" && (
+        <div className="space-y-2">
+          <label
+            htmlFor="fullName"
+            className="block text-sm font-medium text-[var(--text-label)]"
+          >
+            Full name
+          </label>
+          <input
+            id="fullName"
+            type="text"
+            autoComplete="name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            placeholder="Aafaq Ahmed"
+            className={inputClass}
+          />
+        </div>
+      )}
+
       <div className="space-y-2">
         <label
           htmlFor="email"
@@ -130,12 +181,12 @@ export default function AuthForm() {
         <input
           id="password"
           type="password"
-          autoComplete="current-password"
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
           required
-          minLength={6}
+          minLength={8}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="••••••••"
+          placeholder="At least 8 characters"
           className={inputClass}
         />
       </div>
@@ -143,6 +194,11 @@ export default function AuthForm() {
       {error && (
         <p className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-300" role="alert">
           {error}
+        </p>
+      )}
+      {info && (
+        <p className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm text-[var(--accent-cyan)]" role="status">
+          {info}
         </p>
       )}
 
@@ -155,8 +211,46 @@ export default function AuthForm() {
         }}
         className="hud-primary-btn w-full rounded-xl px-5 py-3.5 font-medium disabled:opacity-60"
       >
-        {loading ? "Please wait…" : "Sign in"}
+        {loading
+          ? "Please wait…"
+          : mode === "signup"
+            ? "Create account"
+            : "Sign in"}
       </button>
+
+      <p className="text-center text-sm text-[var(--text-muted)]">
+        {mode === "signup" ? (
+          <>
+            Already have an account?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signin");
+                setError(null);
+                setInfo(null);
+              }}
+              className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+            >
+              Sign in
+            </button>
+          </>
+        ) : (
+          <>
+            New to DiagKnow?{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode("signup");
+                setError(null);
+                setInfo(null);
+              }}
+              className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+            >
+              Create an account
+            </button>
+          </>
+        )}
+      </p>
 
       <p className="text-center">
         <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)]">
