@@ -11,6 +11,7 @@ const navLinks = [
   { href: "/blocks", label: "Blocks" },
   { href: "/exam", label: "Exam" },
   { href: "/leaderboard", label: "Leaderboard" },
+  { href: "/account", label: "Account" },
 ];
 
 export default function Navbar() {
