@@ -14,7 +14,7 @@ type ConfettiPiece = {
 };
 
 function makePieces(): ConfettiPiece[] {
-  const colors = ["#67e8f9", "#a5f3fc", "#c4b5fd", "#2dd4bf", "#f472b6", "#fbbf24"];
+  const colors = ["#2fb8ab", "#6fe0d4", "#7fb4d6", "#28b8a8", "#4cc88a", "#e0a94f"];
   return Array.from({ length: 60 }, (_, i) => ({
     id: i,
     left: Math.random() * 100,

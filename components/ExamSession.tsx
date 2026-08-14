@@ -60,7 +60,7 @@ export default function ExamSession({
         </div>
         <div className="mt-3 h-2 rounded-full bg-[var(--bg-progress-track)]">
           <div
-            className="h-2 rounded-full bg-cyan-300 transition-all duration-300 shadow-[0_0_14px_rgba(0,224,255,0.35)]"
+            className="h-2 rounded-full bg-[var(--accent-cyan)] transition-all duration-300"
             style={{ width: `${(answeredCount / total) * 100}%` }}
           />
         </div>
@@ -68,25 +68,23 @@ export default function ExamSession({
 
       <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
         {currentQuestion.topic && (
-          <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
+          <p className="inline-flex rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
             Topic: {currentQuestion.topic}
           </p>
         )}
-        <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
+        <h2 className="mt-4 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
           {currentQuestion.question}
         </h2>
 
-        <div className="my-5 border-t border-cyan-300/20" />
+        <div className="my-5 border-t border-[var(--border-color)]" />
 
         <div className="space-y-3">
           {currentQuestion.options.map((option, index) => (
             <button
               key={index}
               type="button"
-              className={`w-full rounded-xl p-3 sm:p-4 text-left text-base sm:text-lg transition-all duration-200 ${
-                selectedAnswer === index
-                  ? "border border-cyan-300 bg-cyan-400/12 text-[var(--text-selected)] shadow-[0_0_18px_rgba(0,224,255,0.28)] ring-1 ring-cyan-300/45"
-                  : "border border-cyan-300/20 bg-[var(--bg-card-solid)]/60 text-[var(--text-option)] active:border-cyan-300/55 active:shadow-[0_0_14px_rgba(0,224,255,0.2)]"
+              className={`opt-base p-3 sm:p-4 text-base sm:text-lg ${
+                selectedAnswer === index ? "opt-selected" : ""
               }`}
               onClick={() => {
                 if (Math.abs(touchStartY.current) < 10)
@@ -116,7 +114,7 @@ export default function ExamSession({
         </div>
 
         {submitError && (
-          <p className="mt-4 rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 px-4 py-3 text-sm text-[#ffc3ce]">
+          <p className="alert-error mt-4 rounded-xl px-4 py-3 text-sm">
             {submitError}
           </p>
         )}

@@ -19,7 +19,7 @@ export default function Image() {
           alignItems: "center",
           justifyContent: "center",
           background:
-            "linear-gradient(135deg, #0b0f1a 0%, #0f1424 50%, #0b0f1a 100%)",
+            "linear-gradient(145deg, #0c151b 0%, #12232c 55%, #0c151b 100%)",
           fontFamily: "system-ui, sans-serif",
         }}
       >
@@ -29,38 +29,42 @@ export default function Image() {
             flexDirection: "column",
             alignItems: "center",
             padding: "48px 64px",
-            border: "2px solid rgba(0, 224, 255, 0.35)",
+            border: "1px solid rgba(163, 190, 203, 0.24)",
             borderRadius: "24px",
-            background: "rgba(14, 21, 38, 0.72)",
+            background: "rgba(19, 33, 42, 0.85)",
+            boxShadow: "0 18px 48px rgba(0,0,0,0.35)",
           }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "16px",
+              gap: "18px",
             }}
           >
-            <svg
-              width="56"
-              height="56"
-              viewBox="0 0 24 24"
-              fill="#67e8f9"
-            >
-              <path d="M11.584 2.376a.75.75 0 0 1 .832 0l9 6a.75.75 0 1 1-.832 1.248L12 3.901 3.416 9.624a.75.75 0 0 1-.832-1.248l9-6Z" />
-              <path
-                fillRule="evenodd"
-                d="M20.25 10.332v9.918H21a.75.75 0 0 1 0 1.5H3a.75.75 0 0 1 0-1.5h.75v-9.918a.75.75 0 0 1 .634-.74A49.109 49.109 0 0 1 12 9c2.59 0 5.134.202 7.616.592a.75.75 0 0 1 .634.74Zm-7.5 2.418a.75.75 0 0 0-1.5 0v6.75a.75.75 0 0 0 1.5 0v-6.75Zm3-.75a.75.75 0 0 1 .75.75v6.75a.75.75 0 0 1-1.5 0v-6.75a.75.75 0 0 1 .75-.75ZM9 12.75a.75.75 0 0 0-1.5 0v6.75a.75.75 0 0 0 1.5 0v-6.75Z"
-                clipRule="evenodd"
+            <svg width="64" height="64" viewBox="0 0 32 32" fill="none">
+              <circle
+                cx="16"
+                cy="16"
+                r="12.5"
+                stroke="#2fb8ab"
+                strokeWidth="2.4"
               />
-              <path d="M12 7.875a1.125 1.125 0 1 0 0-2.25 1.125 1.125 0 0 0 0 2.25Z" />
+              <path
+                d="M16 6.5v19M6.5 16h19"
+                stroke="#2fb8ab"
+                strokeWidth="3.6"
+                strokeLinecap="round"
+              />
+              <circle cx="16" cy="16" r="3.4" fill="#2fb8ab" />
+              <circle cx="16" cy="16" r="1.6" fill="#12232c" />
             </svg>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <div
                 style={{
                   fontSize: "72px",
                   fontWeight: 700,
-                  color: "#f2f8ff",
+                  color: "#e6f0f4",
                   letterSpacing: "-1px",
                 }}
               >
@@ -69,7 +73,7 @@ export default function Image() {
               <div
                 style={{
                   fontSize: "28px",
-                  color: "#8ca3c5",
+                  color: "#9bb0ba",
                   marginTop: "4px",
                 }}
               >
@@ -81,7 +85,7 @@ export default function Image() {
             style={{
               marginTop: "36px",
               fontSize: "22px",
-              color: "#a5f3fc",
+              color: "#6fe0d4",
             }}
           >
             Blocks · Modules · Exams · Leaderboard

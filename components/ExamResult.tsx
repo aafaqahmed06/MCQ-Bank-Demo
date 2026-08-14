@@ -56,14 +56,14 @@ export default function ExamResult({
               Question {reviewIndex + 1} of {review.length}
             </p>
             {item.selected_answer !== null && (
-              <p className={item.is_correct ? "text-[#39ff90]" : "text-[#ff4d6d]"}>
+              <p className={item.is_correct ? "text-success" : "text-error"}>
                 {item.is_correct ? "Correct" : "Incorrect"}
               </p>
             )}
           </div>
           <div className="mt-3 h-2 rounded-full bg-[var(--bg-progress-track)]">
             <div
-              className="h-2 rounded-full bg-cyan-300 transition-all duration-300 shadow-[0_0_14px_rgba(0,224,255,0.35)]"
+              className="h-2 rounded-full bg-[var(--accent-cyan)] transition-all duration-300"
               style={{ width: `${((reviewIndex + 1) / review.length) * 100}%` }}
             />
           </div>
@@ -71,7 +71,7 @@ export default function ExamResult({
 
         <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
+            <p className="inline-flex rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
               Question {item.question_order + 1}
             </p>
             <div className="flex items-center gap-2">
@@ -79,28 +79,24 @@ export default function ExamResult({
               <ReportQuestionButton mcqId={item.mcq_id} />
             </div>
           </div>
-          <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
+          <h2 className="mt-4 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
             {item.question}
           </h2>
 
-          <div className="my-5 border-t border-cyan-300/20" />
+          <div className="my-5 border-t border-[var(--border-color)]" />
 
           <div className="space-y-3">
             {item.options.map((option, index) => {
               const isUserAnswer = item.selected_answer === index;
               const isCorrectAnswer = index === item.correct_answer;
-              let classes =
-                "w-full rounded-xl p-3 sm:p-4 text-left text-base sm:text-lg transition-all duration-200 border ";
+              let classes = "opt-base p-3 sm:p-4 text-base sm:text-lg ";
 
               if (isCorrectAnswer) {
-                classes +=
-                  "border-[#39ff90] bg-[#39ff90]/12 text-[#b7ffd9] shadow-[0_0_18px_rgba(57,255,144,0.3)] ring-1 ring-[#39ff90]/60";
+                classes += "opt-correct";
               } else if (isUserAnswer && !isCorrectAnswer) {
-                classes +=
-                  "border-[#ff4d6d] bg-[#ff4d6d]/12 text-[#ffc3ce] shadow-[0_0_18px_rgba(255,77,109,0.3)] ring-1 ring-[#ff4d6d]/60";
+                classes += "opt-wrong";
               } else {
-                classes +=
-                  "border-cyan-300/15 bg-[var(--bg-option)]/50 text-[var(--text-option-dim)]";
+                classes += "opt-neutral";
               }
 
               return (
@@ -110,12 +106,12 @@ export default function ExamResult({
                   </span>{" "}
                   {option}
                   {isCorrectAnswer && (
-                    <span className="ml-2 text-xs text-[#39ff90]">
+                    <span className="ml-2 text-xs text-success">
                       ✓ Correct answer
                     </span>
                   )}
                   {isUserAnswer && !isCorrectAnswer && (
-                    <span className="ml-2 text-xs text-[#ff4d6d]">
+                    <span className="ml-2 text-xs text-error">
                       ✗ Your answer
                     </span>
                   )}
@@ -124,7 +120,7 @@ export default function ExamResult({
             })}
           </div>
 
-          <div className="mt-5 rounded-xl border border-violet-300/35 bg-violet-400/10 p-4 fade-in">
+          <div className="mt-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] p-4 fade-in">
             <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-violet)]">
               Explanation
             </p>
@@ -138,7 +134,7 @@ export default function ExamResult({
               type="button"
               onClick={() => setReviewIndex((prev) => Math.max(0, prev - 1))}
               disabled={reviewIndex === 0}
-              className="rounded-xl border border-cyan-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)] disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)] disabled:cursor-not-allowed disabled:opacity-40"
             >
               ← Previous
             </button>
@@ -148,7 +144,7 @@ export default function ExamResult({
                 onClick={() =>
                   setReviewIndex((prev) => Math.min(review.length - 1, prev + 1))
                 }
-                className="rounded-xl border border-cyan-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
+                className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)]"
               >
                 Next →
               </button>
@@ -169,36 +165,36 @@ export default function ExamResult({
 
   return (
     <section className="hud-card fade-in rounded-xl p-6">
-      <h2 className="text-3xl font-bold text-[var(--text-heading)]">Exam Complete</h2>
+      <h2 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">Exam Complete</h2>
       <p className="mt-1 text-[var(--text-muted)]">
         Here&apos;s how you performed.
       </p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-cyan-300/25 bg-[var(--bg-card-alt)]/70 p-4">
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
           <p className="text-sm text-[var(--text-muted)]">Total score</p>
-          <p className="text-2xl font-semibold text-[var(--text-body)]">
-            {correct} / {total}
+          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">
+            {correct} <span className="text-lg text-[var(--text-muted)]">/ {total}</span>
           </p>
         </div>
-        <div className="rounded-xl border border-violet-300/25 bg-[var(--bg-card-alt-2)]/70 p-4">
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
           <p className="text-sm text-[var(--text-muted)]">Percentage</p>
-          <p className="text-2xl font-semibold text-[var(--text-body)]">
+          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">
             {percentage}%
           </p>
         </div>
-        <div className="rounded-xl border border-[#39ff90]/40 bg-[#39ff90]/10 p-4">
-          <p className="text-sm text-[#8fffc1]">Correct</p>
-          <p className="text-2xl font-semibold text-[#b8ffd9]">{correct}</p>
+        <div className="box-success rounded-xl p-5">
+          <p className="text-sm">Correct</p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums">{correct}</p>
         </div>
-        <div className="rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 p-4">
-          <p className="text-sm text-[#ff9aad]">Incorrect / Unanswered</p>
-          <p className="text-2xl font-semibold text-[#ffc3ce]">{incorrect}</p>
+        <div className="box-error rounded-xl p-5">
+          <p className="text-sm">Incorrect / Unanswered</p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums">{incorrect}</p>
         </div>
       </div>
 
       {reviewError && (
-        <p className="mt-4 rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 px-4 py-3 text-sm text-[#ffc3ce]">
+        <p className="alert-error mt-4 rounded-xl px-4 py-3 text-sm">
           {reviewError}
         </p>
       )}
@@ -219,7 +215,7 @@ export default function ExamResult({
             e.preventDefault();
             onStartNew();
           }}
-          className="rounded-xl border border-violet-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
+          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)]"
         >
           Start New Exam
         </button>

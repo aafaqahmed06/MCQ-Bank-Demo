@@ -17,12 +17,24 @@ export interface Block {
   id: string;
   name: string;
   year: number;
+  subjectCount?: number;
+  topicsCompleted?: number;
+  topicsTotal?: number;
 }
 
 export interface Module {
   id: string;
   blockId: string;
   name: string;
+  topicsCompleted?: number;
+  topicsTotal?: number;
+}
+
+/** Per-topic-group completion state (derived from user_topic_progress). */
+export interface TopicGroupStatus {
+  completedTopics: number;
+  totalTopics: number;
+  completed: boolean;
 }
 
 export interface TopicGroup {

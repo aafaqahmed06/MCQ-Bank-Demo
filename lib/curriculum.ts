@@ -1,7 +1,13 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { Block, MCQ, Module, TopicGroup } from "@/types";
+import type {
+  Block,
+  MCQ,
+  Module,
+  TopicGroup,
+  TopicGroupStatus,
+} from "@/types";
 
 /**
  * Server-side fetchers for curriculum + practice content.
@@ -25,11 +31,43 @@ export async function getBlocks(): Promise<Block[]> {
     .in("id", yearIds);
   const yearByName = new Map((years ?? []).map((y) => [y.id as string, y.year_number as number]));
 
-  return (rows ?? []).map((row) => ({
-    id: row.id as string,
-    name: row.name as string,
-    year: yearByName.get(row.academic_year_id as string) ?? 1,
-  }));
+  const blockIds = (rows ?? []).map((r) => r.id as string);
+  const { data: moduleRows, error: modErr } = await supabase
+    .from("modules")
+    .select("id, block_id")
+    .in("block_id", blockIds.length ? blockIds : [""]);
+  if (modErr) throw new Error(`modules count: ${modErr.message}`);
+  const subjectCountByBlock = new Map<string, number>();
+  const moduleIds: string[] = [];
+  for (const m of moduleRows ?? []) {
+    const bid = m.block_id as string;
+    subjectCountByBlock.set(bid, (subjectCountByBlock.get(bid) ?? 0) + 1);
+    moduleIds.push(m.id as string);
+  }
+
+  const progress = await getTopicProgressByModule(moduleIds);
+  const progressByBlock = new Map<string, { completed: number; total: number }>();
+  for (const m of moduleRows ?? []) {
+    const p = progress[m.id as string];
+    if (!p) continue;
+    const bid = m.block_id as string;
+    const cur = progressByBlock.get(bid) ?? { completed: 0, total: 0 };
+    cur.completed += p.completed;
+    cur.total += p.total;
+    progressByBlock.set(bid, cur);
+  }
+
+  return (rows ?? []).map((row) => {
+    const p = progressByBlock.get(row.id as string);
+    return {
+      id: row.id as string,
+      name: row.name as string,
+      year: yearByName.get(row.academic_year_id as string) ?? 1,
+      subjectCount: subjectCountByBlock.get(row.id as string) ?? 0,
+      topicsCompleted: p?.completed ?? 0,
+      topicsTotal: p?.total ?? 0,
+    };
+  });
 }
 
 export async function getBlockById(blockId: string): Promise<Block | null> {
@@ -45,11 +83,20 @@ export async function getModulesByBlockId(blockId: string): Promise<Module[]> {
     .eq("block_id", blockId)
     .order("order_index", { ascending: true });
   if (error) throw new Error(`modules: ${error.message}`);
-  return (data ?? []).map((m) => ({
-    id: m.id as string,
-    blockId: m.block_id as string,
-    name: m.name as string,
-  }));
+
+  const ids = (data ?? []).map((m) => m.id as string);
+  const progress = await getTopicProgressByModule(ids);
+
+  return (data ?? []).map((m) => {
+    const p = progress[m.id as string];
+    return {
+      id: m.id as string,
+      blockId: m.block_id as string,
+      name: m.name as string,
+      topicsCompleted: p?.completed ?? 0,
+      topicsTotal: p?.total ?? 0,
+    };
+  });
 }
 
 export async function getModuleById(moduleId: string): Promise<Module | null> {
@@ -66,6 +113,98 @@ export async function getModuleById(moduleId: string): Promise<Module | null> {
     blockId: data.block_id as string,
     name: data.name as string,
   };
+}
+
+/** IDs of topics the current user has fully completed (RLS-scoped). */
+export async function getCompletedTopicIds(): Promise<Set<string>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("user_topic_progress")
+    .select("topic_id")
+    .eq("completed", true);
+  if (error) throw new Error(`completion: ${error.message}`);
+  return new Set((data ?? []).map((r) => r.topic_id as string));
+}
+
+/**
+ * Per-module topic completion counts, optionally scoped to a set of modules.
+ * Keyed by module_id -> { completed, total }.
+ */
+export async function getTopicProgressByModule(
+  moduleIds?: string[],
+): Promise<Record<string, { completed: number; total: number }>> {
+  const supabase = await createClient();
+
+  let q = supabase.from("topics").select("id, module_id");
+  if (moduleIds && moduleIds.length > 0) {
+    q = q.in("module_id", moduleIds);
+  }
+  const { data: topicRows } = await q;
+
+  const completed = await getCompletedTopicIds();
+
+  const byModule: Record<string, { completed: number; total: number }> = {};
+  for (const t of topicRows ?? []) {
+    const mid = t.module_id as string;
+    const cur = byModule[mid] ?? { completed: 0, total: 0 };
+    cur.total += 1;
+    if (completed.has(t.id as string)) cur.completed += 1;
+    byModule[mid] = cur;
+  }
+  return byModule;
+}
+
+/**
+ * Completion status per topic group for a module. A group is "completed" only
+ * when every topic belonging to it has been finished.
+ */
+export async function getTopicGroupCompletion(
+  moduleId: string,
+  groups: TopicGroup[],
+): Promise<Record<string, TopicGroupStatus>> {
+  const supabase = await createClient();
+  const { data: topicRows, error: tErr } = await supabase
+    .from("topics")
+    .select("id, name")
+    .eq("module_id", moduleId);
+  if (tErr) throw new Error(`topics: ${tErr.message}`);
+
+  const nameToId = new Map((topicRows ?? []).map((t) => [t.name as string, t.id as string]));
+  const completed = await getCompletedTopicIds();
+
+  const result: Record<string, TopicGroupStatus> = {};
+  for (const group of groups) {
+    const ids = group.topics
+      .map((name) => nameToId.get(name))
+      .filter((id): id is string => typeof id === "string");
+    let done = 0;
+    for (const id of ids) if (completed.has(id)) done += 1;
+    result[group.id] = {
+      completedTopics: done,
+      totalTopics: ids.length,
+      completed: ids.length > 0 && done === ids.length,
+    };
+  }
+  return result;
+}
+
+/**
+ * Resolved topic IDs for the topics a practice session covers (the full topic
+ * group when `topicNames` is provided, otherwise all of the module). These are
+ * the topics flagged as completed when the session is finished.
+ */
+export async function getCompletionTopicIds(
+  moduleId: string,
+  topicNames?: string[],
+): Promise<string[]> {
+  const supabase = await createClient();
+  let q = supabase.from("topics").select("id, name").eq("module_id", moduleId);
+  if (topicNames && topicNames.length > 0) {
+    q = q.in("name", topicNames);
+  }
+  const { data, error } = await q;
+  if (error) throw new Error(`completion topics: ${error.message}`);
+  return (data ?? []).map((t) => t.id as string);
 }
 
 /** Published-question count per topic group (keyed by group.id). */

@@ -13,6 +13,37 @@ type Stats = {
   avgScore: number | null;
 };
 
+function StatIcon({ label }: { label: string }) {
+  const common = "size-5 text-[var(--accent-cyan)]";
+  if (label === "Questions practiced") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden="true">
+        <path d="M9 3h6M10 3v6.5L5.2 18a2 2 0 0 0 1.8 3h10a2 2 0 0 0 1.8-3L14 9.5V3" />
+      </svg>
+    );
+  }
+  if (label === "Accuracy") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className={common} aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+    );
+  }
+  if (label === "Exams completed") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden="true">
+        <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className={common} aria-hidden="true">
+      <path d="M4 6h16M4 12h16M4 18h10" />
+    </svg>
+  );
+}
+
 export default function HomeDashboard() {
   const { profile } = useAuth();
   const info = useProfileInfo();
@@ -80,36 +111,47 @@ export default function HomeDashboard() {
           .join(" · ")
       : null;
 
-  const statCards: { label: string; value: string }[] = [
+  const statCards: { label: string; value: string; isSet: boolean }[] = [
     {
       label: "Questions practiced",
       value: stats ? String(stats.questionsAttempted) : "…",
+      isSet: stats ? stats.questionsAttempted > 0 : false,
     },
     {
       label: "Accuracy",
       value: stats ? (stats.accuracy === null ? "—" : `${stats.accuracy}%`) : "…",
+      isSet: stats ? stats.accuracy !== null : false,
     },
     {
       label: "Exams completed",
       value: stats ? String(stats.examsCompleted) : "…",
+      isSet: stats ? stats.examsCompleted > 0 : false,
     },
     {
       label: "Avg exam score",
       value: stats ? (stats.avgScore === null ? "—" : `${stats.avgScore}%`) : "…",
+      isSet: stats ? stats.avgScore !== null : false,
     },
   ];
 
+  const hasActivity = stats ? stats.questionsAttempted > 0 : false;
+
   return (
-    <div className="space-y-6">
-      <section className="hud-card fade-in rounded-xl p-6">
-        <h1 className="text-3xl font-bold text-[var(--text-heading)]">Welcome back</h1>
+    <div className="space-y-8">
+      {/* Welcome header — prominent but not oversized */}
+      <header className="space-y-1.5">
+        <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)] sm:text-4xl">
+          Welcome back
+        </h1>
         {profile?.full_name ? (
-          <p className="hud-muted mt-2">
-            <span className="font-medium text-[var(--text-body)]">{profile.full_name}</span>
-            {display ? ` · ${display}` : ""}
+          <p className="text-[var(--text-muted)]">
+            <span className="font-medium text-[var(--text-body)]">
+              {profile.full_name}
+            </span>
+            {display ? <span className="text-[var(--text-muted)]"> · {display}</span> : null}
           </p>
         ) : (
-          <p className="hud-muted mt-2">
+          <p className="text-[var(--text-muted)]">
             Complete{" "}
             <Link href="/onboarding" className="text-[var(--accent-cyan)] hover:underline">
               onboarding
@@ -117,40 +159,103 @@ export default function HomeDashboard() {
             to save your details.
           </p>
         )}
-      </section>
+      </header>
 
-      <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* Statistics — scannable white cards */}
+      <section
+        className="grid grid-cols-2 gap-4 lg:grid-cols-4"
+        aria-label="Your statistics"
+      >
         {statCards.map((card) => (
           <div
             key={card.label}
-            className="rounded-xl border border-cyan-300/20 bg-[var(--bg-card)] p-4 text-center backdrop-blur-sm"
+            className="hud-card rounded-xl p-5"
           >
-            <p className="text-2xl font-bold text-[var(--accent-cyan-strong)]">
+            <div className="flex items-center justify-between">
+              <StatIcon label={card.label} />
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+                  card.isSet
+                    ? "bg-cyan-500/10 text-[var(--accent-cyan-strong)]"
+                    : "bg-[var(--bg-card-alt)] text-[var(--text-muted)]"
+                }`}
+              >
+                {card.isSet ? "Active" : "Pending"}
+              </span>
+            </div>
+            <p
+              className={`mt-4 text-3xl font-semibold tabular-nums ${
+                card.isSet
+                  ? "text-[var(--text-heading)]"
+                  : "text-[var(--text-muted)]"
+              }`}
+            >
               {card.value}
             </p>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">{card.label}</p>
+            <p className="mt-1 text-sm text-[var(--text-muted)]">{card.label}</p>
           </div>
         ))}
       </section>
 
-      <section className="grid gap-3 sm:grid-cols-3">
+      {!hasActivity && (
+        <section className="hud-card rounded-xl border-dashed p-6 text-center sm:p-8">
+          <p className="text-[var(--text-muted)]">
+            No activity yet — start practicing or take your first exam simulation
+            to build your stats.
+          </p>
+        </section>
+      )}
+
+      {/* Primary actions — teal primary, outlined secondary, quieter leaderboard */}
+      <section className="grid gap-4 md:grid-cols-2" aria-label="Quick actions">
         <Link
           href="/blocks"
-          className="hud-card hud-card-hover rounded-xl p-4 text-center"
+          className="group flex items-center justify-between rounded-xl bg-[var(--primary-btn-bg)] p-6 text-[var(--primary-btn-text)] transition-colors hover:bg-[var(--primary-btn-bg-hover)]"
         >
-          <span className="font-semibold text-[var(--accent-cyan-strong)]">Start Practice</span>
+          <div>
+            <p className="text-base font-semibold">Start Practice</p>
+            <p className="mt-0.5 text-sm text-[var(--primary-btn-text)]/80">
+              Revise by block, module and topic
+            </p>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
         </Link>
+
         <Link
           href="/exam"
-          className="hud-card hud-card-hover rounded-xl p-4 text-center"
+          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition-colors hover:border-[var(--accent-cyan)]"
         >
-          <span className="font-semibold text-[var(--accent-cyan-strong)]">Exam Simulation</span>
+          <div>
+            <p className="text-base font-semibold text-[var(--text-heading)]">Exam Simulation</p>
+            <p className="mt-0.5 text-sm text-[var(--text-muted)]">
+              Timed, graded exam under real conditions
+            </p>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 text-[var(--accent-cyan)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
         </Link>
+      </section>
+
+      <section>
         <Link
           href="/leaderboard"
-          className="hud-card hud-card-hover rounded-xl p-4 text-center"
+          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--accent-cyan)]"
         >
-          <span className="font-semibold text-[var(--accent-cyan-strong)]">Leaderboard</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[var(--accent-violet)]">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
+                <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4ZM4 4v1a3 3 0 0 0 3 3M20 4v1a3 3 0 0 1-3 3" />
+              </svg>
+            </span>
+            <div>
+              <p className="text-base font-semibold text-[var(--text-heading)]">Leaderboard</p>
+              <p className="text-sm text-[var(--text-muted)]">See how you compare with your cohort</p>
+            </div>
+          </div>
+          <span className="text-[var(--text-muted-light)] transition-transform group-hover:translate-x-0.5">→</span>
         </Link>
       </section>
     </div>

@@ -1,92 +1,162 @@
 @import "tailwindcss";
 
 @font-face {
-  font-family: "Satoshi";
-  src: url("https://api.fontsource.org/v1/fonts/satoshi/latin-400-normal.woff2") format("woff2");
+  font-family: "Inter";
+  src: url("https://api.fontsource.org/v1/fonts/inter/latin-400-normal.woff2") format("woff2");
   font-weight: 400;
   font-display: swap;
 }
 @font-face {
-  font-family: "Satoshi";
-  src: url("https://api.fontsource.org/v1/fonts/satoshi/latin-500-normal.woff2") format("woff2");
+  font-family: "Inter";
+  src: url("https://api.fontsource.org/v1/fonts/inter/latin-500-normal.woff2") format("woff2");
   font-weight: 500;
   font-display: swap;
 }
 @font-face {
-  font-family: "Satoshi";
-  src: url("https://api.fontsource.org/v1/fonts/satoshi/latin-600-normal.woff2") format("woff2");
+  font-family: "Inter";
+  src: url("https://api.fontsource.org/v1/fonts/inter/latin-600-normal.woff2") format("woff2");
   font-weight: 600;
   font-display: swap;
 }
 @font-face {
-  font-family: "Satoshi";
-  src: url("https://api.fontsource.org/v1/fonts/satoshi/latin-700-normal.woff2") format("woff2");
+  font-family: "Inter";
+  src: url("https://api.fontsource.org/v1/fonts/inter/latin-700-normal.woff2") format("woff2");
   font-weight: 700;
   font-display: swap;
 }
 
+/*
+  DiagKnow — Clinical Light / Deep Medical Dark.
+  Whitespace + typography + surface contrast are the primary separators.
+  The teal accent is restrained; borders are subtle blue-gray.
+*/
+
+/* Brand-neutral accent ramps (shared across both themes) so the Tailwind
+   `cyan-*` / `violet-*` utilities map to medical teal / cool blue. */
+@theme {
+  --color-cyan-50: #e7f5f4;
+  --color-cyan-100: #cbe9e6;
+  --color-cyan-200: #a3d6d2;
+  --color-cyan-300: #6fbeb9;
+  --color-cyan-400: #3fa6a0;
+  --color-cyan-500: #0e948b;
+  --color-cyan-600: #087f78;
+  --color-cyan-700: #0a6b65;
+  --color-cyan-800: #0c5551;
+  --color-cyan-900: #0e3f3c;
+  --color-cyan-950: #072a28;
+
+  --color-violet-50: #e9f1f6;
+  --color-violet-100: #cbdde9;
+  --color-violet-200: #a5c4d8;
+  --color-violet-300: #7aa9c6;
+  --color-violet-400: #4e90b7;
+  --color-violet-500: #2f7dab;
+  --color-violet-600: #2878a8;
+  --color-violet-700: #25638a;
+  --color-violet-800: #235073;
+  --color-violet-900: #1f3d52;
+  --color-violet-950: #132633;
+}
+
 :root {
-  --background: #0b0f1a;
-  --foreground: #e6f6ff;
+  /* Deep Medical Dark (default) */
+  --background: #0c151b;
+  --foreground: #cfdde2;
 
-  --bg-page: #0b0f1a;
-  --bg-card: rgba(14, 21, 38, 0.64);
-  --bg-card-solid: #101a31;
-  --bg-card-alt: #111b34;
-  --bg-card-alt-2: #151935;
-  --bg-card-dim: #141d35;
-  --bg-option: #0f1730;
-  --bg-progress-track: #121d36;
-  --bg-landing-btn: #121b33;
-  --bg-nav-inner: #0f1528;
+  --bg-page: #0c151b;
+  --bg-card: #101d26;
+  --bg-card-solid: #13212a;
+  --bg-card-alt: #13212a;
+  --bg-card-alt-2: #152630;
+  --bg-card-dim: #101c24;
+  --bg-option: #101e26;
+  --bg-progress-track: #1c2a33;
+  --bg-landing-btn: #13212a;
+  --bg-nav-inner: #0e1921;
 
-  --text-heading: #f2f8ff;
-  --text-body: #e6f6ff;
-  --text-muted: #8ca3c5;
-  --text-muted-light: #9db1ce;
-  --text-option: #cfe2ff;
-  --text-option-dim: #8299bc;
-  --text-selected: #ecfbff;
-  --text-label: #dceaff;
-  --text-body-alt: #d4e4ff;
-  --text-btn-secondary: #d8e5ff;
-  --text-btn-landing: #cfdcff;
+  --text-heading: #e6f0f4;
+  --text-body: #cfdde2;
+  --text-muted: #7d929c;
+  --text-muted-light: #9bb0ba;
+  --text-option: #d6e3e8;
+  --text-option-dim: #79909b;
+  --text-selected: #e9f6f4;
+  --text-label: #b9cbd3;
+  --text-body-alt: #aec3cc;
+  --text-btn-secondary: #b9cbd3;
+  --text-btn-landing: #c2d4dc;
 
-  --accent-cyan: #67e8f9;
-  --accent-cyan-strong: #a5f3fc;
-  --accent-violet: #c4b5fd;
+  --accent-cyan: #2fb8ab;
+  --accent-cyan-strong: #6fe0d4;
+  --accent-violet: #7fb4d6;
+
+  --primary-btn-bg: #0e948b;
+  --primary-btn-bg-hover: #12867e;
+  --primary-btn-text: #ffffff;
+
+  --border-color: rgba(163, 190, 203, 0.16);
+  --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.24), 0 4px 14px rgba(0, 0, 0, 0.22);
+
+  --success: #4cc88a;
+  --success-soft: rgba(76, 200, 138, 0.14);
+  --success-text: #8fe0b4;
+  --error: #f0717a;
+  --error-soft: rgba(240, 113, 122, 0.14);
+  --error-text: #f7a6ad;
+  --warning: #e0a94f;
+  --warning-soft: rgba(224, 169, 79, 0.16);
+  --warning-text: #f0cd8f;
 }
 
 [data-theme="light"] {
-  --background: #f0f4f8;
-  --foreground: #1e293b;
+  /* Clinical Light */
+  --background: #f5f7f8;
+  --foreground: #24333c;
 
-  --bg-page: #f0f4f8;
-  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-page: #f5f7f8;
+  --bg-card: #ffffff;
   --bg-card-solid: #ffffff;
-  --bg-card-alt: #f1f5f9;
-  --bg-card-alt-2: #f1f5f9;
-  --bg-card-dim: #f8fafc;
+  --bg-card-alt: #f2f6f7;
+  --bg-card-alt-2: #eef3f5;
+  --bg-card-dim: #f3f6f7;
   --bg-option: #ffffff;
-  --bg-progress-track: #e2e8f0;
-  --bg-landing-btn: #f1f5f9;
+  --bg-progress-track: #e3e9ec;
+  --bg-landing-btn: #f2f6f7;
   --bg-nav-inner: #ffffff;
 
-  --text-heading: #0f172a;
-  --text-body: #1e293b;
-  --text-muted: #64748b;
-  --text-muted-light: #475569;
-  --text-option: #1e293b;
-  --text-option-dim: #94a3b8;
-  --text-selected: #0f172a;
-  --text-label: #334155;
-  --text-body-alt: #475569;
-  --text-btn-secondary: #1e293b;
-  --text-btn-landing: #334155;
+  --text-heading: #0f2430;
+  --text-body: #24333c;
+  --text-muted: #5c6e78;
+  --text-muted-light: #44565f;
+  --text-option: #16262e;
+  --text-option-dim: #6a7b84;
+  --text-selected: #086d67;
+  --text-label: #33454f;
+  --text-body-alt: #44565f;
+  --text-btn-secondary: #2c3c46;
+  --text-btn-landing: #33454f;
 
-  --accent-cyan: #155e75;
-  --accent-cyan-strong: #0e7490;
-  --accent-violet: #6d28d9;
+  --accent-cyan: #087f78;
+  --accent-cyan-strong: #086a64;
+  --accent-violet: #2878a8;
+
+  --primary-btn-bg: #087f78;
+  --primary-btn-bg-hover: #0b6b66;
+  --primary-btn-text: #ffffff;
+
+  --border-color: #d7e0e4;
+  --card-shadow: 0 1px 2px rgba(16, 33, 43, 0.04), 0 1px 3px rgba(16, 33, 43, 0.06);
+
+  --success: #1e7e48;
+  --success-soft: #e5f4e9;
+  --success-text: #1b6b3f;
+  --error: #c1353f;
+  --error-soft: #fce8ea;
+  --error-text: #a42932;
+  --warning: #b7791f;
+  --warning-soft: #faf0df;
+  --warning-text: #9c6a1c;
 }
 
 html {
@@ -97,65 +167,24 @@ html {
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Satoshi", system-ui, sans-serif;
-  --font-mono: "Satoshi", system-ui, sans-serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-mono: "Inter", ui-monospace, monospace;
 }
 
 body {
-  background:
-    radial-gradient(circle at 14% 10%, rgba(0, 224, 255, 0.12), transparent 36%),
-    radial-gradient(circle at 86% 12%, rgba(126, 63, 255, 0.12), transparent 34%),
-    radial-gradient(circle at 52% 88%, rgba(0, 224, 255, 0.08), transparent 40%),
-    linear-gradient(165deg, #0b0f1a 0%, #0f1424 100%);
+  background: var(--bg-page);
   color: var(--foreground);
-  font-family: "Satoshi", system-ui, sans-serif;
+  font-family: "Inter", system-ui, sans-serif;
   min-height: 100vh;
-  transition: background 0.3s ease, color 0.3s ease;
+  transition: background 0.25s ease, color 0.25s ease;
 }
 
-[data-theme="light"] body {
-  background: #f0f4f8;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.12;
-  background-image:
-    linear-gradient(rgba(170, 199, 255, 0.09) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(170, 199, 255, 0.09) 1px, transparent 1px);
-  background-size: 48px 48px;
-  background-position: 0 0;
-  animation: gridShift 30s linear infinite;
-}
-
-[data-theme="light"] body::before {
-  opacity: 0.04;
-  animation: none;
-  background-image:
-    linear-gradient(rgba(15, 23, 42, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.06) 1px, transparent 1px);
-}
-
+/* Editorial card surface: white in light, subtle raised surface in dark. */
 .hud-card {
-  border: 1px solid rgba(0, 224, 255, 0.24);
   background: var(--bg-card);
-  backdrop-filter: blur(14px);
-  box-shadow:
-    inset 0 1px 0 rgba(230, 246, 255, 0.08),
-    0 0 0 1px rgba(126, 63, 255, 0.08),
-    0 12px 34px rgba(1, 6, 18, 0.55);
-  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
-}
-
-[data-theme="light"] .hud-card {
-  border-color: rgba(0, 224, 255, 0.3);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 0 0 1px rgba(126, 63, 255, 0.06),
-    0 4px 16px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .hud-card-hover {
@@ -164,64 +193,44 @@ body::before {
 
 @media (pointer: fine) {
   .hud-card-hover:hover {
-    border-color: rgba(0, 224, 255, 0.5);
-    box-shadow:
-      inset 0 1px 0 rgba(230, 246, 255, 0.1),
-      0 0 0 1px rgba(0, 224, 255, 0.18),
-      0 0 28px rgba(0, 224, 255, 0.18);
-    transform: translateY(-1px);
+    border-color: var(--accent-cyan);
+    box-shadow: 0 2px 4px rgba(16, 33, 43, 0.06), 0 8px 22px rgba(16, 33, 43, 0.1);
+    transform: translateY(-2px);
   }
 }
 
 .hud-card-hover:active {
-  border-color: rgba(0, 224, 255, 0.5);
-  box-shadow:
-    inset 0 1px 0 rgba(230, 246, 255, 0.1),
-    0 0 0 1px rgba(0, 224, 255, 0.18),
-    0 0 28px rgba(0, 224, 255, 0.18);
-  transform: translateY(-1px);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 2px 4px rgba(16, 33, 43, 0.06), 0 8px 22px rgba(16, 33, 43, 0.1);
+  transform: translateY(-2px);
 }
 
 .hud-muted {
-  color: #8ca3c5;
-}
-
-[data-theme="light"] .hud-muted {
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .hud-primary-btn {
-  background: linear-gradient(135deg, rgba(0, 224, 255, 0.9), rgba(126, 63, 255, 0.85));
-  color: #eafaff;
-  box-shadow: 0 0 24px rgba(0, 224, 255, 0.2);
-  transition: box-shadow 180ms ease, opacity 180ms ease, transform 180ms ease;
-}
-
-@media (pointer: fine) {
-  .hud-primary-btn:hover {
-    box-shadow: 0 0 30px rgba(0, 224, 255, 0.36);
-    transform: translateY(-1px);
-  }
-}
-
-.hud-primary-btn:active {
-  box-shadow: 0 0 30px rgba(0, 224, 255, 0.36);
-  transform: translateY(-1px);
+  background: var(--primary-btn-bg);
+  color: var(--primary-btn-text);
+  transition: background 180ms ease, box-shadow 180ms ease, transform 180ms ease;
 }
 
 @media (pointer: fine) {
   .hud-primary-btn:hover:not(:disabled) {
-    transform: scale(1.03);
+    background: var(--primary-btn-bg-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(8, 127, 120, 0.22);
   }
 }
 
 .hud-primary-btn:active:not(:disabled) {
-  transform: scale(1.03);
+  background: var(--primary-btn-bg-hover);
+  transform: translateY(-1px);
 }
 
 .hud-primary-btn:disabled {
   opacity: 0.5;
-  box-shadow: none;
+  cursor: not-allowed;
 }
 
 .fade-in {
@@ -230,11 +239,6 @@ body::before {
 
 .pulse-soft {
   animation: pulseSoft 2.4s ease-in-out infinite;
-}
-
-@keyframes gridShift {
-  from { background-position: 0 0; }
-  to { background-position: 48px 48px; }
 }
 
 @keyframes fadeIn {
@@ -251,9 +255,79 @@ body::before {
 @keyframes pulseSoft {
   0%,
   100% {
-    box-shadow: 0 0 0 rgba(0, 224, 255, 0);
+    box-shadow: 0 0 0 rgba(8, 127, 120, 0);
   }
   50% {
-    box-shadow: 0 0 24px rgba(0, 224, 255, 0.16);
+    box-shadow: 0 0 16px rgba(8, 127, 120, 0.18);
   }
+}
+
+/* ── Clinical status boxes ──────────────────────────────────────────── */
+.alert-error {
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  background: var(--error-soft);
+  color: var(--error-text);
+}
+
+.alert-info {
+  border: 1px solid color-mix(in srgb, var(--accent-cyan) 35%, transparent);
+  background: color-mix(in srgb, var(--accent-cyan) 8%, transparent);
+  color: var(--accent-cyan-strong);
+}
+
+/* ── MCQ answer option states ──────────────────────────────────────── */
+.opt-base {
+  width: 100%;
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+  background: var(--bg-option);
+  color: var(--text-option);
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+@media (pointer: fine) {
+  .opt-base:not(:disabled):hover {
+    border-color: var(--accent-cyan);
+  }
+}
+
+.opt-selected {
+  border-color: var(--accent-cyan);
+  background: color-mix(in srgb, var(--accent-cyan) 10%, var(--bg-option));
+  color: var(--accent-cyan-strong);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-cyan) 35%, transparent);
+}
+
+.opt-correct {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.opt-wrong {
+  border-color: var(--error);
+  background: var(--error-soft);
+  color: var(--error-text);
+}
+
+.opt-neutral {
+  border-color: var(--border-color);
+  background: var(--bg-option);
+  color: var(--text-option-dim);
+}
+
+.text-success { color: var(--success-text); }
+.text-error { color: var(--error-text); }
+
+.box-success {
+  border: 1px solid color-mix(in srgb, var(--success) 40%, transparent);
+  background: var(--success-soft);
+  color: var(--success-text);
+}
+
+.box-error {
+  border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
+  background: var(--error-soft);
+  color: var(--error-text);
 }

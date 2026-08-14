@@ -1,13 +1,14 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import PracticeSession from "@/components/PracticeSession";
 import RequireProfile from "@/components/RequireProfile";
-import { getModuleById } from "@/lib/curriculum";
+import { getModuleById, getBlockById } from "@/lib/curriculum";
 import { getPracticeQuestions } from "@/lib/curriculum";
+import { getCompletionTopicIds } from "@/lib/curriculum";
 import {
   topicGroups,
 } from "@/lib/topicGroups";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 type PageProps = {
   params: Promise<{ moduleId: string }>;
@@ -26,11 +27,14 @@ export default async function PracticePage({
     notFound();
   }
 
+  const block = await getBlockById(mod.blockId);
+
   const group = topic
     ? topicGroups.find((g) => g.moduleId === moduleId && g.name === topic) ?? null
     : null;
 
   const moduleMcqs = await getPracticeQuestions(moduleId, group?.topics);
+  const completionTopicIds = await getCompletionTopicIds(moduleId, group?.topics);
 
   const backHref = group
     ? `/topics/${moduleId}`
@@ -38,19 +42,21 @@ export default async function PracticePage({
 
   const heading = group ? `${mod.name} — ${group.name}` : mod.name;
 
+  const crumbs = [
+    { label: "Blocks", href: "/blocks" },
+    ...(block ? [{ label: block.name, href: `/modules/${block.id}` }] : []),
+    { label: mod.name, href: `/topics/${mod.id}` },
+    ...(group ? [{ label: group.name }] : [{ label: "Practice" }]),
+  ];
+
   return (
     <LayoutWrapper>
       <RequireProfile>
         <div className="space-y-6">
-          <div className="space-y-3">
-            <Link
-              href={backHref}
-              className="text-sm text-[var(--accent-cyan)] hover:underline"
-            >
-              ← Back to {group ? "topics" : "subjects"}
-            </Link>
-            <h1 className="text-3xl font-bold text-[var(--text-heading)]">{heading}</h1>
-          </div>
+          <header className="space-y-2">
+            <Breadcrumbs items={crumbs} />
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">{heading}</h1>
+          </header>
 
           {moduleMcqs.length === 0 ? (
             <p className="hud-card rounded-xl border-dashed p-6 text-center text-[var(--text-muted)]">
@@ -60,6 +66,7 @@ export default async function PracticePage({
             <PracticeSession
               questions={moduleMcqs}
               backHref={backHref}
+              completionTopicIds={completionTopicIds}
             />
           )}
         </div>

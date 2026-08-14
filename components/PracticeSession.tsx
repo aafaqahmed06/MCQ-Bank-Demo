@@ -5,10 +5,13 @@ import type { MCQ } from "@/types";
 import MCQCard from "@/components/MCQCard";
 import QuestionProgress from "@/components/QuestionProgress";
 import ResultSummary from "@/components/ResultSummary";
+import { createClient } from "@/lib/supabase/client";
 
 type PracticeSessionProps = {
   questions: MCQ[];
   backHref: string;
+  /** Topic IDs flagged as completed when the session finishes. */
+  completionTopicIds?: string[];
 };
 
 function shuffle<T>(arr: readonly T[]): T[] {
@@ -23,6 +26,7 @@ function shuffle<T>(arr: readonly T[]): T[] {
 export default function PracticeSession({
   questions,
   backHref,
+  completionTopicIds,
 }: PracticeSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -68,6 +72,19 @@ export default function PracticeSession({
     }
   };
 
+  const recordCompletion = async () => {
+    if (!completionTopicIds || completionTopicIds.length === 0) {
+      return;
+    }
+    try {
+      await createClient().rpc("record_practice_completion", {
+        p_topic_ids: completionTopicIds,
+      });
+    } catch {
+      // Non-fatal: don't interrupt the finished state on a sync failure.
+    }
+  };
+
   const handleNext = () => {
     if (!answered) {
       return;
@@ -76,6 +93,7 @@ export default function PracticeSession({
     const isLastQuestion = currentIndex === totalQuestions - 1;
     if (isLastQuestion) {
       setFinished(true);
+      void recordCompletion();
       return;
     }
 

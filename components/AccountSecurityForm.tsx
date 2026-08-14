@@ -46,8 +46,8 @@ export default function AccountSecurityForm() {
       }
       setNewEmail("");
       setEmailInfo(
-        "A confirmation link has been sent to your current and new email. " +
-          "Click both links to finish changing your address.",
+        "A confirmation link has been sent to your new email. " +
+          "Click it to finish changing your address.",
       );
     } finally {
       setEmailSaving(false);
@@ -130,7 +130,7 @@ export default function AccountSecurityForm() {
           </div>
           {emailError && (
             <p
-              className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-300"
+              className="alert-error rounded-lg px-3 py-2 text-sm"
               role="alert"
             >
               {emailError}
@@ -138,7 +138,7 @@ export default function AccountSecurityForm() {
           )}
           {emailInfo && (
             <p
-              className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm text-[var(--accent-cyan)]"
+              className="alert-info rounded-lg px-3 py-2 text-sm"
               role="status"
             >
               {emailInfo}

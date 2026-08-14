@@ -7,17 +7,17 @@ export default function LeaderboardPage() {
     <LayoutWrapper>
       <RequireProfile>
         <div className="space-y-6">
-          <section className="hud-card fade-in rounded-xl p-6 sm:p-8">
-            <h1 className="text-3xl font-bold text-[var(--text-heading)]">
+          <header className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">
               Leaderboard
             </h1>
-            <p className="mt-2 text-[var(--text-muted)]">
+            <p className="text-[var(--text-muted)]">
               Top students by correct answers and accuracy across completed
               exams.
             </p>
-            <div className="mt-6">
-              <Leaderboard />
-            </div>
+          </header>
+          <section className="hud-card rounded-xl p-4 sm:p-6">
+            <Leaderboard />
           </section>
         </div>
       </RequireProfile>

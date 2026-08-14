@@ -29,7 +29,7 @@ export default async function AuthPage({
           </p>
           {error && (
             <p
-              className="mt-3 rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 px-4 py-3 text-sm text-[#ffc3ce]"
+              className="alert-error mt-3 rounded-xl px-4 py-3 text-sm"
               role="alert"
             >
               We couldn&apos;t complete that sign-in. Please try again.

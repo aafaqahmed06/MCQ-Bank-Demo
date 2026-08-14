@@ -23,7 +23,7 @@ export default function QuestionProgress({
       </div>
       <div className="mt-3 h-2 rounded-full bg-[var(--bg-progress-track)]">
         <div
-          className="h-2 rounded-full bg-cyan-300 transition-all duration-300 shadow-[0_0_14px_rgba(0,224,255,0.35)]"
+          className="h-2 rounded-full bg-[var(--accent-cyan)] transition-all duration-300"
           style={{ width: `${(answered / total) * 100}%` }}
         />
       </div>

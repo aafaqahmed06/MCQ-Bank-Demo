@@ -21,26 +21,23 @@ function getOptionClasses(
   answered: boolean,
   correctAnswer: number
 ) {
-  const base =
-    "w-full rounded-xl p-3 sm:p-4 text-left text-base sm:text-lg transition-all duration-200 disabled:opacity-100";
+  const base = "opt-base p-3 sm:p-4 text-base sm:text-lg";
 
   if (!answered) {
     return `${base} ${
-      selectedAnswer === index
-        ? "border border-cyan-300 bg-cyan-400/12 text-[var(--text-selected)] shadow-[0_0_18px_rgba(0,224,255,0.28)] ring-1 ring-cyan-300/45"
-        : "border border-cyan-300/20 bg-[var(--bg-card-solid)]/60 text-[var(--text-option)] active:border-cyan-300/55 active:shadow-[0_0_14px_rgba(0,224,255,0.2)]"
+      selectedAnswer === index ? "opt-selected" : ""
     }`;
   }
 
   if (index === correctAnswer) {
-    return `${base} border border-[#39ff90] bg-[#39ff90]/12 text-[#b7ffd9] shadow-[0_0_18px_rgba(57,255,144,0.3)] ring-1 ring-[#39ff90]/60`;
+    return `${base} opt-correct`;
   }
 
   if (selectedAnswer === index && selectedAnswer !== correctAnswer) {
-    return `${base} border border-[#ff4d6d] bg-[#ff4d6d]/12 text-[#ffc3ce] shadow-[0_0_18px_rgba(255,77,109,0.3)] ring-1 ring-[#ff4d6d]/60`;
+    return `${base} opt-wrong`;
   }
 
-  return `${base} border border-cyan-300/15 bg-[var(--bg-option)]/50 text-[var(--text-option-dim)]`;
+  return `${base} opt-neutral`;
 }
 
 export default function MCQCard({
@@ -57,7 +54,7 @@ export default function MCQCard({
   return (
     <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
+        <p className="inline-flex rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
           Topic: {mcq.topic}
         </p>
         <div className="flex items-center gap-2">
@@ -65,11 +62,11 @@ export default function MCQCard({
           <ReportQuestionButton mcqId={mcq.id} />
         </div>
       </div>
-      <h2 className="mt-3 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
+      <h2 className="mt-4 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
         {mcq.question}
       </h2>
 
-      <div className="my-5 border-t border-cyan-300/20" />
+      <div className="my-5 border-t border-[var(--border-color)]" />
 
       <div className="space-y-3">
         {mcq.options.map((option, index) => (
@@ -101,7 +98,7 @@ export default function MCQCard({
       </div>
 
       {answered && (
-        <div className="mt-5 rounded-xl border border-violet-300/35 bg-violet-400/10 p-4 fade-in">
+        <div className="mt-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] p-4 fade-in">
           <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-violet)]">
             Explanation
           </p>
@@ -135,7 +132,7 @@ export default function MCQCard({
               if (dy < 10) { e.preventDefault(); onNext(); }
               touchStartY.current = 0;
             }}
-            className="hud-primary-btn pulse-soft rounded-xl px-5 py-3 text-sm font-medium"
+            className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium"
           >
             {isLastQuestion ? "Finish" : "Next Question"}
           </button>

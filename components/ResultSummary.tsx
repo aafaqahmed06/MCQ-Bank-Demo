@@ -20,27 +20,27 @@ export default function ResultSummary({
 
   return (
     <section className="hud-card fade-in rounded-xl p-6">
-      <h2 className="text-3xl font-bold text-[var(--text-heading)]">Session Complete</h2>
+      <h2 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">Session Complete</h2>
       <p className="mt-1 text-[var(--text-muted)]">Review your performance below.</p>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-cyan-300/25 bg-[var(--bg-card-alt)]/70 p-4">
+      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
           <p className="text-sm text-[var(--text-muted)]">Total score</p>
-          <p className="text-2xl font-semibold text-[var(--text-body)]">
-            {correct} / {total}
+          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">
+            {correct} <span className="text-lg text-[var(--text-muted)]">/ {total}</span>
           </p>
         </div>
-        <div className="rounded-xl border border-violet-300/25 bg-[var(--bg-card-alt-2)]/70 p-4">
+        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
           <p className="text-sm text-[var(--text-muted)]">Percentage</p>
-          <p className="text-2xl font-semibold text-[var(--text-body)]">{percentage}%</p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">{percentage}%</p>
         </div>
-        <div className="rounded-xl border border-[#39ff90]/40 bg-[#39ff90]/10 p-4">
-          <p className="text-sm text-[#8fffc1]">Correct</p>
-          <p className="text-2xl font-semibold text-[#b8ffd9]">{correct}</p>
+        <div className="box-success rounded-xl p-5">
+          <p className="text-sm">Correct</p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums">{correct}</p>
         </div>
-        <div className="rounded-xl border border-[#ff4d6d]/40 bg-[#ff4d6d]/10 p-4">
-          <p className="text-sm text-[#ff9aad]">Incorrect</p>
-          <p className="text-2xl font-semibold text-[#ffc3ce]">{incorrect}</p>
+        <div className="box-error rounded-xl p-5">
+          <p className="text-sm">Incorrect</p>
+          <p className="mt-1 text-3xl font-semibold tabular-nums">{incorrect}</p>
         </div>
       </div>
 
@@ -55,7 +55,7 @@ export default function ResultSummary({
         </button>
         <Link
           href={backHref}
-          className="rounded-xl border border-violet-300/30 bg-[var(--bg-card-dim)]/60 px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)]"
+          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)]"
         >
           Back to modules
         </Link>

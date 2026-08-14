@@ -11,8 +11,8 @@ export default function ThemeToggle() {
       onClick={toggle}
       onTouchEnd={(e) => { e.preventDefault(); toggle(); }}
       className="rounded-lg p-1.5 sm:p-2 text-sm text-[var(--text-muted-light)] transition-all duration-200 hover:bg-cyan-400/10 hover:text-[var(--accent-cyan-strong)] hover:scale-110 active:bg-cyan-400/10 active:text-[var(--accent-cyan-strong)] active:scale-110"
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+      aria-label={`Switch to ${theme === "dark" ? "Clinical Light" : "Deep Medical Dark"}`}
+      title={`Switch to ${theme === "dark" ? "Clinical Light" : "Deep Medical Dark"}`}
     >
       {theme === "dark" ? (
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5">
