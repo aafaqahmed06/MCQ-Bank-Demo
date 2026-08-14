@@ -136,11 +136,22 @@ async function main(): Promise<void> {
       r("token replay after grace rejected", !!replayed.error, s(replayed.error?.message ?? "TOKEN REPLAYED"));
     }
 
-    // ── Auth: weak-password acceptance (minimum length) ────────────
+    // ── Auth: weak-password acceptance — via the REAL signup path ────
     {
       const stamp = Date.now();
-      const { error: weak } = await admin.auth.admin.createUser({ email: `audit.weak.${stamp}@diagknow.test`, password: "Ab1def", email_confirm: true });
-      r("6-char password rejected", !!weak, s(weak?.message ?? "accepted by API"));
+      const signer = createClient(URL, ANON);
+      const { data: weakU, error: weak } = await signer.auth.signUp({
+        email: `audit.weak.${stamp}@diagknow.test`,
+        password: "Ab1def",
+      });
+      r("6-char password rejected (policy)", !!weak, s(weak?.message ?? "accepted"));
+      if (weakU?.user?.id) await admin.auth.admin.deleteUser(weakU.user.id).catch(() => undefined);
+      const { data: strongU, error: strongErr } = await signer.auth.signUp({
+        email: `audit.strong.${stamp}@diagknow.test`,
+        password: "AuditStrongPass1",
+      });
+      r("strong password still allowed", !strongErr && !!strongU?.user, s(strongErr?.message ?? "ok"));
+      if (strongU?.user?.id) await admin.auth.admin.deleteUser(strongU.user.id).catch(() => undefined);
     }
 
     // ── Exam score tamper: submit, then try direct UPDATE score ───
