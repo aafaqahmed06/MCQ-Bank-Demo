@@ -7,6 +7,18 @@ import { createClient } from "@/lib/supabase/client";
 
 type Mode = "signin" | "signup";
 
+const MIN_PASSWORD_LENGTH = 10;
+
+function validatePassword(pw: string): string | null {
+  if (pw.length < MIN_PASSWORD_LENGTH) {
+    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
+  }
+  if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) {
+    return "Password must include both letters and numbers.";
+  }
+  return null;
+}
+
 export default function AuthForm() {
   const router = useRouter();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -35,6 +47,11 @@ export default function AuthForm() {
 
     try {
       if (mode === "signup") {
+        const pwError = validatePassword(password);
+        if (pwError) {
+          setError(pwError);
+          return;
+        }
         const { data, error: err } = await supabase.auth.signUp({
           email,
           password,
@@ -184,10 +201,10 @@ export default function AuthForm() {
           type="password"
           autoComplete={mode === "signup" ? "new-password" : "current-password"}
           required
-          minLength={8}
+          minLength={MIN_PASSWORD_LENGTH}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="At least 8 characters"
+          placeholder={`At least ${MIN_PASSWORD_LENGTH} characters, letters + numbers`}
           className={inputClass}
         />
         {mode === "signin" && (

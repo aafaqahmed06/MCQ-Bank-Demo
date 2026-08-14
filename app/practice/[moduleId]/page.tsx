@@ -66,6 +66,7 @@ export default async function PracticePage({
             <PracticeSession
               questions={moduleMcqs}
               backHref={backHref}
+              completionModuleId={moduleId}
               completionTopicIds={completionTopicIds}
             />
           )}

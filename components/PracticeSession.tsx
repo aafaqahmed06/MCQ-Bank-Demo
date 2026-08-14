@@ -10,6 +10,8 @@ import { createClient } from "@/lib/supabase/client";
 type PracticeSessionProps = {
   questions: MCQ[];
   backHref: string;
+  /** Module the practice session belongs to. */
+  completionModuleId?: string;
   /** Topic IDs flagged as completed when the session finishes. */
   completionTopicIds?: string[];
 };
@@ -26,6 +28,7 @@ function shuffle<T>(arr: readonly T[]): T[] {
 export default function PracticeSession({
   questions,
   backHref,
+  completionModuleId,
   completionTopicIds,
 }: PracticeSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -73,11 +76,12 @@ export default function PracticeSession({
   };
 
   const recordCompletion = async () => {
-    if (!completionTopicIds || completionTopicIds.length === 0) {
+    if (!completionModuleId || !completionTopicIds || completionTopicIds.length === 0) {
       return;
     }
     try {
       await createClient().rpc("record_practice_completion", {
+        p_module_id: completionModuleId,
         p_topic_ids: completionTopicIds,
       });
     } catch {
