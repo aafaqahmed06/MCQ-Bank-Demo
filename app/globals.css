@@ -331,3 +331,39 @@ body {
   background: var(--error-soft);
   color: var(--error-text);
 }
+
+/* ── Page transition (fade-out / fade-in) ─────────────────────────── */
+@keyframes page-fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes page-overlay-out {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes page-overlay-in {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+.page-transition-fade-in {
+  animation: page-fade-in 0.28s ease-out;
+}
+
+.page-transition-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--bg-page);
+  pointer-events: none;
+}
+
+.page-transition-overlay-out {
+  animation: page-overlay-out 0.15s ease forwards;
+}
+
+.page-transition-overlay-in {
+  animation: page-overlay-in 0.24s ease forwards;
+}
