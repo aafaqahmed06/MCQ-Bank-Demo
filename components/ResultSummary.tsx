@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import DkBot from "@/components/DkBot";
 
 type ResultSummaryProps = {
   correct: number;
@@ -17,10 +18,17 @@ export default function ResultSummary({
 }: ResultSummaryProps) {
   const incorrect = total - correct;
   const percentage = total === 0 ? 0 : Math.round((correct / total) * 100);
+  const botState =
+    percentage >= 80 ? "celebrating" :
+    percentage >= 50 ? "happy" :
+    "thinking";
 
   return (
     <section className="hud-card fade-in rounded-xl p-6">
-      <h2 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">Session Complete</h2>
+      <div className="flex justify-center">
+        <DkBot state={botState} size="medium" alt={null} />
+      </div>
+      <h2 className="mt-4 text-3xl font-bold tracking-tight text-[var(--text-heading)]">Session Complete</h2>
       <p className="mt-1 text-[var(--text-muted)]">Review your performance below.</p>
 
       <div className="mt-5 grid gap-4 sm:grid-cols-2">

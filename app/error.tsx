@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import DkBot from "@/components/DkBot";
 
 export default function Error({
   error,
@@ -16,7 +17,10 @@ export default function Error({
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="hud-card w-full max-w-md rounded-xl p-8 text-center">
-        <h1 className="text-2xl font-bold text-[var(--text-heading)]">
+        <div className="flex justify-center">
+          <DkBot state="concerned" size="small" alt={null} />
+        </div>
+        <h1 className="mt-4 text-2xl font-bold text-[var(--text-heading)]">
           Something went wrong
         </h1>
         <p className="mt-3 text-sm text-[var(--text-muted)]">

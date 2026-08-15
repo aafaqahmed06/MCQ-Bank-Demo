@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import DkBot from "@/components/DkBot";
 
 type LeaderboardRow = {
   rank: number;
@@ -60,7 +61,10 @@ export default function Leaderboard() {
   if (rows.length === 0) {
     return (
       <div className="py-6 text-center">
-        <p className="text-lg font-semibold text-[var(--text-heading)]">
+        <div className="flex justify-center">
+          <DkBot state="thinking" size="small" alt={null} />
+        </div>
+        <p className="mt-3 text-lg font-semibold text-[var(--text-heading)]">
           No results yet
         </p>
         <p className="mx-auto mt-2 max-w-md text-sm text-[var(--text-muted)]">

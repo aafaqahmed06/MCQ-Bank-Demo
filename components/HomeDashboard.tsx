@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/AuthProvider";
 import { useProfileInfo } from "@/components/useProfileInfo";
+import DkBot from "@/components/DkBot";
 import { createClient } from "@/lib/supabase/client";
 
 type Stats = {
@@ -199,7 +200,10 @@ export default function HomeDashboard() {
 
       {!hasActivity && (
         <section className="hud-card rounded-xl border-dashed p-6 text-center sm:p-8">
-          <p className="text-[var(--text-muted)]">
+          <div className="flex justify-center">
+            <DkBot state="thumbsUp" size="small" alt={null} />
+          </div>
+          <p className="mt-3 text-[var(--text-muted)]">
             No activity yet — start practicing or take your first exam simulation
             to build your stats.
           </p>

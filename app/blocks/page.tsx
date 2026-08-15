@@ -1,6 +1,7 @@
 import BlockCard from "@/components/BlockCard";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import RequireProfile from "@/components/RequireProfile";
+import DkBot from "@/components/DkBot";
 import { getBlocks } from "@/lib/curriculum";
 
 export default async function BlocksPage() {
@@ -19,9 +20,14 @@ export default async function BlocksPage() {
             </p>
           </header>
           {blocks.length === 0 ? (
-            <p className="hud-card rounded-xl border-dashed p-6 text-center text-[var(--text-muted)]">
-              No curriculum available yet.
-            </p>
+            <div className="hud-card rounded-xl border-dashed p-6 text-center">
+              <div className="flex justify-center">
+                <DkBot state="neutral" size="small" alt={null} />
+              </div>
+              <p className="mt-3 text-[var(--text-muted)]">
+                No curriculum available yet.
+              </p>
+            </div>
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2">
               {blocks.map((block) => (

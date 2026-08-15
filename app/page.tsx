@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ContinueCard from "@/components/ContinueCard";
+import DkBot from "@/components/DkBot";
 import { useAuth } from "@/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 
@@ -39,6 +40,9 @@ export default function LandingPage() {
     <LayoutWrapper>
       <div className="flex flex-1 flex-col items-center justify-center py-8 md:py-12">
         <section className="hud-card fade-in w-full rounded-xl p-6 text-center sm:p-8">
+          <div className="flex justify-center">
+            <DkBot state="waving" size="hero" alt={null} />
+          </div>
           <p className="text-sm font-medium uppercase tracking-wide text-[var(--accent-cyan)]">
             {stats ? `${stats.mcqs} Practice Questions` : "Practice Questions"}
           </p>

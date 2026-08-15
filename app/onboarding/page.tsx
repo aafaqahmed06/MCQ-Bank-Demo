@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import OnboardingForm from "@/components/OnboardingForm";
 import LayoutWrapper from "@/components/LayoutWrapper";
+import DkBot from "@/components/DkBot";
 
 export default async function OnboardingPage() {
   const supabase = await createClient();
@@ -15,7 +16,10 @@ export default async function OnboardingPage() {
     <LayoutWrapper>
       <div className="space-y-6">
         <section className="hud-card fade-in mx-auto w-full max-w-2xl rounded-xl p-6 sm:p-8">
-          <h1 className="text-3xl font-bold text-[var(--text-heading)]">Set up your profile</h1>
+          <div className="flex justify-center">
+            <DkBot state="happy" size="medium" alt={null} />
+          </div>
+          <h1 className="mt-4 text-3xl font-bold text-[var(--text-heading)]">Set up your profile</h1>
           <p className="hud-muted mt-1">
             Tell us who you are to personalize your dashboard.
           </p>
