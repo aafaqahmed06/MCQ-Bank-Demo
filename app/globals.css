@@ -432,24 +432,20 @@ body {
   transform: scale(1.3);
 }
 
-/* Dashboard highlight glow */
-[data-tutorial] {
-  transition: box-shadow 250ms ease, border-color 250ms ease;
+/* Spotlight — dims the dashboard with a hole over the highlighted element.
+   The 9999px box-shadow darkens everything except the target → spotlight. */
+.tutorial-spotlight {
+  position: fixed;
+  border: 2px solid var(--accent-cyan);
   border-radius: 0.75rem;
-}
-.tutorial-highlight {
-  box-shadow: 0 0 0 3px rgba(47, 184, 171, 0.35),
-    0 0 16px rgba(47, 184, 171, 0.15);
-  border-color: var(--accent-cyan) !important;
+  box-shadow: 0 0 0 9999px rgba(3, 8, 12, 0.6);
+  pointer-events: none;
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .tutorial-bot {
     animation: none !important;
-  }
-  [data-tutorial] {
-    transition: none !important;
   }
 }
 

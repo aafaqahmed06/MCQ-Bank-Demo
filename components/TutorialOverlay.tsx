@@ -1,29 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import DkBot from "@/components/DkBot";
 import type { DkBotState } from "@/lib/dkBotAssets";
 
 /**
  * D.K. Bot Tutorial — floating character that guides new users through
- * the app after onboarding. Uses framer-motion for step transitions and
- * CSS for highlight glow on dashboard sections.
+ * the app after onboarding.
  *
- * Renders nothing if the user has completed or skipped the tutorial
- * (stored in localStorage under "dk-tutorial-completed").
+ * - Larger D.K. Bot floats bottom-left with a speech bubble.
+ * - On steps that reference a dashboard section, a spotlight dims the
+ *   whole dashboard and forms a glowing window over the target.
+ * - Uses framer-motion for cross-fades and smooth spotlight movement.
+ * - Renders nothing if the user has completed/skipped the tutorial
+ *   (stored in localStorage under "dk-tutorial-completed").
  */
 
 const STORAGE_KEY = "dk-tutorial-completed";
+
+const SPOTLIGHT_PAD = 6; // px of breathing room around the target
 
 type Step = {
   state: DkBotState;
   title: string;
   message: string;
-  highlight?: string; // CSS selector for [data-tutorial] target
-  cta?: string;       // override CTA label (default: "Next")
-  href?: string;      // navigation target on final step
+  highlight?: string;   // CSS selector for [data-tutorial] target
+  cta?: string;         // override CTA label (default: "Next")
+  href?: string;        // navigation target on final step
 };
 
 const STEPS: Step[] = [
@@ -71,32 +76,74 @@ const STEPS: Step[] = [
   },
 ];
 
-/* ── Highlight manager ─────────────────────────────────────────── */
+type Rect = { top: number; left: number; width: number; height: number };
 
-let currentHighlight: Element | null = null;
+/* ── Spotlight ────────────────────────────────────────────────────
+   A fixed overlay that dims the dashboard and forms a glowing window
+   over the currently highlighted element. Moves smoothly between
+   targets and fades in/out on mount/unmount via AnimatePresence.
+   ───────────────────────────────────────────────────────────────── */
 
-function setHighlight(selector: string | undefined) {
-  if (currentHighlight) {
-    currentHighlight.classList.remove("tutorial-highlight");
-    currentHighlight = null;
-  }
-  if (selector) {
-    const el = document.querySelector(selector);
-    if (el) {
-      el.classList.add("tutorial-highlight");
-      currentHighlight = el;
+function Spotlight({ selector }: { selector?: string }) {
+  const [rect, setRect] = useState<Rect | null>(null);
+  const lastSelector = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!selector) return;
+
+    const measure = () => {
+      const el = document.querySelector(selector);
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      setRect({
+        top: r.top - SPOTLIGHT_PAD,
+        left: r.left - SPOTLIGHT_PAD,
+        width: r.width + SPOTLIGHT_PAD * 2,
+        height: r.height + SPOTLIGHT_PAD * 2,
+      });
+    };
+
+    // Scroll the target into view when a new highlight step begins.
+    if (lastSelector.current !== selector) {
+      lastSelector.current = selector;
+      const el = document.querySelector(selector);
+      const reduce = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      el?.scrollIntoView({
+        block: "center",
+        behavior: reduce ? "auto" : "smooth",
+      });
     }
-  }
+
+    window.addEventListener("resize", measure);
+    window.addEventListener("scroll", measure, true);
+    const raf = requestAnimationFrame(measure);
+
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("scroll", measure, true);
+      cancelAnimationFrame(raf);
+    };
+  }, [selector]);
+
+  return (
+    <AnimatePresence>
+      {rect && (
+        <motion.div
+          className="tutorial-spotlight"
+          aria-hidden="true"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, ...rect }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+        />
+      )}
+    </AnimatePresence>
+  );
 }
 
-function clearHighlight() {
-  if (currentHighlight) {
-    currentHighlight.classList.remove("tutorial-highlight");
-    currentHighlight = null;
-  }
-}
-
-/* ── Component ─────────────────────────────────────────────────── */
+/* ── Tutorial ───────────────────────────────────────────────────── */
 
 export default function TutorialOverlay({
   children,
@@ -114,16 +161,7 @@ export default function TutorialOverlay({
     }
   });
 
-  // Update highlight when step changes
-  useEffect(() => {
-    if (!completed) {
-      setHighlight(STEPS[step]?.highlight);
-    }
-    return () => clearHighlight();
-  }, [step, completed]);
-
   function dismiss() {
-    clearHighlight();
     setCompleted(true);
     try {
       localStorage.setItem(STORAGE_KEY, "true");
@@ -149,9 +187,13 @@ export default function TutorialOverlay({
   const current = STEPS[step];
 
   return (
-    <>
+    <MotionConfig reducedMotion="user">
       {children}
 
+      {/* Spotlight over the highlighted dashboard section */}
+      {current.highlight && <Spotlight selector={current.highlight} />}
+
+      {/* Floating bot + bubble */}
       <div className="fixed bottom-4 left-4 z-50 sm:bottom-6 sm:left-6">
         <AnimatePresence>
           <motion.div
@@ -162,7 +204,7 @@ export default function TutorialOverlay({
           >
             {/* Speech bubble */}
             <motion.div
-              className="tutorial-bubble max-w-[280px] text-sm sm:max-w-sm sm:text-base"
+              className="tutorial-bubble max-w-[280px] text-sm sm:max-w-lg sm:text-base"
               role="region"
               aria-label="D.K. Bot tutorial"
               initial={{ opacity: 0, y: 8, scale: 0.96 }}
@@ -218,7 +260,7 @@ export default function TutorialOverlay({
               </div>
             </motion.div>
 
-            {/* Bot */}
+            {/* Bot — large on desktop, small on mobile */}
             <div className="tutorial-bot">
               <AnimatePresence mode="wait">
                 <motion.div
@@ -228,13 +270,18 @@ export default function TutorialOverlay({
                   exit={{ opacity: 0, scale: 0.95 }}
                   transition={{ duration: 0.18 }}
                 >
-                  <DkBot state={current.state} size="small" alt={null} />
+                  <span className="hidden sm:block">
+                    <DkBot state={current.state} size="large" alt={null} />
+                  </span>
+                  <span className="sm:hidden">
+                    <DkBot state={current.state} size="small" alt={null} />
+                  </span>
                 </motion.div>
               </AnimatePresence>
             </div>
           </motion.div>
         </AnimatePresence>
       </div>
-    </>
+    </MotionConfig>
   );
 }
