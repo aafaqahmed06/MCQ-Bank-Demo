@@ -170,6 +170,53 @@ export default function TutorialOverlay({
     }
   }
 
+  /** Replay the tutorial from step zero, e.g. via the dev shortcuts. */
+  function replay() {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+    setCompleted(false);
+    setStep(0);
+  }
+
+  // Dev shortcuts — registered before the early return so they stay live
+  // even after the tutorial is dismissed (only mounted on /home).
+  // Desktop: Ctrl+Shift+Alt+R. Mobile: 5 quick taps anywhere within 2s.
+  useEffect(() => {
+    let taps = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    function onKey(e: KeyboardEvent) {
+      if (e.ctrlKey && e.shiftKey && e.altKey && e.key.toLowerCase() === "r") {
+        e.preventDefault();
+        replay();
+      }
+    }
+
+    function onTap() {
+      taps += 1;
+      if (timer) clearTimeout(timer);
+      if (taps >= 5) {
+        taps = 0;
+        replay();
+      } else {
+        timer = setTimeout(() => {
+          taps = 0;
+        }, 2000);
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onTap);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onTap);
+      if (timer) clearTimeout(timer);
+    };
+  }, []);
+
   function advance() {
     const next = step + 1;
     if (next >= STEPS.length) {
