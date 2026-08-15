@@ -164,6 +164,7 @@ export default function HomeDashboard() {
 
       {/* Statistics — scannable white cards */}
       <section
+        data-tutorial="stats"
         className="grid grid-cols-2 gap-4 lg:grid-cols-4"
         aria-label="Your statistics"
       >
@@ -213,6 +214,7 @@ export default function HomeDashboard() {
       {/* Primary actions — teal primary, outlined secondary, quieter leaderboard */}
       <section className="grid gap-4 md:grid-cols-2" aria-label="Quick actions">
         <Link
+          data-tutorial="practice"
           href="/blocks"
           className="group flex items-center justify-between rounded-xl bg-[var(--primary-btn-bg)] p-6 text-[var(--primary-btn-text)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-btn-bg-hover)]"
         >
@@ -228,6 +230,7 @@ export default function HomeDashboard() {
         </Link>
 
         <Link
+          data-tutorial="exam"
           href="/exam"
           className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:-translate-y-0.5 hover:border-[var(--accent-cyan)]"
         >
@@ -243,7 +246,7 @@ export default function HomeDashboard() {
         </Link>
       </section>
 
-      <section>
+      <section data-tutorial="leaderboard">
         <Link
           href="/leaderboard"
           className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--accent-cyan)]"
