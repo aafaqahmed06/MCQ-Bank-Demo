@@ -1,5 +1,5 @@
 /**
- * D.K. Bot — centralized asset registry.
+ * Dex — centralized asset registry.
  *
  * Maps semantic character states to the actual PNG files in public/dk-bot/.
  * To add a new state: add an entry here and drop the PNG into public/dk-bot/.

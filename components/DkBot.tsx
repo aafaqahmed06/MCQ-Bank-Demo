@@ -4,12 +4,12 @@ import Image from "next/image";
 import { DK_BOT_ASSETS, DK_BOT_DEFAULT, type DkBotState } from "@/lib/dkBotAssets";
 
 /**
- * D.K. Bot — reusable character component.
+ * Dex — reusable character component.
  *
  * Usage:
  *   <DkBot state="happy" />
  *   <DkBot state="thinking" size="large" />
- *   <DkBot state="celebrating" alt="D.K. celebrating your score" />
+ *   <DkBot state="celebrating" alt="Dex celebrating your score" />
  *
  * Assets live in public/dk-bot/ and are mapped via lib/dkBotAssets.ts.
  * To add a new bot state, add the PNG and update the registry — no UI changes needed.
@@ -51,7 +51,7 @@ export default function DkBot({
     >
       <Image
         src={src}
-        alt={isDecorative ? "" : `D.K. ${resolved}`}
+        alt={isDecorative ? "" : `Dex ${resolved}`}
         {...(isDecorative ? { "aria-hidden": true } : {})}
         height={height}
         style={{ width: "auto", height: "100%", objectFit: "contain" }}

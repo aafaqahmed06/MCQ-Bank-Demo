@@ -7,10 +7,10 @@ import DkBot from "@/components/DkBot";
 import type { DkBotState } from "@/lib/dkBotAssets";
 
 /**
- * D.K. Bot Tutorial — floating character that guides new users through
+ * Dex Tutorial — floating character that guides new users through
  * the app after onboarding.
  *
- * - Larger D.K. Bot floats bottom-left with a speech bubble.
+ * - Larger Dex floats bottom-left with a speech bubble.
  * - On steps that reference a dashboard section, a spotlight dims the
  *   whole dashboard and forms a glowing window over the target.
  * - Uses framer-motion for cross-fades and smooth spotlight movement.
@@ -36,7 +36,7 @@ const STEPS: Step[] = [
     state: "waving",
     title: "Welcome!",
     message:
-      "Hi! I'm D.K., your study buddy. Let me show you around DiagKnow.",
+      "Hi! I'm Dex, your study buddy. Let me show you around DiagKnow.",
   },
   {
     state: "presenting",
@@ -253,7 +253,7 @@ export default function TutorialOverlay({
             <motion.div
               className="tutorial-bubble max-w-[280px] text-sm sm:max-w-lg sm:text-base"
               role="region"
-              aria-label="D.K. Bot tutorial"
+              aria-label="Dex tutorial"
               initial={{ opacity: 0, y: 8, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ duration: 0.25, ease: "easeOut" }}
