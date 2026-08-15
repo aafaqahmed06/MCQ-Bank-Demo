@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getTopicGroupsByModuleId } from "@/lib/topicGroups";
 import type {
   Block,
   MCQ,
@@ -127,29 +128,55 @@ export async function getCompletedTopicIds(): Promise<Set<string>> {
 }
 
 /**
- * Per-module topic completion counts, optionally scoped to a set of modules.
- * Keyed by module_id -> { completed, total }.
+ * Per-module topic-group completion counts, optionally scoped to a set of
+ * modules. Keyed by module_id -> { completed, total }.
+ *
+ * The `total` is the number of topic GROUPS defined for the module (e.g. the
+ * 11 physiology groups), not the number of granular topic rows in the topics
+ * table — that is what the blocks/modules cards present to the user. A group
+ * counts toward `total` only when at least one of its topics exists in the
+ * bank, and toward `completed` only when every one of its topics is done
+ * (same semantics as getTopicGroupCompletion).
  */
 export async function getTopicProgressByModule(
   moduleIds?: string[],
 ): Promise<Record<string, { completed: number; total: number }>> {
   const supabase = await createClient();
 
-  let q = supabase.from("topics").select("id, module_id");
+  let q = supabase.from("topics").select("id, name, module_id");
   if (moduleIds && moduleIds.length > 0) {
     q = q.in("module_id", moduleIds);
   }
   const { data: topicRows } = await q;
 
-  const completed = await getCompletedTopicIds();
-
-  const byModule: Record<string, { completed: number; total: number }> = {};
+  const nameToIdByModule = new Map<string, Map<string, string>>();
   for (const t of topicRows ?? []) {
     const mid = t.module_id as string;
-    const cur = byModule[mid] ?? { completed: 0, total: 0 };
-    cur.total += 1;
-    if (completed.has(t.id as string)) cur.completed += 1;
-    byModule[mid] = cur;
+    if (!nameToIdByModule.has(mid)) nameToIdByModule.set(mid, new Map());
+    nameToIdByModule.get(mid)!.set(t.name as string, t.id as string);
+  }
+
+  const completed = await getCompletedTopicIds();
+
+  const targetModules =
+    moduleIds && moduleIds.length > 0
+      ? moduleIds
+      : [...nameToIdByModule.keys()];
+
+  const byModule: Record<string, { completed: number; total: number }> = {};
+  for (const mid of targetModules) {
+    const nameToId = nameToIdByModule.get(mid) ?? new Map<string, string>();
+    let done = 0;
+    let total = 0;
+    for (const group of getTopicGroupsByModuleId(mid)) {
+      const ids = group.topics
+        .map((name) => nameToId.get(name))
+        .filter((id): id is string => typeof id === "string");
+      if (ids.length === 0) continue;
+      total += 1;
+      if (ids.every((id) => completed.has(id))) done += 1;
+    }
+    byModule[mid] = { completed: done, total };
   }
   return byModule;
 }
