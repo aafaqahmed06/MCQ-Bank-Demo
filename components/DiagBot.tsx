@@ -86,37 +86,29 @@ function Eyes({ mood }: { mood: DiagBotMood }) {
   }
 }
 
-/* ── Sparkles (celebrating only) ───────────────────────────────── */
+/* ── Sparkles (celebrating — restrained) ───────────────────────── */
 
 function Sparkles() {
   return (
-    <g fill={TEAL} opacity="0.8">
+    <g fill={TEAL} opacity="0.7">
       <rect
         x="118"
         y="24"
-        width="7"
-        height="7"
-        rx="1.5"
-        transform="rotate(45 121.5 27.5)"
-      />
-      <rect
-        x="32"
-        y="30"
         width="6"
         height="6"
-        rx="1.2"
-        transform="rotate(45 35 33)"
+        rx="1.5"
+        transform="rotate(45 121 27)"
       />
       <rect
-        x="128"
-        y="56"
+        x="34"
+        y="32"
         width="5"
         height="5"
         rx="1"
-        transform="rotate(45 130.5 58.5)"
+        transform="rotate(45 36.5 34.5)"
       />
-      <circle cx="26" cy="68" r="3" />
-      <circle cx="136" cy="36" r="2.5" />
+      <circle cx="130" cy="44" r="2.5" />
+      <circle cx="28" cy="56" r="2" />
     </g>
   );
 }
@@ -124,56 +116,152 @@ function Sparkles() {
 /* ── Arms ──────────────────────────────────────────────────────── */
 
 function Arms({ mood }: { mood: DiagBotMood }) {
-  if (mood === "celebrating") {
-    return (
-      <g>
-        <line
-          x1="46"
-          y1="106"
-          x2="28"
-          y2="76"
-          stroke={WHITE}
-          strokeWidth="13"
-          strokeLinecap="round"
-        />
-        <circle cx="25" cy="72" r="7" fill={TEAL} />
-        <line
-          x1="114"
-          y1="106"
-          x2="132"
-          y2="76"
-          stroke={WHITE}
-          strokeWidth="13"
-          strokeLinecap="round"
-        />
-        <circle cx="135" cy="72" r="7" fill={TEAL} />
-      </g>
-    );
+  switch (mood) {
+    case "celebrating":
+      return (
+        <g>
+          <line
+            x1="46"
+            y1="106"
+            x2="28"
+            y2="78"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="25" cy="74" r="7" fill={TEAL} />
+          <line
+            x1="114"
+            y1="106"
+            x2="132"
+            y2="78"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="135" cy="74" r="7" fill={TEAL} />
+        </g>
+      );
+    case "happy":
+      return (
+        <g>
+          <line
+            x1="46"
+            y1="106"
+            x2="32"
+            y2="128"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="30" cy="132" r="7" fill={TEAL} />
+          <line
+            x1="114"
+            y1="106"
+            x2="128"
+            y2="132"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="130" cy="136" r="7" fill={TEAL} />
+        </g>
+      );
+    case "thinking":
+      return (
+        <g>
+          <line
+            x1="46"
+            y1="106"
+            x2="32"
+            y2="132"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="30" cy="136" r="7" fill={TEAL} />
+          <line
+            x1="114"
+            y1="106"
+            x2="122"
+            y2="82"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="124" cy="78" r="7" fill={TEAL} />
+        </g>
+      );
+    case "concerned":
+      return (
+        <g>
+          <line
+            x1="46"
+            y1="106"
+            x2="38"
+            y2="134"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="36" cy="138" r="7" fill={TEAL} />
+          <line
+            x1="114"
+            y1="106"
+            x2="122"
+            y2="134"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="124" cy="138" r="7" fill={TEAL} />
+        </g>
+      );
+    default:
+      return (
+        <g>
+          <line
+            x1="46"
+            y1="106"
+            x2="32"
+            y2="136"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="30" cy="140" r="7" fill={TEAL} />
+          <line
+            x1="114"
+            y1="106"
+            x2="128"
+            y2="136"
+            stroke={WHITE}
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <circle cx="130" cy="140" r="7" fill={TEAL} />
+        </g>
+      );
   }
-  return (
-    <g>
-      <line
-        x1="46"
-        y1="106"
-        x2="32"
-        y2="136"
-        stroke={WHITE}
-        strokeWidth="13"
-        strokeLinecap="round"
-      />
-      <circle cx="30" cy="140" r="7" fill={TEAL} />
-      <line
-        x1="114"
-        y1="106"
-        x2="128"
-        y2="136"
-        stroke={WHITE}
-        strokeWidth="13"
-        strokeLinecap="round"
-      />
-      <circle cx="130" cy="140" r="7" fill={TEAL} />
-    </g>
-  );
+}
+
+/* ── Mood transforms ───────────────────────────────────────────── */
+
+function moodTransform(mood: DiagBotMood) {
+  switch (mood) {
+    case "happy":
+      return "translate(0 -1) rotate(2 80 70)";
+    case "thinking":
+      return "rotate(-2 80 70)";
+    case "excited":
+      return "translate(0 -2) rotate(1 80 70)";
+    case "concerned":
+      return "rotate(-1 80 70)";
+    case "celebrating":
+      return "translate(0 -2)";
+    default:
+      return undefined;
+  }
 }
 
 /* ── Main component ────────────────────────────────────────────── */
@@ -184,6 +272,8 @@ export default function DiagBot({
   animation = true,
   className,
 }: DiagBotProps) {
+  const mt = moodTransform(mood);
+
   return (
     <svg
       viewBox="0 0 160 180"
@@ -195,67 +285,84 @@ export default function DiagBot({
       <g className={animation ? "digibot-idle" : undefined}>
         {mood === "celebrating" && <Sparkles />}
 
-        {/* antenna */}
+        {/* antenna — 2px offset right for subtle asymmetry */}
         <line
-          x1="80"
+          x1="82"
           y1="20"
-          x2="80"
+          x2="82"
           y2="10"
           stroke={OUTLINE}
           strokeWidth="3.5"
           strokeLinecap="round"
         />
-        <circle cx="80" cy="7" r="5" fill={TEAL} />
+        <circle cx="82" cy="7" r="5" fill={TEAL} />
 
-        {/* ear modules — large, prominent teal domes */}
+        {/* ear modules */}
         <circle cx="14" cy="68" r="18" fill={TEAL} />
         <circle cx="146" cy="68" r="18" fill={TEAL} />
 
-        {/* head shell — large dome shape */}
-        <path
-          d="M20 98 L20 60 Q20 18 80 18 Q140 18 140 60 L140 98 Z"
-          fill={WHITE}
-          stroke={OUTLINE}
-          strokeWidth="2"
-        />
-
-        {/* face display — very large, dark, rounded */}
-        <rect
-          x="30"
-          y="30"
-          width="100"
-          height="62"
-          rx="16"
-          fill={NAVY}
-        />
-
-        <g className={animation ? "digibot-eyes" : undefined}>
-          <Eyes mood={mood} />
+        {/* head — mood transform applies tilt/lift */}
+        <g transform={mt}>
+          <path
+            d="M20 98 L20 60 Q20 18 80 18 Q140 18 140 60 L140 98 Z"
+            fill={WHITE}
+            stroke={OUTLINE}
+            strokeWidth="2"
+          />
+          <rect
+            x="30"
+            y="30"
+            width="100"
+            height="62"
+            rx="16"
+            fill={NAVY}
+          />
+          <g className={animation ? "digibot-eyes" : undefined}>
+            <Eyes mood={mood} />
+          </g>
         </g>
 
-        {/* body — small egg shape, tucked under the large head */}
-        <path
-          d="M44 98 C44 94 48 92 56 92 L104 92 C112 92 116 94 116 98 C116 120 118 134 114 142 C110 152 96 156 80 156 C64 156 50 152 46 142 C42 134 44 120 44 98 Z"
-          fill={WHITE}
+        {/* shoulder line — subtle transition from head to body */}
+        <line
+          x1="50"
+          y1="98"
+          x2="110"
+          y2="98"
           stroke={OUTLINE}
-          strokeWidth="2"
-        />
-        <ellipse
-          cx="80"
-          cy="124"
-          rx="24"
-          ry="13"
-          fill={GRAY}
-          opacity="0.6"
+          strokeWidth="1.2"
+          opacity="0.5"
         />
 
-        {/* chest badge — DiagKnow symbol, prominent on the small body */}
-        <circle cx="80" cy="120" r="20" fill={TEAL} />
-        <g transform="translate(64 104)" style={{ color: WHITE }}>
-          <LogoMark className="size-8" />
+        {/* body — same mood transform as head */}
+        <g transform={mt}>
+          <path
+            d="M44 98 C44 94 48 92 56 92 L104 92 C112 92 116 94 116 98 C116 120 118 134 114 142 C110 152 96 156 80 156 C64 156 50 152 46 142 C42 134 44 120 44 98 Z"
+            fill={WHITE}
+            stroke={OUTLINE}
+            strokeWidth="2"
+          />
+
+          {/* chest panel — recessed area for the badge */}
+          <rect
+            x="60"
+            y="104"
+            width="40"
+            height="36"
+            rx="10"
+            fill={GRAY}
+            stroke={OUTLINE}
+            strokeWidth="1"
+            opacity="0.7"
+          />
+
+          {/* teal badge — sits inside the chest panel */}
+          <circle cx="80" cy="120" r="14" fill={TEAL} />
+          <g transform="translate(68 108)" style={{ color: WHITE }}>
+            <LogoMark className="size-6" />
+          </g>
+
+          <Arms mood={mood} />
         </g>
-
-        <Arms mood={mood} />
 
         {/* legs */}
         <line
@@ -299,7 +406,7 @@ export default function DiagBot({
           strokeWidth="1.5"
         />
 
-        {/* subtle shadow under body */}
+        {/* subtle shadow */}
         <ellipse
           cx="80"
           cy="172"
