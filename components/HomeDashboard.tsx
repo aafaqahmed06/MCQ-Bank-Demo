@@ -210,7 +210,7 @@ export default function HomeDashboard() {
       <section className="grid gap-4 md:grid-cols-2" aria-label="Quick actions">
         <Link
           href="/blocks"
-          className="group flex items-center justify-between rounded-xl bg-[var(--primary-btn-bg)] p-6 text-[var(--primary-btn-text)] transition-colors hover:bg-[var(--primary-btn-bg-hover)]"
+          className="group flex items-center justify-between rounded-xl bg-[var(--primary-btn-bg)] p-6 text-[var(--primary-btn-text)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-btn-bg-hover)]"
         >
           <div>
             <p className="text-base font-semibold">Start Practice</p>
@@ -225,7 +225,7 @@ export default function HomeDashboard() {
 
         <Link
           href="/exam"
-          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition-colors hover:border-[var(--accent-cyan)]"
+          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:-translate-y-0.5 hover:border-[var(--accent-cyan)]"
         >
           <div>
             <p className="text-base font-semibold text-[var(--text-heading)]">Exam Simulation</p>
@@ -242,7 +242,7 @@ export default function HomeDashboard() {
       <section>
         <Link
           href="/leaderboard"
-          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition-colors hover:border-[var(--accent-cyan)]"
+          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--accent-cyan)]"
         >
           <div className="flex items-center gap-3">
             <span className="text-[var(--accent-violet)]">

@@ -14,9 +14,9 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "diagnknow-theme";
 
 function getInitialTheme(): Theme {
-  if (typeof window === "undefined") return "dark";
+  if (typeof window === "undefined") return "light";
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored === "light" || stored === "dark" ? stored : "dark";
+  return stored === "light" || stored === "dark" ? stored : "light";
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
