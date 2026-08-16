@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import DkBot from "@/components/DkBot";
+import { useAuth } from "@/components/AuthProvider";
 import type { DkBotState } from "@/lib/dkBotAssets";
 
 /**
@@ -15,10 +16,24 @@ import type { DkBotState } from "@/lib/dkBotAssets";
  *   whole dashboard and forms a glowing window over the target.
  * - Uses framer-motion for cross-fades and smooth spotlight movement.
  * - Renders nothing if the user has completed/skipped the tutorial
- *   (stored in localStorage under "dk-tutorial-completed").
+ *   (stored in localStorage per user under "dk-tutorial-completed-<userId>").
+ *   A brand-new account always starts the tutorial because that flag has not
+ *   been written yet for the new user id.
  */
 
-const STORAGE_KEY = "dk-tutorial-completed";
+const STORAGE_KEY_PREFIX = "dk-tutorial-completed";
+
+function storageKeyFor(userId: string) {
+  return `${STORAGE_KEY_PREFIX}-${userId}`;
+}
+
+function readCompleted(userId: string): boolean {
+  try {
+    return localStorage.getItem(storageKeyFor(userId)) === "true";
+  } catch {
+    return true;
+  }
+}
 
 const SPOTLIGHT_PAD = 6; // px of breathing room around the target
 
@@ -151,39 +166,50 @@ export default function TutorialOverlay({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { user } = useAuth();
+  const userId = user?.id ?? null;
   const [step, setStep] = useState(0);
+  // Only mounted once RequireProfile has resolved a signed-in user, so the
+  // lazy initializer can safely read the per-user completion flag. A new
+  // account has no flag yet → tutorial starts mandatorily.
   const [completed, setCompleted] = useState<boolean>(() => {
-    if (typeof window === "undefined") return true;
-    try {
-      return localStorage.getItem(STORAGE_KEY) === "true";
-    } catch {
-      return true;
-    }
+    if (typeof window === "undefined" || !userId) return true;
+    return readCompleted(userId);
   });
 
   function dismiss() {
     setCompleted(true);
+    if (!userId) return;
     try {
-      localStorage.setItem(STORAGE_KEY, "true");
+      localStorage.setItem(storageKeyFor(userId), "true");
     } catch {
       // ignore
     }
   }
 
   /** Replay the tutorial from step zero, e.g. via the dev shortcuts. */
-  function replay() {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
+  const replay = useCallback(() => {
+    if (userId) {
+      try {
+        localStorage.removeItem(storageKeyFor(userId));
+      } catch {
+        // ignore
+      }
     }
     setCompleted(false);
     setStep(0);
-  }
+  }, [userId]);
 
   // Dev shortcuts — registered before the early return so they stay live
   // even after the tutorial is dismissed (only mounted on /home).
   // Desktop: Ctrl+Shift+Alt+R. Mobile: 5 quick taps anywhere within 2s.
+  // NOTE: the tap shortcut only counts taps while the tutorial is hidden;
+  // otherwise tapping the tutorial's own buttons 5 times would restart it.
+  const completedRef = useRef(completed);
+  useEffect(() => {
+    completedRef.current = completed;
+  }, [completed]);
+
   useEffect(() => {
     let taps = 0;
     let timer: ReturnType<typeof setTimeout> | null = null;
@@ -196,6 +222,7 @@ export default function TutorialOverlay({
     }
 
     function onTap() {
+      if (!completedRef.current) return; // tutorial visible — don't replay
       taps += 1;
       if (timer) clearTimeout(timer);
       if (taps >= 5) {
@@ -215,7 +242,7 @@ export default function TutorialOverlay({
       window.removeEventListener("pointerdown", onTap);
       if (timer) clearTimeout(timer);
     };
-  }, []);
+  }, [replay]);
 
   function advance() {
     const next = step + 1;
