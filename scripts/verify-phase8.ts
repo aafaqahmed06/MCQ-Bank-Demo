@@ -268,6 +268,12 @@ async function main(): Promise<void> {
         record("answers persisted", (ans?.length ?? 0) === 20, `rows=${ans?.length ?? 0}`);
         const { data: prog } = await u1c.from("user_topic_progress").select("questions_attempted").eq("user_id", u1.id);
         record("progress upserted", (prog?.length ?? 0) > 0, `rows=${prog?.length ?? 0}`);
+        const attemptedSum = (prog ?? []).reduce((sum, r) => sum + Number(r.questions_attempted), 0);
+        record(
+          "progress counts equal exam size",
+          attemptedSum === 20,
+          `attempted=${attemptedSum}/20 rows=${prog?.length ?? 0}`,
+        );
         const { data: rev, error: revErr } = await u1c.rpc("get_exam_review", { p_exam_id: u1ExamId });
         const revKeys = ((rev as unknown[])?.[0] ?? {}) as Record<string, unknown>;
         record(
