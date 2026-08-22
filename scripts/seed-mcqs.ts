@@ -179,19 +179,53 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const errors = validateMcqs(rawMcqs as McqRow[]);
-  if (errors.length > 0) {
-    console.error(`\nValidation FAILED (${errors.length} issue(s)):`);
-    for (const err of errors) console.error(`  - ${err}`);
-    console.error("\nNo data was written. Fix the data and re-run.");
-    process.exit(1);
-  }
-  console.log(`Validation passed: ${rawMcqs.length} mcqs`);
-
   const db = createClient(url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
+  // One generation_jobs row per script invocation ("run" = one call to
+  // main()), covering both validation failures and import failures -- an
+  // import log is only useful if failed runs show up in it too.
+  const { data: jobRow, error: jobError } = await db
+    .from("generation_jobs")
+    .insert({ status: "running" })
+    .select("id")
+    .single();
+  if (jobError || !jobRow) {
+    console.error(`Failed to create generation_jobs row: ${jobError?.message}`);
+    process.exit(1);
+  }
+  const jobId = jobRow.id as string;
+
+  try {
+    const errors = validateMcqs(rawMcqs as McqRow[]);
+    if (errors.length > 0) {
+      console.error(`\nValidation FAILED (${errors.length} issue(s)):`);
+      for (const err of errors) console.error(`  - ${err}`);
+      console.error("\nNo data was written. Fix the data and re-run.");
+      throw new Error(`Validation failed with ${errors.length} issue(s)`);
+    }
+    console.log(`Validation passed: ${rawMcqs.length} mcqs`);
+
+    await seedAll(db, jobId);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    const { error: updateError } = await db
+      .from("generation_jobs")
+      // "now" (not a client-side Date) so completed_at uses the DB server's
+      // clock, matching started_at's `default now()` -- avoids a
+      // completed_at-before-started_at audit row if the local machine
+      // running this script has clock drift against the Postgres server.
+      .update({ status: "failed", completed_at: "now", error: { message } })
+      .eq("id", jobId);
+    if (updateError) {
+      console.error(`Failed to record generation_jobs failure: ${updateError.message}`);
+    }
+    throw err;
+  }
+}
+
+async function seedAll(db: SupabaseClient, jobId: string): Promise<void> {
   // --- Colleges -------------------------------------------------------------
   const colleges = [
     CANONICAL_COLLEGE,
@@ -357,6 +391,20 @@ async function main(): Promise<void> {
   console.log(`  modules: ${dbModules.length}`);
   console.log(`  topics: ${dbTopics.length}`);
   console.log(`  mcqs: ${dbMcqs.length} (${JSON.stringify(moduleCounts)})`);
+
+  const { error: jobUpdateError } = await db
+    .from("generation_jobs")
+    .update({
+      status: "succeeded",
+      // "now" (DB server clock), not a client-side Date -- see the failure
+      // path's update above for why.
+      completed_at: "now",
+      manifest: { count: dbMcqs.length, ids: dbMcqs.map((m) => m.id) },
+    })
+    .eq("id", jobId);
+  if (jobUpdateError) {
+    console.error(`Failed to record generation_jobs success: ${jobUpdateError.message}`);
+  }
 }
 
 function shortName(name: string): string {

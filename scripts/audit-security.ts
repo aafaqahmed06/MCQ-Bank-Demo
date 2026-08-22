@@ -58,8 +58,17 @@ async function main(): Promise<void> {
       ["anon bookmarks", "bookmarks"], ["anon question_reports", "question_reports"],
       ["anon exam_answers", "exam_answers"], ["anon exams", "exams"],
       ["anon exam_questions", "exam_questions"],
+      ["anon generation_jobs", "generation_jobs"], ["anon mcq_sources", "mcq_sources"],
     ] as const) {
       const { data } = await anon.from(t).select("id");
+      r(name, (data?.length ?? 0) === 0, `rows=${s(data?.length ?? 0)}`);
+    }
+
+    // ── REST: reviewer-only tables denied to a plain (non-reviewer) student ──
+    for (const [name, t] of [
+      ["student generation_jobs", "generation_jobs"], ["student mcq_sources", "mcq_sources"],
+    ] as const) {
+      const { data } = await u1.c.from(t).select("id");
       r(name, (data?.length ?? 0) === 0, `rows=${s(data?.length ?? 0)}`);
     }
 
