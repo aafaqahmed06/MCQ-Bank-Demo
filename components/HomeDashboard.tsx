@@ -6,6 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useProfileInfo } from "@/components/useProfileInfo";
 import DkBot from "@/components/DkBot";
 import { createClient } from "@/lib/supabase/client";
+import { getSmartPracticeEligibility, type SmartPracticeEligibility } from "@/lib/smartPractice";
 
 type PracticeStats = {
   questionsAttempted: number;
@@ -56,6 +57,7 @@ export default function HomeDashboard() {
   const [tab, setTab] = useState<Tab>("practice");
   const [practiceStats, setPracticeStats] = useState<PracticeStats | null>(null);
   const [examStats, setExamStats] = useState<ExamStats | null>(null);
+  const [smartEligibility, setSmartEligibility] = useState<SmartPracticeEligibility | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -66,7 +68,7 @@ export default function HomeDashboard() {
       // are written only by record_practice_attempt (practice mode), while
       // the exams query is untouched -- exam mode's numbers here are
       // byte-for-byte the same as before this feature existed.
-      const [progRes, examRes] = await Promise.all([
+      const [progRes, examRes, eligibilityRes] = await Promise.all([
         supabase
           .from("user_topic_progress")
           .select("practice_questions_attempted, practice_questions_correct")
@@ -77,9 +79,12 @@ export default function HomeDashboard() {
           .eq("status", "submitted")
           .order("submitted_at", { ascending: false })
           .limit(1000),
+        getSmartPracticeEligibility().catch(() => null),
       ]);
 
       if (!active) return;
+
+      setSmartEligibility(eligibilityRes);
 
       const rows = progRes.data ?? [];
       const attempted = rows.reduce(
@@ -291,21 +296,50 @@ export default function HomeDashboard() {
           </svg>
         </Link>
 
-        <Link
-          data-tutorial="smart-practice"
-          href="/practice/smart"
-          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:-translate-y-0.5 hover:border-[var(--accent-violet)]"
-        >
-          <div>
-            <p className="text-base font-semibold text-[var(--text-heading)]">Smart Practice</p>
-            <p className="mt-0.5 text-sm text-[var(--text-muted)]">
-              A mix weighted toward your weakest topics
-            </p>
-          </div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 text-[var(--accent-violet)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </Link>
+        {smartEligibility && !smartEligibility.eligible ? (
+          <Link
+            data-tutorial="smart-practice"
+            href="/practice/smart"
+            className="flex flex-col justify-between gap-3 rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:border-[var(--accent-violet)]/40"
+          >
+            <div className="flex items-center justify-between">
+              <p className="text-base font-semibold text-[var(--text-heading)]">Smart Practice</p>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[var(--text-muted)]" aria-hidden="true">
+                <rect x="5" y="11" width="14" height="9" rx="2" />
+                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm text-[var(--text-muted)]">
+                {smartEligibility.attempts} of {smartEligibility.minAttempts} questions answered
+              </p>
+              <div className="mt-2 h-2 rounded-full bg-[var(--bg-progress-track)]">
+                <div
+                  className="h-2 rounded-full bg-[var(--accent-violet)] transition-all duration-300"
+                  style={{
+                    width: `${Math.min(100, (smartEligibility.attempts / smartEligibility.minAttempts) * 100)}%`,
+                  }}
+                />
+              </div>
+            </div>
+          </Link>
+        ) : (
+          <Link
+            data-tutorial="smart-practice"
+            href="/practice/smart"
+            className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:-translate-y-0.5 hover:border-[var(--accent-violet)]"
+          >
+            <div>
+              <p className="text-base font-semibold text-[var(--text-heading)]">Smart Practice</p>
+              <p className="mt-0.5 text-sm text-[var(--text-muted)]">
+                A mix weighted toward your weakest topics
+              </p>
+            </div>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 text-[var(--accent-violet)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </Link>
+        )}
       </section>
 
       <section data-tutorial="leaderboard">

@@ -433,18 +433,24 @@ async function main(): Promise<void> {
 
       // u1 already has exam history from Section D -- Smart Practice's
       // topic weighting must pick that up even though it never reads
-      // user_topic_progress's exam-sourced columns directly.
+      // user_topic_progress's exam-sourced columns directly. u1 has ~22
+      // combined attempts at this point (20 exam answers + 2 practice
+      // attempts above) -- below the real default of 25, so this call
+      // overrides p_min_attempts down to keep the suite fast without
+      // needing 25 real attempts; the eligibility gate itself is exercised
+      // separately below.
       const smartCount = 20;
       const { data: smart, error: smartErr } = await u1c.rpc("get_smart_practice_questions", {
         p_question_count: smartCount,
+        p_min_attempts: 3,
         p_debug: true,
       });
       const smartQuestions: { topic_id: string; question_weight?: number; correct_answer: number }[] =
         smart?.questions ?? [];
       record(
         "u1 get_smart_practice_questions succeeds",
-        !smartErr && smartQuestions.length > 0 && "correct_answer" in (smartQuestions[0] ?? {}),
-        `n=${smartQuestions.length} ${notSensitive(smartErr?.message)}`,
+        !smartErr && smart?.eligible === true && smartQuestions.length > 0 && "correct_answer" in (smartQuestions[0] ?? {}),
+        `n=${smartQuestions.length} eligible=${smart?.eligible} ${notSensitive(smartErr?.message)}`,
       );
       record(
         "smart practice debug weights present",
@@ -470,6 +476,59 @@ async function main(): Promise<void> {
         "smart practice represents >= 5 distinct topics",
         (smart?.topics_included ?? 0) >= 5,
         `topics_included=${smart?.topics_included}`,
+      );
+
+      // ── Eligibility gate: u2 has 0 combined attempts (their exam from
+      // Section D was started but never submitted, so it has no
+      // exam_answers with is_correct set) -- a clean below/at/above-
+      // threshold fixture without touching u1's already-mixed history.
+      const { error: anonEligErr } = await anon.rpc("get_smart_practice_eligibility", {});
+      record("anon RPC get_smart_practice_eligibility rejected", !!anonEligErr, notSensitive(anonEligErr?.message));
+
+      const { data: eligDefault, error: eligDefaultErr } = await u2c.rpc("get_smart_practice_eligibility", {});
+      record(
+        "u2 below default threshold (25) reports correctly",
+        !eligDefaultErr && eligDefault?.eligible === false && eligDefault?.attempts === 0 && eligDefault?.min_attempts === 25,
+        `${JSON.stringify(eligDefault)} ${notSensitive(eligDefaultErr?.message)}`,
+      );
+
+      const { data: eligBelow } = await u2c.rpc("get_smart_practice_eligibility", { p_min_attempts: 3 });
+      record(
+        "u2 below overridden threshold (3)",
+        eligBelow?.eligible === false && eligBelow?.attempts === 0 && eligBelow?.min_attempts === 3,
+        JSON.stringify(eligBelow),
+      );
+
+      const { data: eligAtZero } = await u2c.rpc("get_smart_practice_eligibility", { p_min_attempts: 0 });
+      record(
+        "u2 eligible once threshold is 0 (edge: attempts >= min_attempts)",
+        eligAtZero?.eligible === true && eligAtZero?.attempts === 0 && eligAtZero?.min_attempts === 0,
+        JSON.stringify(eligAtZero),
+      );
+
+      // get_smart_practice_questions must enforce the SAME gate itself --
+      // not just report it -- with a structured response, never a raw
+      // error and never a silent fallback to (uninformative) questions.
+      const { data: gatedDefault, error: gatedDefaultErr } = await u2c.rpc("get_smart_practice_questions", {});
+      record(
+        "u2 get_smart_practice_questions enforces default gate (no raw error, no fallback questions)",
+        !gatedDefaultErr &&
+          gatedDefault?.eligible === false &&
+          gatedDefault?.attempts === 0 &&
+          gatedDefault?.min_attempts === 25 &&
+          Array.isArray(gatedDefault?.questions) &&
+          gatedDefault.questions.length === 0 &&
+          gatedDefault?.topics_included === 0,
+        `${JSON.stringify(gatedDefault)} ${notSensitive(gatedDefaultErr?.message)}`,
+      );
+
+      const { data: gatedOverride, error: gatedOverrideErr } = await u2c.rpc("get_smart_practice_questions", {
+        p_min_attempts: 0,
+      });
+      record(
+        "u2 get_smart_practice_questions serves questions once threshold override is met",
+        !gatedOverrideErr && gatedOverride?.eligible === true && (gatedOverride?.questions?.length ?? 0) > 0,
+        `n=${gatedOverride?.questions?.length ?? 0} ${notSensitive(gatedOverrideErr?.message)}`,
       );
     }
 
