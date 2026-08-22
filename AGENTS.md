@@ -4,6 +4,10 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
+# Source of truth
+
+Before any schema, pipeline, or architecture work, read `docs/MASTER_KB.md` in full. It is the source of truth for this project and takes precedence over convenience.
+
 # Project stage
 
 Moved on from the Demo stage. DiagKnow is in active development toward a complete, deployment-ready production app (Vercel + Supabase, live at https://mcq-bank.vercel.app). Every change is treated as production work:
