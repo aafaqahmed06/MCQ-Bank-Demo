@@ -38,23 +38,29 @@ export default function PracticeSession({
   const [score, setScore] = useState(0);
   const [restartCount, setRestartCount] = useState(0);
 
-  const shuffled = useMemo(
-    () => shuffle(questions),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [questions, restartCount],
-  );
+  // `questions` arrives in a deliberately weighted order (miss rate +
+  // recency, see lib/practiceRanking.ts) -- it must NOT be reshuffled
+  // client-side, or the ranking is erased before the student ever sees it.
+  const orderedQuestions = questions;
 
   const displayedQuestion = useMemo(() => {
-    const q = shuffled[currentIndex];
+    const q = orderedQuestions[currentIndex];
     const indices = shuffle(q.options.map((_, i) => i));
     return {
       ...q,
       options: indices.map((i) => q.options[i]),
       correctAnswer: indices.indexOf(q.correctAnswer),
+      // Inverse mapping back to the original (unshuffled) option space, so
+      // a selected answer can be reported to record_practice_attempt in
+      // the space mcqs.correct_answer is actually expressed in.
+      optionIndices: indices,
     };
-  }, [shuffled, currentIndex]);
+    // restartCount forces a fresh option shuffle on each restart even
+    // though orderedQuestions/currentIndex are unchanged.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderedQuestions, currentIndex, restartCount]);
 
-  const totalQuestions = shuffled.length;
+  const totalQuestions = orderedQuestions.length;
   const completed = finished;
 
   const answeredCount = useMemo(() => {
@@ -62,6 +68,17 @@ export default function PracticeSession({
     if (answered) return currentIndex + 1;
     return currentIndex;
   }, [finished, answered, currentIndex, totalQuestions]);
+
+  const recordAttempt = async (mcqId: string, selectedOptionIndex: number) => {
+    try {
+      await createClient().rpc("record_practice_attempt", {
+        p_mcq_id: mcqId,
+        p_selected_option_index: selectedOptionIndex,
+      });
+    } catch {
+      // Non-fatal: don't interrupt the session on a sync failure.
+    }
+  };
 
   const handleSubmit = () => {
     if (selectedAnswer === null || answered) {
@@ -73,6 +90,10 @@ export default function PracticeSession({
     if (selectedAnswer === displayedQuestion.correctAnswer) {
       setScore((prev) => prev + 1);
     }
+
+    // p_selected_option_index must be in the original (unshuffled) option
+    // space -- selectedAnswer is in shuffled-option space.
+    void recordAttempt(displayedQuestion.id, displayedQuestion.optionIndices[selectedAnswer]);
   };
 
   const recordCompletion = async () => {

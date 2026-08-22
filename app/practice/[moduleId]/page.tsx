@@ -4,7 +4,7 @@ import PracticeSession from "@/components/PracticeSession";
 import RequireProfile from "@/components/RequireProfile";
 import DkBot from "@/components/DkBot";
 import { getModuleById, getBlockById } from "@/lib/curriculum";
-import { getPracticeQuestions } from "@/lib/curriculum";
+import { getWeightedPracticeQuestions } from "@/lib/practiceRanking";
 import { getCompletionTopicIds } from "@/lib/curriculum";
 import {
   topicGroups,
@@ -34,7 +34,7 @@ export default async function PracticePage({
     ? topicGroups.find((g) => g.moduleId === moduleId && g.name === topic) ?? null
     : null;
 
-  const moduleMcqs = await getPracticeQuestions(moduleId, group?.topics);
+  const { questions: moduleMcqs } = await getWeightedPracticeQuestions(moduleId, group?.topics);
   const completionTopicIds = await getCompletionTopicIds(moduleId, group?.topics);
 
   const backHref = group

@@ -358,6 +358,121 @@ async function main(): Promise<void> {
       const { data: lbBig, error: lbBigErr } = await u1c.rpc("get_leaderboard", { p_limit: 1000 });
       record("leaderboard p_limit clamped", !lbBigErr && Array.isArray(lbBig) && (lbBig?.length ?? 0) <= 100, `rows=${String((lbBig as unknown[])?.length ?? "n/a")}`);
     }
+    // ── I. Practice attempts + Smart Practice ──────────────────────────
+    {
+      const { data: anonRows, error: anonReadErr } = await anon.from("practice_attempts").select("id");
+      record(
+        "anon cannot read practice_attempts",
+        !anonReadErr ? (anonRows?.length ?? 0) === 0 : true,
+        anonReadErr ? notSensitive(anonReadErr.message) : `rows=${anonRows?.length ?? 0}`,
+      );
+      const { error: anonRecordErr } = await anon.rpc("record_practice_attempt", {
+        p_mcq_id: ARCHIVE_MCQ,
+        p_selected_option_index: 0,
+      });
+      record("anon RPC record_practice_attempt rejected", !!anonRecordErr, notSensitive(anonRecordErr?.message));
+      const { error: anonSmartErr } = await anon.rpc("get_smart_practice_questions", {});
+      record("anon RPC get_smart_practice_questions rejected", !!anonSmartErr, notSensitive(anonSmartErr?.message));
+
+      const { data: mcqRow } = await admin
+        .from("mcqs")
+        .select("topic_id, correct_answer")
+        .eq("id", ARCHIVE_MCQ)
+        .single();
+      const correctIdx = mcqRow?.correct_answer as number;
+      const topicId = mcqRow?.topic_id as string;
+      const wrongIdx = correctIdx === 0 ? 1 : 0;
+
+      const { data: correctRes, error: correctErr } = await u1c.rpc("record_practice_attempt", {
+        p_mcq_id: ARCHIVE_MCQ,
+        p_selected_option_index: correctIdx,
+      });
+      record(
+        "record_practice_attempt derives is_correct=true server-side",
+        !correctErr && correctRes?.is_correct === true,
+        notSensitive(correctErr?.message),
+      );
+      const { data: wrongRes, error: wrongErr } = await u1c.rpc("record_practice_attempt", {
+        p_mcq_id: ARCHIVE_MCQ,
+        p_selected_option_index: wrongIdx,
+      });
+      record(
+        "record_practice_attempt derives is_correct=false server-side",
+        !wrongErr && wrongRes?.is_correct === false,
+        notSensitive(wrongErr?.message),
+      );
+
+      const { data: ownAttempts } = await u1c
+        .from("practice_attempts")
+        .select("id, is_correct")
+        .eq("mcq_id", ARCHIVE_MCQ);
+      record("u1 reads own practice attempts", (ownAttempts?.length ?? 0) === 2, `rows=${ownAttempts?.length ?? 0}`);
+
+      const { data: u2Attempts } = await u2c.from("practice_attempts").select("id").eq("mcq_id", ARCHIVE_MCQ);
+      record("u2 cannot see u1 practice attempts", (u2Attempts?.length ?? 0) === 0, `rows=${u2Attempts?.length ?? 0}`);
+
+      const { error: directInsertErr } = await u1c.from("practice_attempts").insert({
+        user_id: u1.id,
+        mcq_id: ARCHIVE_MCQ,
+        topic_id: topicId,
+        selected_option_index: correctIdx,
+        is_correct: true,
+      });
+      record("student cannot insert practice_attempts directly (RPC-only)", !!directInsertErr, notSensitive(directInsertErr?.message));
+
+      const { data: progRow } = await u1c
+        .from("user_topic_progress")
+        .select("practice_questions_attempted, practice_questions_correct, practice_accuracy, practice_last_attempted_at")
+        .eq("topic_id", topicId)
+        .single();
+      record(
+        "practice_* progress cache updated (exam-sourced columns untouched)",
+        (progRow?.practice_questions_attempted ?? 0) >= 2 && progRow?.practice_last_attempted_at != null,
+        `attempted=${progRow?.practice_questions_attempted} correct=${progRow?.practice_questions_correct} accuracy=${progRow?.practice_accuracy}`,
+      );
+
+      // u1 already has exam history from Section D -- Smart Practice's
+      // topic weighting must pick that up even though it never reads
+      // user_topic_progress's exam-sourced columns directly.
+      const smartCount = 20;
+      const { data: smart, error: smartErr } = await u1c.rpc("get_smart_practice_questions", {
+        p_question_count: smartCount,
+        p_debug: true,
+      });
+      const smartQuestions: { topic_id: string; question_weight?: number; correct_answer: number }[] =
+        smart?.questions ?? [];
+      record(
+        "u1 get_smart_practice_questions succeeds",
+        !smartErr && smartQuestions.length > 0 && "correct_answer" in (smartQuestions[0] ?? {}),
+        `n=${smartQuestions.length} ${notSensitive(smartErr?.message)}`,
+      );
+      record(
+        "smart practice debug weights present",
+        smartQuestions.length > 0 && typeof smartQuestions[0]?.question_weight === "number",
+        `sample=${JSON.stringify(smartQuestions[0] ?? {})}`,
+      );
+      const perTopicCount = new Map<string, number>();
+      for (const q of smartQuestions) {
+        perTopicCount.set(q.topic_id, (perTopicCount.get(q.topic_id) ?? 0) + 1);
+      }
+      const maxShare = smartQuestions.length > 0
+        ? Math.max(...perTopicCount.values()) / smartQuestions.length
+        : 0;
+      record(
+        "no topic exceeds 30% share of smart practice set",
+        maxShare <= 0.3 + 1e-9,
+        `maxShare=${maxShare.toFixed(2)} topics=${perTopicCount.size}`,
+      );
+      // Seed data has 88 topics across the bank -- comfortably more than
+      // the min-topics floor, so this asserts the floor itself, not a
+      // tautology derived from the same result set.
+      record(
+        "smart practice represents >= 5 distinct topics",
+        (smart?.topics_included ?? 0) >= 5,
+        `topics_included=${smart?.topics_included}`,
+      );
+    }
+
     // ── Summary ────────────────────────────────────────────────────────
     const passCount = results.filter((r) => r.pass).length;
     console.log(

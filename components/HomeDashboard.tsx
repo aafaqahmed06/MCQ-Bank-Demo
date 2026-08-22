@@ -7,12 +7,17 @@ import { useProfileInfo } from "@/components/useProfileInfo";
 import DkBot from "@/components/DkBot";
 import { createClient } from "@/lib/supabase/client";
 
-type Stats = {
+type PracticeStats = {
   questionsAttempted: number;
   accuracy: number | null;
+};
+
+type ExamStats = {
   examsCompleted: number;
   avgScore: number | null;
 };
+
+type Tab = "practice" | "exam";
 
 function StatIcon({ label }: { label: string }) {
   const common = "size-5 text-[var(--accent-cyan)]";
@@ -48,17 +53,23 @@ function StatIcon({ label }: { label: string }) {
 export default function HomeDashboard() {
   const { profile } = useAuth();
   const info = useProfileInfo();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [tab, setTab] = useState<Tab>("practice");
+  const [practiceStats, setPracticeStats] = useState<PracticeStats | null>(null);
+  const [examStats, setExamStats] = useState<ExamStats | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
       const supabase = createClient();
+      // Two genuinely separate sources: practice_questions_attempted/correct
+      // are written only by record_practice_attempt (practice mode), while
+      // the exams query is untouched -- exam mode's numbers here are
+      // byte-for-byte the same as before this feature existed.
       const [progRes, examRes] = await Promise.all([
         supabase
           .from("user_topic_progress")
-          .select("questions_attempted, questions_correct")
+          .select("practice_questions_attempted, practice_questions_correct")
           .order("updated_at", { ascending: false }),
         supabase
           .from("exams")
@@ -72,11 +83,11 @@ export default function HomeDashboard() {
 
       const rows = progRes.data ?? [];
       const attempted = rows.reduce(
-        (sum, r) => sum + (r.questions_attempted as number),
+        (sum, r) => sum + (r.practice_questions_attempted as number),
         0,
       );
       const correct = rows.reduce(
-        (sum, r) => sum + (r.questions_correct as number),
+        (sum, r) => sum + (r.practice_questions_correct as number),
         0,
       );
 
@@ -91,12 +102,11 @@ export default function HomeDashboard() {
             ) / 10
           : null;
 
-      setStats({
+      setPracticeStats({
         questionsAttempted: attempted,
         accuracy: attempted > 0 ? Math.round((correct / attempted) * 100) : null,
-        examsCompleted,
-        avgScore,
       });
+      setExamStats({ examsCompleted, avgScore });
     }
 
     void load();
@@ -112,30 +122,45 @@ export default function HomeDashboard() {
           .join(" · ")
       : null;
 
-  const statCards: { label: string; value: string; isSet: boolean }[] = [
+  const practiceCards: { label: string; value: string; isSet: boolean }[] = [
     {
       label: "Questions practiced",
-      value: stats ? String(stats.questionsAttempted) : "…",
-      isSet: stats ? stats.questionsAttempted > 0 : false,
+      value: practiceStats ? String(practiceStats.questionsAttempted) : "…",
+      isSet: practiceStats ? practiceStats.questionsAttempted > 0 : false,
     },
     {
       label: "Accuracy",
-      value: stats ? (stats.accuracy === null ? "—" : `${stats.accuracy}%`) : "…",
-      isSet: stats ? stats.accuracy !== null : false,
-    },
-    {
-      label: "Exams completed",
-      value: stats ? String(stats.examsCompleted) : "…",
-      isSet: stats ? stats.examsCompleted > 0 : false,
-    },
-    {
-      label: "Avg exam score",
-      value: stats ? (stats.avgScore === null ? "—" : `${stats.avgScore}%`) : "…",
-      isSet: stats ? stats.avgScore !== null : false,
+      value: practiceStats
+        ? practiceStats.accuracy === null
+          ? "—"
+          : `${practiceStats.accuracy}%`
+        : "…",
+      isSet: practiceStats ? practiceStats.accuracy !== null : false,
     },
   ];
 
-  const hasActivity = stats ? stats.questionsAttempted > 0 : false;
+  const examCards: { label: string; value: string; isSet: boolean }[] = [
+    {
+      label: "Exams completed",
+      value: examStats ? String(examStats.examsCompleted) : "…",
+      isSet: examStats ? examStats.examsCompleted > 0 : false,
+    },
+    {
+      label: "Avg exam score",
+      value: examStats
+        ? examStats.avgScore === null
+          ? "—"
+          : `${examStats.avgScore}%`
+        : "…",
+      isSet: examStats ? examStats.avgScore !== null : false,
+    },
+  ];
+
+  const statCards = tab === "practice" ? practiceCards : examCards;
+
+  const hasActivity =
+    (practiceStats ? practiceStats.questionsAttempted > 0 : false) ||
+    (examStats ? examStats.examsCompleted > 0 : false);
 
   return (
     <div className="space-y-8">
@@ -162,12 +187,32 @@ export default function HomeDashboard() {
         )}
       </header>
 
-      {/* Statistics — scannable white cards */}
-      <section
-        data-tutorial="stats"
-        className="grid grid-cols-2 gap-4 lg:grid-cols-4"
-        aria-label="Your statistics"
-      >
+      {/* Statistics — scannable white cards, toggled between practice and exam */}
+      <section data-tutorial="stats" className="space-y-4">
+        <div
+          role="tablist"
+          aria-label="Statistics view"
+          className="inline-flex rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-1"
+        >
+          {(["practice", "exam"] as const).map((t) => (
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={tab === t}
+              onClick={() => setTab(t)}
+              className={`rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
+                tab === t
+                  ? "bg-[var(--primary-btn-bg)] text-[var(--primary-btn-text)]"
+                  : "text-[var(--text-muted)] hover:text-[var(--text-body)]"
+              }`}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4" aria-label="Your statistics">
         {statCards.map((card) => (
           <div
             key={card.label}
@@ -197,6 +242,7 @@ export default function HomeDashboard() {
             <p className="mt-1 text-sm text-[var(--text-muted)]">{card.label}</p>
           </div>
         ))}
+        </div>
       </section>
 
       {!hasActivity && (
@@ -212,7 +258,7 @@ export default function HomeDashboard() {
       )}
 
       {/* Primary actions — teal primary, outlined secondary, quieter leaderboard */}
-      <section className="grid gap-4 md:grid-cols-2" aria-label="Quick actions">
+      <section className="grid gap-4 md:grid-cols-3" aria-label="Quick actions">
         <Link
           data-tutorial="practice"
           href="/blocks"
@@ -241,6 +287,22 @@ export default function HomeDashboard() {
             </p>
           </div>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 text-[var(--accent-cyan)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">
+            <path d="M5 12h14M13 6l6 6-6 6" />
+          </svg>
+        </Link>
+
+        <Link
+          data-tutorial="smart-practice"
+          href="/practice/smart"
+          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:-translate-y-0.5 hover:border-[var(--accent-violet)]"
+        >
+          <div>
+            <p className="text-base font-semibold text-[var(--text-heading)]">Smart Practice</p>
+            <p className="mt-0.5 text-sm text-[var(--text-muted)]">
+              A mix weighted toward your weakest topics
+            </p>
+          </div>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 text-[var(--accent-violet)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">
             <path d="M5 12h14M13 6l6 6-6 6" />
           </svg>
         </Link>
