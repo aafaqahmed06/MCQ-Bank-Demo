@@ -478,6 +478,99 @@ async function main(): Promise<void> {
         `topics_included=${smart?.topics_included}`,
       );
 
+      // ── Guaranteed-slot reservation for missed questions ────────────
+      // Backdate a miss (30 days ago) on a topic u1 has NEVER touched by
+      // any other attempt -- weight's recency term uses max(attempted_at)
+      // across ALL of a topic's/mcq's attempts, so backdating a miss on
+      // ARCHIVE_MCQ (which already has two same-day attempts from earlier
+      // in this section) would be masked by those more recent timestamps.
+      // A clean, untouched topic makes max(ts) unambiguously the backdated
+      // value, pushing recency_weight near the R_MAX ceiling (~2.2 total),
+      // far above the ~1.2 baseline every unseen candidate has.
+      const { data: examMcqRows } = await admin
+        .from("exam_answers")
+        .select("mcq_id")
+        .eq("exam_id", u1ExamId);
+      const examMcqIds = (examMcqRows ?? []).map((r) => r.mcq_id as string);
+      const { data: examMcqTopicRows } = await admin
+        .from("mcqs")
+        .select("id, topic_id")
+        .in("id", examMcqIds.length ? examMcqIds : [""]);
+      const excludedTopics = new Set<string>([
+        topicId,
+        ...(examMcqTopicRows ?? []).map((m) => m.topic_id as string),
+      ]);
+      const { data: candidatePool } = await admin
+        .from("mcqs")
+        .select("id, topic_id, correct_answer")
+        .eq("status", "published");
+      const freshCandidate = (candidatePool ?? []).find(
+        (m) => !excludedTopics.has(m.topic_id as string),
+      );
+      record("found an untouched-topic candidate for the backdated-miss fixture", !!freshCandidate, `id=${freshCandidate?.id}`);
+
+      const freshMcqId = freshCandidate?.id as string;
+      const freshTopicId = freshCandidate?.topic_id as string;
+      const freshCorrectIdx = freshCandidate?.correct_answer as number;
+      const freshWrongIdx = freshCorrectIdx === 0 ? 1 : 0;
+
+      const backdated = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { error: backdateErr } = await admin.from("practice_attempts").insert({
+        user_id: u1.id,
+        mcq_id: freshMcqId,
+        topic_id: freshTopicId,
+        selected_option_index: freshWrongIdx,
+        is_correct: false,
+        attempted_at: backdated,
+      });
+      record("backdated miss fixture inserted", !backdateErr, notSensitive(backdateErr?.message));
+
+      const { data: backdatedRows } = await admin
+        .from("practice_attempts")
+        .select("attempted_at")
+        .eq("user_id", u1.id)
+        .eq("mcq_id", freshMcqId)
+        .lt("attempted_at", new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString());
+      record(
+        "backdated timestamp actually persisted (admin bypasses no trigger that would reset it)",
+        (backdatedRows?.length ?? 0) === 1,
+        `rows=${backdatedRows?.length ?? 0}`,
+      );
+
+      const { data: guaranteed, error: guaranteedErr } = await u1c.rpc("get_smart_practice_questions", {
+        p_question_count: 40,
+        p_min_attempts: 3,
+        p_debug: true,
+      });
+      const guaranteedQuestions: { mcq_id: string; topic_id: string; reserved?: boolean; topic_weight?: number }[] =
+        guaranteed?.questions ?? [];
+      const archiveRow = guaranteedQuestions.find((q) => q.mcq_id === freshMcqId);
+      const otherTopicWeights = [...new Set(guaranteedQuestions.map((q) => q.topic_weight))].sort(
+        (a, b) => (b ?? 0) - (a ?? 0),
+      );
+      record(
+        "long-overdue miss is guaranteed a reserved slot, not just weighted",
+        !guaranteedErr && archiveRow?.reserved === true,
+        archiveRow
+          ? JSON.stringify(archiveRow)
+          : `not present among ${guaranteedQuestions.length} questions; top topic_weights=${JSON.stringify(otherTopicWeights.slice(0, 5))} err=${notSensitive(guaranteedErr?.message)}`,
+      );
+      // Ground truth: freshMcqId is the only mcq with misses > 0 in this
+      // topic. reserved_count = min(floor(slot_count*0.5), 1) can only ever
+      // be 0 or 1 -- but topicRows.length (returned row count) isn't a
+      // reliable proxy for the topic's true slot_count when the topic has
+      // fewer total published mcqs than its allocation (fine-grained
+      // subtopics here often have just 1-2 mcqs total), so this only
+      // asserts the invariant that IS knowable from the client-visible
+      // response, not a precise slot_count-derived prediction.
+      const topicRows = guaranteedQuestions.filter((q) => q.topic_id === freshTopicId);
+      const reservedInTopic = topicRows.filter((q) => q.reserved === true).length;
+      record(
+        "reserved count in that topic never exceeds the real missed-mcq count (1)",
+        reservedInTopic <= 1,
+        `topicRows=${topicRows.length} reserved=${reservedInTopic}`,
+      );
+
       // ── Eligibility gate: u2 has 0 combined attempts (their exam from
       // Section D was started but never submitted, so it has no
       // exam_answers with is_correct set) -- a clean below/at/above-

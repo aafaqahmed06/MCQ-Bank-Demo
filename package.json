@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx scripts/seed-mcqs.ts",
-    "db:verify": "tsx scripts/verify-phase8.ts"
+    "db:verify": "tsx scripts/verify-phase8.ts",
+    "verify:ranking": "tsx scripts/verify-practice-ranking.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
