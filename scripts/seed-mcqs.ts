@@ -290,8 +290,35 @@ async function main(): Promise<void> {
       status: "published" as const,
     };
   });
+  const { data: preExistingRows, error: preExistingError } = await db
+    .from("mcqs")
+    .select("id");
+  if (preExistingError) {
+    throw new Error(`fetch existing mcq ids: ${preExistingError.message}`);
+  }
+  const preExistingIds = new Set((preExistingRows ?? []).map((row) => row.id as string));
+
   await upsertBatched(db, "mcqs", dbMcqs, 50);
   console.log(`mcqs upserted: ${dbMcqs.length}`);
+
+  // --- Stamp provenance/verification fields on newly-inserted mcqs only -----
+  // Existing rows keep whatever source_type/verification_status they already
+  // have (set by the mcq_generation_verification_fields migration backfill or
+  // a prior seed run) -- never overwritten on a re-seed.
+  const newIds = dbMcqs.map((m) => m.id).filter((id) => !preExistingIds.has(id));
+  if (newIds.length > 0) {
+    for (let i = 0; i < newIds.length; i += 200) {
+      const slice = newIds.slice(i, i + 200);
+      const { error } = await db
+        .from("mcqs")
+        .update({ source_type: "curated", verification_status: "unverified" })
+        .in("id", slice);
+      if (error) throw new Error(`stamp new mcqs: ${error.message}`);
+    }
+    console.log(`mcqs stamped as new (source_type=curated): ${newIds.length}`);
+  } else {
+    console.log("mcqs stamped as new: 0 (no new ids this run)");
+  }
 
   // --- Archive any mcqs that no longer exist in the bank ----------------------
   const seedIds = new Set(dbMcqs.map((m) => m.id));
