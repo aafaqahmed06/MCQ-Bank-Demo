@@ -32,6 +32,21 @@ export interface AdminUserRow {
   createdAt: string;
 }
 
+/**
+ * Audit trail row for admin_actions (supabase/migrations/20260708000039_admin_actions.sql).
+ * adminId/targetUserId are plain uuids with no FK to auth.users -- the row
+ * must outlive the accounts it references. See migration comments.
+ */
+export interface AdminActionRow {
+  id: string;
+  adminId: string;
+  action: string;
+  targetUserId: string;
+  targetEmail: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+}
+
 export interface Block {
   id: string;
   name: string;

@@ -46,6 +46,10 @@ async function main(): Promise<void> {
   const password = "Phase8-verify-pass-1";
   let u1: { id: string; email: string; token: string; refresh: string } | null = null;
   let u2: { id: string; email: string; token: string; refresh: string } | null = null;
+  let delTarget: { id: string; email: string; token: string; refresh: string } | null = null;
+  let delAdminCaller: { id: string; email: string; token: string; refresh: string } | null = null;
+  let delSuperCaller: { id: string; email: string; token: string; refresh: string } | null = null;
+  let delTargetAdmin: { id: string; email: string; token: string; refresh: string } | null = null;
   // A client acting as a given user: apikey=anon, Authorization=user JWT.
   const c = async (access: string, refresh: string) => {
     const client = createClient(URL, ANON_KEY);
@@ -625,6 +629,127 @@ async function main(): Promise<void> {
       );
     }
 
+    // ── J. Account deletion (admin_actions + assert_can_delete_user + cascade) ──
+    {
+      const stamp2 = Date.now();
+      const mkWithRole = async (email: string, role: "student" | "admin" | "super_admin") => {
+        const u = await mk(email);
+        if (role !== "student") {
+          const { error } = await admin.from("profiles").update({ role }).eq("id", u.id);
+          if (error) throw new Error(`role update ${email}: ${error.message}`);
+        }
+        return u;
+      };
+
+      delTarget = await mkWithRole(`pg8.del-target.${stamp2}@diagknow.test`, "student");
+      delAdminCaller = await mkWithRole(`pg8.del-admin.${stamp2}@diagknow.test`, "admin");
+      delSuperCaller = await mkWithRole(`pg8.del-super.${stamp2}@diagknow.test`, "super_admin");
+      delTargetAdmin = await mkWithRole(`pg8.del-target-admin.${stamp2}@diagknow.test`, "admin");
+
+      const adminC = await c(delAdminCaller.token, delAdminCaller.refresh);
+      const superC = await c(delSuperCaller.token, delSuperCaller.refresh);
+      const targetId = delTarget.id;
+
+      const { error: selfErr } = await adminC.rpc("assert_can_delete_user", {
+        p_target: delAdminCaller.id,
+      });
+      record(
+        "assert_can_delete_user blocks self-deletion",
+        !!selfErr && /own account/i.test(selfErr.message),
+        notSensitive(selfErr?.message),
+      );
+
+      const { error: tierBlockErr } = await adminC.rpc("assert_can_delete_user", {
+        p_target: delTargetAdmin.id,
+      });
+      record(
+        "assert_can_delete_user blocks plain admin deleting an admin",
+        !!tierBlockErr && /super admin/i.test(tierBlockErr.message),
+        notSensitive(tierBlockErr?.message),
+      );
+
+      const { error: tierAllowErr } = await superC.rpc("assert_can_delete_user", {
+        p_target: delTargetAdmin.id,
+      });
+      record(
+        "assert_can_delete_user allows super_admin deleting an admin",
+        !tierAllowErr,
+        notSensitive(tierAllowErr?.message),
+      );
+
+      const { error: nonAdminErr } = await u1c.rpc("assert_can_delete_user", {
+        p_target: targetId,
+      });
+      record(
+        "assert_can_delete_user rejects non-admin caller",
+        !!nonAdminErr,
+        notSensitive(nonAdminErr?.message),
+      );
+
+      // Seed dependent rows on the deletion target to prove cascade cleanup.
+      const { data: mcqForTopic } = await admin.from("mcqs").select("topic_id").eq("id", ARCHIVE_MCQ).single();
+      const topicIdJ = mcqForTopic?.topic_id as string;
+      await admin.from("bookmarks").insert({ user_id: targetId, mcq_id: ARCHIVE_MCQ });
+      await admin
+        .from("question_reports")
+        .insert({ user_id: targetId, mcq_id: ARCHIVE_MCQ, reason: "typo" });
+      await admin
+        .from("user_topic_progress")
+        .insert({ user_id: targetId, topic_id: topicIdJ, questions_attempted: 1 });
+
+      const { error: guardErr } = await adminC.rpc("assert_can_delete_user", { p_target: targetId });
+      record(
+        "assert_can_delete_user allows admin deleting a student",
+        !guardErr,
+        notSensitive(guardErr?.message),
+      );
+
+      // Mirrors the Server Action's own sequence: insert the audit row
+      // BEFORE calling deleteUser().
+      const { data: logRow, error: logErr } = await admin
+        .from("admin_actions")
+        .insert({
+          admin_id: delAdminCaller.id,
+          action: "delete_user",
+          target_user_id: targetId,
+          target_email: delTarget.email,
+        })
+        .select("id")
+        .single();
+      record("admin_actions row inserted pre-delete", !logErr && !!logRow, notSensitive(logErr?.message));
+
+      const { error: delErr } = await admin.auth.admin.deleteUser(targetId);
+      record("deleteUser succeeds", !delErr, notSensitive(delErr?.message));
+      if (!delErr) delTarget = null; // consumed -- keep out of the finally cleanup loop
+
+      const [{ data: profRow }, { data: bmRow }, { data: repRow }, { data: progRow2 }] = await Promise.all([
+        admin.from("profiles").select("id").eq("id", targetId),
+        admin.from("bookmarks").select("mcq_id").eq("user_id", targetId),
+        admin.from("question_reports").select("id").eq("user_id", targetId),
+        admin.from("user_topic_progress").select("topic_id").eq("user_id", targetId),
+      ]);
+      record("cascade removed profile", (profRow?.length ?? 0) === 0, `rows=${profRow?.length ?? 0}`);
+      record("cascade removed bookmarks", (bmRow?.length ?? 0) === 0, `rows=${bmRow?.length ?? 0}`);
+      record("cascade removed question_reports", (repRow?.length ?? 0) === 0, `rows=${repRow?.length ?? 0}`);
+      record("cascade removed user_topic_progress", (progRow2?.length ?? 0) === 0, `rows=${progRow2?.length ?? 0}`);
+
+      if (logRow) {
+        const { data: auditRow } = await admin
+          .from("admin_actions")
+          .select("id, action, target_user_id, target_email")
+          .eq("id", logRow.id)
+          .single();
+        record(
+          "admin_actions row survives the account deletion (no FK cascade)",
+          !!auditRow && auditRow.action === "delete_user" && auditRow.target_user_id === targetId,
+          JSON.stringify(auditRow ?? {}),
+        );
+        // Test residue cleanup -- this table is a real audit log, not a
+        // scratch table, so remove the row this run created.
+        await admin.from("admin_actions").delete().eq("id", logRow.id);
+      }
+    }
+
     // ── Summary ────────────────────────────────────────────────────────
     const passCount = results.filter((r) => r.pass).length;
     console.log(
@@ -639,7 +764,7 @@ async function main(): Promise<void> {
     // above must set process.exitCode (not call process.exit) or this cleanup
     // never fires and the throwaway users leak into the database permanently.
     const leftover: string[] = [];
-    for (const u of [u1, u2]) {
+    for (const u of [u1, u2, delTarget, delAdminCaller, delSuperCaller, delTargetAdmin]) {
       if (!u) continue;
       const { error } = await admin.auth.admin.deleteUser(u.id);
       if (error) leftover.push(`${u.email} (${u.id}): ${error.message}`);

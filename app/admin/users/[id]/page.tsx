@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { formatLastActive } from "@/lib/activity";
+import DeleteAccountSection from "./DeleteAccountSection";
 
 // Service-role client: RLS on user_topic_progress, exams, and
 // practice_attempts is locked to `user_id = auth.uid()` with no is_admin()
@@ -36,6 +38,17 @@ type PageProps = {
 export default async function AdminUserDetailPage({ params }: PageProps) {
   const { id } = await params;
   const admin = createAdminClient();
+
+  // Session-scoped client, used only to identify the caller for the delete
+  // section below -- everything else on this page still reads via the
+  // service-role client as before.
+  const session = await createClient();
+  const {
+    data: { user: caller },
+  } = await session.auth.getUser();
+  const { data: callerProfile } = caller
+    ? await session.from("profiles").select("role").eq("id", caller.id).single()
+    : { data: null };
 
   const [{ data: profile, error: profileError }, { data: progressData }, { data: examData }] =
     await Promise.all([
@@ -73,7 +86,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
   const p = profile as unknown as {
     id: string;
     full_name: string | null;
-    role: string;
+    role: "student" | "reviewer" | "admin" | "super_admin";
     last_active_at: string | null;
     created_at: string;
     colleges: { name: string } | null;
@@ -200,6 +213,20 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
           </table>
         )}
       </div>
+
+      {caller && (
+        <DeleteAccountSection
+          targetId={p.id}
+          targetEmail={authUser?.user?.email ?? ""}
+          targetRole={p.role}
+          callerId={caller.id}
+          callerRole={
+            (callerProfile?.role as "student" | "reviewer" | "admin" | "super_admin" | undefined) ??
+            "student"
+          }
+          stats={{ practiceAttempted, practiceAccuracy, examsCompleted, avgScore }}
+        />
+      )}
     </div>
   );
 }
