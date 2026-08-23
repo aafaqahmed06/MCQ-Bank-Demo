@@ -212,16 +212,14 @@ token_verifications = 30
 # Number of Web3 logins that can be made in a 5 minute interval per IP address.
 web3 = 30
 
-# Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
-# NOT YET ENABLED -- no provider/keys chosen. Once you have a site key +
-# secret key, set NEXT_PUBLIC_CAPTCHA_PROVIDER and NEXT_PUBLIC_CAPTCHA_SITE_KEY
-# (see .env.example) to the same provider as below, uncomment this block,
-# and set the equivalent in the hosted project's Dashboard
-# (Authentication -> Attack Protection) -- this file only affects local dev.
-# [auth.captcha]
-# enabled = true
-# provider = "hcaptcha" # or "turnstile" -- must match NEXT_PUBLIC_CAPTCHA_PROVIDER
-# secret = "env(SUPABASE_AUTH_CAPTCHA_SECRET)"
+# Cloudflare Turnstile widget "DiagKnow" (sitekey 0x4AAAAAAEZWLpqldw3hao2r),
+# registered for localhost/127.0.0.1/mcq-bank.vercel.app. This only affects
+# local dev -- the hosted project's Dashboard (Authentication -> Attack
+# Protection) needs the same secret set separately for production/preview.
+[auth.captcha]
+enabled = true
+provider = "turnstile"
+secret = "env(TURNSTILE_SECRET)"
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
