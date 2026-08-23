@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "db:seed": "tsx scripts/seed-mcqs.ts",
-    "db:verify": "tsx scripts/verify-phase8.ts"
+    "db:verify": "tsx scripts/verify-phase8.ts",
+    "db:coverage": "tsx scripts/topic-coverage-report.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.4",
