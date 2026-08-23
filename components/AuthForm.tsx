@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import CaptchaWidget from "@/components/CaptchaWidget";
+import CaptchaWidget, { isCaptchaConfigured } from "@/components/CaptchaWidget";
 
 type Mode = "signin" | "signup";
 
@@ -32,6 +32,7 @@ export default function AuthForm() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const captchaReady = !isCaptchaConfigured || !!captchaToken;
 
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
@@ -252,6 +253,11 @@ export default function AuthForm() {
       </div>
 
       <CaptchaWidget onToken={setCaptchaToken} />
+      {!captchaReady && !loading && (
+        <p className="text-sm text-[var(--text-muted)]" role="status">
+          Complete the verification above to continue.
+        </p>
+      )}
 
       {error && (
         <p className="alert-error rounded-lg px-3 py-2 text-sm" role="alert">
@@ -266,10 +272,10 @@ export default function AuthForm() {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !captchaReady}
         onTouchEnd={(e) => {
           e.preventDefault();
-          if (!loading) handleSubmit(e);
+          if (!loading && captchaReady) handleSubmit(e);
         }}
         className="hud-primary-btn w-full rounded-xl px-5 py-3.5 font-medium disabled:opacity-60"
       >

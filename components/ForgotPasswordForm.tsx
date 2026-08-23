@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import CaptchaWidget from "@/components/CaptchaWidget";
+import CaptchaWidget, { isCaptchaConfigured } from "@/components/CaptchaWidget";
 
 export default function ForgotPasswordForm() {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -12,6 +12,7 @@ export default function ForgotPasswordForm() {
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState<string | undefined>();
+  const captchaReady = !isCaptchaConfigured || !!captchaToken;
 
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
@@ -70,6 +71,11 @@ export default function ForgotPasswordForm() {
       </div>
 
       <CaptchaWidget onToken={setCaptchaToken} />
+      {!captchaReady && !loading && (
+        <p className="text-sm text-[var(--text-muted)]" role="status">
+          Complete the verification above to continue.
+        </p>
+      )}
 
       {error && (
         <p
@@ -90,10 +96,10 @@ export default function ForgotPasswordForm() {
 
       <button
         type="submit"
-        disabled={loading}
+        disabled={loading || !captchaReady}
         onTouchEnd={(e) => {
           e.preventDefault();
-          if (!loading) void run(e);
+          if (!loading && captchaReady) void run(e);
         }}
         className="hud-primary-btn w-full rounded-xl px-5 py-3.5 font-medium disabled:opacity-60"
       >

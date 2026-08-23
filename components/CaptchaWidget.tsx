@@ -42,6 +42,14 @@ const PROVIDER = process.env.NEXT_PUBLIC_CAPTCHA_PROVIDER as
 const SITE_KEY = process.env.NEXT_PUBLIC_CAPTCHA_SITE_KEY;
 
 /**
+ * Single source of truth for whether the widget will actually render.
+ * Forms that mount CaptchaWidget should import this instead of re-reading
+ * the env vars, so the "is captcha required before submit" check can never
+ * drift from the widget's own "render nothing" check below.
+ */
+export const isCaptchaConfigured = Boolean(PROVIDER && SITE_KEY);
+
+/**
  * Renders nothing until NEXT_PUBLIC_CAPTCHA_PROVIDER + NEXT_PUBLIC_CAPTCHA_SITE_KEY
  * are set (see .env.example) -- inert scaffold until a provider is chosen.
  * Supabase's captcha protection, once enabled in config.toml, gates
@@ -57,8 +65,8 @@ export default function CaptchaWidget({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!PROVIDER || !SITE_KEY) return;
-    const config = PROVIDER_CONFIG[PROVIDER];
+    if (!isCaptchaConfigured) return;
+    const config = PROVIDER_CONFIG[PROVIDER!];
     if (!config) return;
 
     let cancelled = false;
@@ -94,7 +102,7 @@ export default function CaptchaWidget({
     };
   }, [onToken]);
 
-  if (!PROVIDER || !SITE_KEY) return null;
+  if (!isCaptchaConfigured) return null;
 
   return <div ref={containerRef} id={containerId} className="my-2" />;
 }
