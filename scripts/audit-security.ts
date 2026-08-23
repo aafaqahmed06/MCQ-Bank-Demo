@@ -31,6 +31,14 @@ function r(name: string, blocked: boolean, detail: string): void {
 }
 const s = String;
 
+async function deleteTestUser(admin: SupabaseClient, id: string, email: string): Promise<void> {
+  const { error } = await admin.auth.admin.deleteUser(id);
+  if (error) {
+    console.error(`CLEANUP FAILED — leftover test user, delete manually: ${email} (${id}): ${error.message}`);
+    process.exitCode = 1;
+  }
+}
+
 async function asUser(admin: SupabaseClient): Promise<{ c: SupabaseClient; id: string; email: string }> {
   const stamp = Date.now() + Math.floor(Math.random() * 10000);
   const email = `audit.${stamp}@diagknow.test`;
@@ -154,13 +162,13 @@ async function main(): Promise<void> {
         password: "Ab1def",
       });
       r("6-char password rejected (policy)", !!weak, s(weak?.message ?? "accepted"));
-      if (weakU?.user?.id) await admin.auth.admin.deleteUser(weakU.user.id).catch(() => undefined);
+      if (weakU?.user?.id) await deleteTestUser(admin, weakU.user.id, weakU.user.email!);
       const { data: strongU, error: strongErr } = await signer.auth.signUp({
         email: `audit.strong.${stamp}@diagknow.test`,
         password: "AuditStrongPass1",
       });
       r("strong password still allowed", !strongErr && !!strongU?.user, s(strongErr?.message ?? "ok"));
-      if (strongU?.user?.id) await admin.auth.admin.deleteUser(strongU.user.id).catch(() => undefined);
+      if (strongU?.user?.id) await deleteTestUser(admin, strongU.user.id, strongU.user.email!);
     }
 
     // ── Exam score tamper: submit, then try direct UPDATE score ───
@@ -181,7 +189,7 @@ async function main(): Promise<void> {
       r("student forge exam_answers is_correct", abefore?.is_correct === aafter?.is_correct, `changed? ${abefore?.is_correct}→${aafter?.is_correct}`);
     }
   } finally {
-    await admin.auth.admin.deleteUser(u1.id).catch(() => undefined);
+    await deleteTestUser(admin, u1.id, u1.email);
   }
 
   const findingsOnly = rows.filter((x) => x.situation === "COMPROMISED (finding)");

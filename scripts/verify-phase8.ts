@@ -632,11 +632,21 @@ async function main(): Promise<void> {
     );
     if (failures.length) {
       console.log(`Failed: ${failures.join(" | ")}`);
-      process.exit(1);
+      process.exitCode = 1;
     }
   } finally {
+    // process.exit() terminates before pending awaits run, so a failed check
+    // above must set process.exitCode (not call process.exit) or this cleanup
+    // never fires and the throwaway users leak into the database permanently.
+    const leftover: string[] = [];
     for (const u of [u1, u2]) {
-      if (u) await admin.auth.admin.deleteUser(u.id).catch(() => undefined);
+      if (!u) continue;
+      const { error } = await admin.auth.admin.deleteUser(u.id);
+      if (error) leftover.push(`${u.email} (${u.id}): ${error.message}`);
+    }
+    if (leftover.length) {
+      console.error(`CLEANUP FAILED — leftover test user(s), delete manually:\n  ${leftover.join("\n  ")}`);
+      process.exitCode = 1;
     }
   }
 }
