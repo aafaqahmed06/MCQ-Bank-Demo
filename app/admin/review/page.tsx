@@ -24,7 +24,7 @@ export default async function AdminReviewPage() {
   const { data, error } = await supabase
     .from("mcqs")
     .select(
-      "id, question, options, correct_answer, explanation, difficulty, source, created_at, topics ( name )"
+      "id, question, options, correct_answer, explanation, difficulty, source, created_at, topics!mcqs_topic_id_fkey ( name )"
     )
     .eq("status", "review")
     .order("created_at", { ascending: true });
