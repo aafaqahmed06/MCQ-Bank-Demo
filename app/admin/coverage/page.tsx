@@ -1,10 +1,19 @@
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import {
   getTopicCoverage,
   tierFor,
   CRITICAL_MAX_QUESTIONS,
   LOW_MAX_QUESTIONS,
 } from "@/lib/coverage";
+
+// Cookie-based (not service-role) client: unlike correct_answer/explanation
+// on mcqs (revoked from anon/authenticated entirely, see
+// app/admin/reports/page.tsx and app/admin/review/page.tsx), everything
+// getTopicCoverage reads -- topics, mcq_topics, and mcqs.difficulty/status/
+// verification_status -- is already select-granted to authenticated, and
+// the is_reviewer() RLS policies on all three tables give admins full
+// visibility (including draft/review-stage rows) through their own
+// session. No service-role access is needed here.
 
 const TIER_STYLE: Record<string, string> = {
   CRITICAL: "bg-red-500/10 text-error",
@@ -13,7 +22,7 @@ const TIER_STYLE: Record<string, string> = {
 };
 
 export default async function AdminCoveragePage() {
-  const supabase = createAdminClient();
+  const supabase = await createClient();
   const rows = await getTopicCoverage(supabase);
 
   const critical = rows.filter((r) => tierFor(r.publishedCount) === "CRITICAL").length;
