@@ -14,9 +14,21 @@
 import { getServiceClient } from "./tag-utils";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-// Flag a topic when its published question count falls below this. Adjust
-// freely -- this is not derived from any spec, just a sane starting bar.
-const DEFAULT_MIN_QUESTIONS = 10;
+// Severity tiers by published question count. Adjust freely -- these are not
+// derived from any spec, just sane starting bars.
+//   CRITICAL: 0..CRITICAL_MAX_QUESTIONS
+//   LOW:      CRITICAL_MAX_QUESTIONS+1..LOW_MAX_QUESTIONS
+//   OK:       LOW_MAX_QUESTIONS+1 and up
+const CRITICAL_MAX_QUESTIONS = 2;
+const LOW_MAX_QUESTIONS = 9;
+
+type Tier = "CRITICAL" | "LOW" | "OK";
+
+function tierFor(publishedCount: number): Tier {
+  if (publishedCount <= CRITICAL_MAX_QUESTIONS) return "CRITICAL";
+  if (publishedCount <= LOW_MAX_QUESTIONS) return "LOW";
+  return "OK";
+}
 
 type Difficulty = 1 | 2 | 3;
 type QuestionStatus = "draft" | "review" | "published" | "archived";
@@ -130,15 +142,18 @@ async function main(): Promise<void> {
     Linked: r.linkedCount,
     "Diff 1/2/3": `${r.difficulty[1]}/${r.difficulty[2]}/${r.difficulty[3]}`,
     "Verif v/u/nr/rej": `${r.verification.verified}/${r.verification.unverified}/${r.verification.needs_review}/${r.verification.rejected}`,
-    Flag: r.publishedCount < DEFAULT_MIN_QUESTIONS ? `LOW (<${DEFAULT_MIN_QUESTIONS})` : "",
+    Flag: tierFor(r.publishedCount),
   }));
 
   console.table(table);
 
-  const flaggedCount = rows.filter((r) => r.publishedCount < DEFAULT_MIN_QUESTIONS).length;
+  const critical = rows.filter((r) => tierFor(r.publishedCount) === "CRITICAL").length;
+  const low = rows.filter((r) => tierFor(r.publishedCount) === "LOW").length;
+  const ok = rows.filter((r) => tierFor(r.publishedCount) === "OK").length;
   console.log(
-    `\n${rows.length} topics, ${flaggedCount} below the ${DEFAULT_MIN_QUESTIONS}-question flag threshold ` +
-      `(edit DEFAULT_MIN_QUESTIONS in scripts/topic-coverage-report.ts to change it).`,
+    `\n${rows.length} topics: ${critical} critical (0-${CRITICAL_MAX_QUESTIONS}), ${low} low ` +
+      `(${CRITICAL_MAX_QUESTIONS + 1}-${LOW_MAX_QUESTIONS}), ${ok} ok (${LOW_MAX_QUESTIONS + 1}+) ` +
+      `(edit CRITICAL_MAX_QUESTIONS/LOW_MAX_QUESTIONS in scripts/topic-coverage-report.ts to change the tiers).`,
   );
 }
 
