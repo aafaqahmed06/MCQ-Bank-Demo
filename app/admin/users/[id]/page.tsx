@@ -217,6 +217,7 @@ export default async function AdminUserDetailPage({ params }: PageProps) {
       {caller && (
         <DeleteAccountSection
           targetId={p.id}
+          targetName={p.full_name}
           targetEmail={authUser?.user?.email ?? ""}
           targetRole={p.role}
           callerId={caller.id}
