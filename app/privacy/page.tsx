@@ -62,6 +62,22 @@ export default function PrivacyPage() {
               provider (Vercel) and database provider (Supabase) may collect standard logs such
               as IP addresses and browser information to operate and secure the service.
             </p>
+            <p>
+              <strong className="text-[var(--text-body)]">CAPTCHA data.</strong> We use
+              Cloudflare Turnstile to protect sign-up, sign-in, and password recovery from
+              automated abuse. Turnstile runs in your browser and processes limited device and
+              browser signals on Cloudflare&apos;s servers to verify you are human; we do not
+              receive the underlying signals ourselves. See{" "}
+              <a
+                href="https://www.cloudflare.com/privacypolicy/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+              >
+                Cloudflare&apos;s Privacy Policy
+              </a>{" "}
+              for details.
+            </p>
           </Section>
 
           <Section id="how-we-use" title="2. How We Use Your Information">
@@ -73,6 +89,20 @@ export default function PrivacyPage() {
               <li>Respond to question reports and support requests;</li>
               <li>Maintain the security, safety, and integrity of the service.</li>
             </ul>
+            <p>
+              <strong className="text-[var(--text-body)]">Leaderboard visibility.</strong> If you
+              use the leaderboard, your full name, college, program, exams completed, correct
+              answers, and accuracy are visible to other signed-in users of the Service. This
+              information is not anonymized or aggregated — it identifies you by name. If you do
+              not want this information visible to other users, contact us at{" "}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+              .
+            </p>
           </Section>
 
           <Section id="sharing" title="3. Sharing and Disclosure">
@@ -95,8 +125,13 @@ export default function PrivacyPage() {
           <Section id="retention" title="5. Data Retention">
             <p>
               We keep your account and practice data for as long as your account is active.
-              When you delete your account, your profile and practice data are removed. Backup
-              copies may take a short time to be purged by our hosting providers.
+              Account deletion is handled by our team on request (see{" "}
+              <a href="#your-rights" className="font-medium text-[var(--accent-cyan)] hover:underline active:underline">
+                Your Rights
+              </a>{" "}
+              below) rather than as a self-service action in the app. Once processed, your
+              profile and practice data are removed; backup copies may take a short time to be
+              purged by our hosting providers.
             </p>
           </Section>
 
@@ -120,6 +155,11 @@ export default function PrivacyPage() {
               We use essential cookies and tokens to keep you signed in and secure. These are
               required for the service to function and are not used for advertising or
               cross-site tracking.
+            </p>
+            <p>
+              We also use your browser&apos;s local storage to remember non-account preferences
+              on your device, such as light/dark theme and whether you have completed the
+              onboarding tutorial. This information stays on your device and is not sent to us.
             </p>
           </Section>
 

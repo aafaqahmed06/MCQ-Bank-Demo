@@ -36,8 +36,10 @@ export default function TermsPage() {
 
           <p className="hud-muted mt-6 leading-relaxed">
             These Terms of Service (&quot;Terms&quot;) govern your use of {SITE_NAME}
-            (&quot;the Service&quot;). By accessing or using the Service, you agree to these
-            Terms. If you do not agree, please do not use the Service.
+            (&quot;the Service&quot;), which is developed and operated by an individual
+            developer, not a registered company (&quot;we&quot;, &quot;our&quot;, or
+            &quot;us&quot;). By accessing or using the Service, you agree to these Terms. If you
+            do not agree, please do not use the Service.
           </p>
 
           <Section id="eligibility" title="1. Eligibility">
@@ -87,8 +89,16 @@ export default function TermsPage() {
 
           <Section id="termination" title="6. Termination">
             <p>
-              You may delete your account at any time. We may suspend or terminate access if we
-              reasonably believe you have violated these Terms.
+              You may request deletion of your account at any time by contacting us at{" "}
+              <a
+                href={`mailto:${SUPPORT_EMAIL}`}
+                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+              >
+                {SUPPORT_EMAIL}
+              </a>
+              . Deletion requests are processed by our team rather than performed automatically
+              in-app. We may suspend or terminate your access if we reasonably believe you have
+              violated these Terms.
             </p>
           </Section>
 
@@ -110,15 +120,23 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section id="governing-law" title="9. Governing Law">
+          <Section id="fees" title="9. Fees">
             <p>
-              These Terms are governed by the laws applicable to our jurisdiction, without
-              regard to conflict-of-law principles. Any disputes will be resolved in the
-              competent courts of that jurisdiction.
+              The Service is currently offered free of charge. If we introduce paid features in
+              the future, we will update these Terms and provide notice before any charges
+              apply to you.
             </p>
           </Section>
 
-          <Section id="changes" title="10. Changes to These Terms">
+          <Section id="governing-law" title="10. Governing Law">
+            <p>
+              These Terms are governed by the laws of Pakistan, without regard to
+              conflict-of-law principles. Any disputes arising from these Terms or your use of
+              the Service will be resolved in the competent courts of Pakistan.
+            </p>
+          </Section>
+
+          <Section id="changes" title="11. Changes to These Terms">
             <p>
               We may update these Terms from time to time. Material changes will be reflected
               by the &quot;Last updated&quot; date above. Continued use of the Service after
@@ -126,7 +144,7 @@ export default function TermsPage() {
             </p>
           </Section>
 
-          <Section id="contact" title="11. Contact">
+          <Section id="contact" title="12. Contact">
             <p>
               Questions about these Terms can be sent to{" "}
               <a
