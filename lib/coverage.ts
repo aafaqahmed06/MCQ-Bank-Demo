@@ -3,10 +3,12 @@
 // registry -- this is NOT that. It's a quick snapshot over data we already
 // have, useful for spotting thin/unverified topics today).
 //
-// Used by both scripts/topic-coverage-report.ts (CLI, service-role client)
-// and app/admin/coverage/page.tsx (admin-gated route, service-role client
-// via lib/supabase/admin.ts) so the query logic isn't duplicated between the
-// two.
+// Used by both scripts/topic-coverage-report.ts (CLI, service-role client --
+// no user session to run as) and app/admin/coverage/page.tsx (admin-gated
+// route, cookie-based session client via lib/supabase/server.ts -- the
+// is_reviewer() RLS policies on topics/mcq_topics/mcqs already give an
+// admin's own session full visibility, so no service-role client is
+// needed there) so the query logic isn't duplicated between the two.
 //
 // Question ownership follows mcq_topics with relationship_type = 'primary'
 // (docs/MASTER_KB.md "Architecture/database-schema.md" -> ## mcq_topics),
