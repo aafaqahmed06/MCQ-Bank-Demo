@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import CaptchaWidget from "@/components/CaptchaWidget";
 
 type Mode = "signin" | "signup";
 
@@ -30,6 +31,7 @@ export default function AuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
 
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
@@ -59,6 +61,7 @@ export default function AuthForm() {
           options: {
             data: { full_name: fullName.trim() || null },
             emailRedirectTo: `${window.location.origin}/auth/callback?next=/home`,
+            captchaToken,
           },
         });
         if (err) {
@@ -78,6 +81,7 @@ export default function AuthForm() {
         const { error: err } = await supabase.auth.signInWithPassword({
           email,
           password,
+          options: { captchaToken },
         });
         if (err) {
           setError(err.message);
@@ -88,6 +92,7 @@ export default function AuthForm() {
       }
     } finally {
       setLoading(false);
+      setCaptchaToken(undefined);
     }
   }
 
@@ -245,6 +250,8 @@ export default function AuthForm() {
           </div>
         )}
       </div>
+
+      <CaptchaWidget onToken={setCaptchaToken} />
 
       {error && (
         <p className="alert-error rounded-lg px-3 py-2 text-sm" role="alert">

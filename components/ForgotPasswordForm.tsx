@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import CaptchaWidget from "@/components/CaptchaWidget";
 
 export default function ForgotPasswordForm() {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -10,6 +11,7 @@ export default function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
 
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
@@ -26,6 +28,7 @@ export default function ForgotPasswordForm() {
         email,
         {
           redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
+          captchaToken,
         },
       );
       if (err) {
@@ -38,6 +41,7 @@ export default function ForgotPasswordForm() {
       setEmail("");
     } finally {
       setLoading(false);
+      setCaptchaToken(undefined);
     }
   }
 
@@ -64,6 +68,8 @@ export default function ForgotPasswordForm() {
           className={inputClass}
         />
       </div>
+
+      <CaptchaWidget onToken={setCaptchaToken} />
 
       {error && (
         <p

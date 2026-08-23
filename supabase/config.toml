@@ -213,10 +213,15 @@ token_verifications = 30
 web3 = 30
 
 # Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
+# NOT YET ENABLED -- no provider/keys chosen. Once you have a site key +
+# secret key, set NEXT_PUBLIC_CAPTCHA_PROVIDER and NEXT_PUBLIC_CAPTCHA_SITE_KEY
+# (see .env.example) to the same provider as below, uncomment this block,
+# and set the equivalent in the hosted project's Dashboard
+# (Authentication -> Attack Protection) -- this file only affects local dev.
 # [auth.captcha]
 # enabled = true
-# provider = "hcaptcha"
-# secret = ""
+# provider = "hcaptcha" # or "turnstile" -- must match NEXT_PUBLIC_CAPTCHA_PROVIDER
+# secret = "env(SUPABASE_AUTH_CAPTCHA_SECRET)"
 
 [auth.email]
 # Allow/disallow new user signups via email to your project.
@@ -225,7 +230,7 @@ enable_signup = true
 # addresses. If disabled, only the new email is required to confirm.
 double_confirm_changes = false
 # If enabled, users need to confirm their email address before signing in.
-enable_confirmations = false
+enable_confirmations = true
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
 secure_password_change = false
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
