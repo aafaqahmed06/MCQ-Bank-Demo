@@ -6,6 +6,7 @@ import type {
   Block,
   MCQ,
   Module,
+  SampleQuestion,
   TopicGroup,
   TopicGroupStatus,
 } from "@/types";
@@ -98,6 +99,74 @@ export async function getModulesByBlockId(blockId: string): Promise<Module[]> {
       topicsTotal: p?.total ?? 0,
     };
   });
+}
+
+/**
+ * Flat, ordered list of every subject (module) name, for public display
+ * (landing page subject pills). Unlike getModulesByBlockId this isn't
+ * scoped to a block or a user -- it skips the per-user topic-progress join,
+ * which an anonymous visitor's request has no use for.
+ */
+export async function getSubjectNames(): Promise<string[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("modules")
+    .select("name")
+    .order("order_index", { ascending: true });
+  if (error) throw new Error(`modules: ${error.message}`);
+  return (data ?? []).map((m) => m.name as string);
+}
+
+const SAMPLE_QUESTION_ID = "heme_coag_001";
+
+/**
+ * One real, published question for the landing page. Selects only columns
+ * anon is granted (correct_answer/explanation are revoked at the Postgres
+ * grant level for anon/authenticated -- see migration
+ * 20260708000016_lock_mcq_keys.sql -- this list is explicit for clarity of
+ * intent, not a workaround). Prefers a known-good, well-formed question by
+ * id; falls back to any published question if that row is ever
+ * removed/unpublished. Supabase-js has no way to ORDER BY random() without
+ * a new RPC, so this isn't randomized.
+ */
+export async function getSampleQuestion(): Promise<SampleQuestion | null> {
+  const supabase = await createClient();
+
+  const preferred = await supabase
+    .from("mcqs")
+    .select("id, topic_id, question, options")
+    .eq("id", SAMPLE_QUESTION_ID)
+    .eq("status", "published")
+    .maybeSingle();
+
+  const row =
+    preferred.data ??
+    (
+      await supabase
+        .from("mcqs")
+        .select("id, topic_id, question, options")
+        .eq("status", "published")
+        .limit(1)
+        .maybeSingle()
+    ).data;
+  if (!row) return null;
+
+  let topicName: string | null = null;
+  if (row.topic_id) {
+    const { data: topic } = await supabase
+      .from("topics")
+      .select("name")
+      .eq("id", row.topic_id as string)
+      .maybeSingle();
+    topicName = (topic?.name as string) ?? null;
+  }
+
+  return {
+    id: row.id as string,
+    topic: topicName,
+    question: row.question as string,
+    options: (row.options as string[]) ?? [],
+  };
 }
 
 export async function getModuleById(moduleId: string): Promise<Module | null> {

@@ -134,3 +134,16 @@ export interface ExamReviewItem {
   explanation: string;
   question_order: number;
 }
+
+/**
+ * A single published question shown to anonymous visitors on the landing
+ * page (getSampleQuestion, lib/curriculum.ts). Key-free by design, same as
+ * ExamQuestionPayload -- correct_answer/explanation are not readable by
+ * anon at the Postgres grant level anyway (migration 20260708000016).
+ */
+export interface SampleQuestion {
+  id: string;
+  topic: string | null;
+  question: string;
+  options: string[];
+}
