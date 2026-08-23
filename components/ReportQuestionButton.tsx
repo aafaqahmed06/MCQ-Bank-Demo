@@ -8,7 +8,9 @@ type ReportQuestionButtonProps = {
   mcqId: string;
 };
 
-const REASONS: { value: string; label: string }[] = [
+// Exported so the admin reports queue (app/admin/reports) can render the
+// same reason labels instead of duplicating this taxonomy.
+export const REPORT_REASONS: { value: string; label: string }[] = [
   { value: "incorrect_answer", label: "Incorrect answer" },
   { value: "incorrect_explanation", label: "Incorrect explanation" },
   { value: "ambiguous", label: "Ambiguous / multiple answers" },
@@ -122,7 +124,7 @@ export default function ReportQuestionButton({ mcqId }: ReportQuestionButtonProp
                       onChange={(e) => setReason(e.target.value)}
                       className={selectClass}
                     >
-                      {REASONS.map((r) => (
+                      {REPORT_REASONS.map((r) => (
                         <option key={r.value} value={r.value}>
                           {r.label}
                         </option>
