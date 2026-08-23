@@ -11,6 +11,7 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import type { DBProfile } from "@/types";
 import { createClient } from "@/lib/supabase/client";
+import { touchLastActiveIfStale } from "@/lib/activity";
 
 type AuthContextValue = {
   session: Session | null;
@@ -61,6 +62,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(s);
         if (s?.user) {
           await fetchProfile(s.user.id);
+          touchLastActiveIfStale(supabase, s.user.id);
         } else {
           setProfile(null);
         }
@@ -76,6 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(s);
       if (s?.user) {
         fetchProfile(s.user.id);
+        touchLastActiveIfStale(supabase, s.user.id);
       } else {
         setProfile(null);
       }

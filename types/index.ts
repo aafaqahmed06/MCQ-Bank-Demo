@@ -13,6 +13,25 @@ export interface DBProfile {
   avatar_url: string | null;
 }
 
+/**
+ * Admin user-directory row: a profile joined with college/program/year names
+ * and the auth.users email, assembled server-side via the service-role
+ * client (app/admin/users/page.tsx). Kept separate from DBProfile since
+ * regular client-side profile fetches (AuthProvider) never need or have
+ * access to these joined/service-role-only fields.
+ */
+export interface AdminUserRow {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: "student" | "reviewer" | "admin" | "super_admin";
+  collegeName: string | null;
+  programName: string | null;
+  academicYearName: string | null;
+  lastActiveAt: string | null;
+  createdAt: string;
+}
+
 export interface Block {
   id: string;
   name: string;

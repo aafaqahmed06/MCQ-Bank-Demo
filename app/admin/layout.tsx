@@ -12,6 +12,7 @@ const TABS = [
   { href: "/admin/reports", label: "Reports" },
   { href: "/admin/review", label: "Review Queue" },
   { href: "/admin/coverage", label: "Coverage" },
+  { href: "/admin/users", label: "Users" },
 ];
 
 export default async function AdminLayout({
