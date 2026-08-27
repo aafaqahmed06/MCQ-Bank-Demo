@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import {
   getTopicCoverage,
   tierFor,
@@ -22,6 +23,7 @@ const TIER_STYLE: Record<string, string> = {
 };
 
 export default async function AdminCoveragePage() {
+  await requireAdmin();
   const supabase = await createClient();
   const rows = await getTopicCoverage(supabase);
 

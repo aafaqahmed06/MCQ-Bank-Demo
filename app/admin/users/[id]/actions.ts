@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
 // Error-only: redirect() throws internally on success, so no `ok: true`
 // value is ever actually returned to a caller on the happy path.
@@ -12,6 +13,10 @@ export async function deleteUserAccount(
   targetId: string,
   confirmedEmail: string
 ): Promise<DeleteAccountResult> {
+  // Blanket in-app admin gate; the assert_can_delete_user RPC below is the
+  // authoritative check (self-deletion + admin/super_admin tier rule).
+  await requireAdmin();
+
   const session = await createClient();
   const {
     data: { user: caller },

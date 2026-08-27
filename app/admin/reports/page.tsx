@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import ReportsTable, { type ReportRow } from "./ReportsTable";
 
 // Service-role client, not the cookie-based server client: mcqs.correct_answer
@@ -22,6 +23,7 @@ interface RawReportRow {
 }
 
 export default async function AdminReportsPage() {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { data, error } = await supabase

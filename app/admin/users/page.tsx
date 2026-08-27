@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { formatLastActive } from "@/lib/activity";
 import type { AdminUserRow } from "@/types";
 
@@ -47,6 +48,7 @@ async function fetchAllUserEmails(
 }
 
 export default async function AdminUsersPage() {
+  await requireAdmin();
   const admin = createAdminClient();
 
   const [{ data, error }, emailById] = await Promise.all([

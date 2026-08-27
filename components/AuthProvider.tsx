@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 import type { Session, User } from "@supabase/supabase-js";
 import type { DBProfile } from "@/types";
 import { createClient } from "@/lib/supabase/client";
@@ -26,10 +27,17 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<DBProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Latest session id, readable from event handlers without a stale closure.
+  const sessionUserIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    sessionUserIdRef.current = session?.user?.id ?? null;
+  }, [session]);
 
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
@@ -89,6 +97,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription.unsubscribe();
     };
   }, [fetchProfile]);
+
+  // Secondary net for the back/forward cache: neither getSession() nor
+  // onAuthStateChange re-runs when a page is restored from bfcache, so a
+  // stale React tree (e.g. a previous account's dashboard) can reappear
+  // after logout + login as someone else. On a persisted restore, force a
+  // fresh check against the current cookies and refresh the RSC payload.
+  useEffect(() => {
+    const supabase = supabaseRef.current!;
+
+    const onPageShow = async (event: PageTransitionEvent) => {
+      if (!event.persisted) return;
+
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          setSession(null);
+          setProfile(null);
+        } else if (user.id !== sessionUserIdRef.current) {
+          const {
+            data: { session: s },
+          } = await supabase.auth.getSession();
+          setSession(s);
+          await fetchProfile(user.id);
+        }
+      } catch {
+        // Network hiccup on restore -- fall through to router.refresh(), which
+        // re-runs the server with current cookies anyway.
+      }
+
+      router.refresh();
+    };
+
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [fetchProfile, router]);
 
   const refreshProfile = useCallback(async () => {
     const supabase = supabaseRef.current!;

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { formatLastActive } from "@/lib/activity";
 import DeleteAccountSection from "./DeleteAccountSection";
 
@@ -36,6 +37,7 @@ type PageProps = {
 };
 
 export default async function AdminUserDetailPage({ params }: PageProps) {
+  await requireAdmin();
   const { id } = await params;
   const admin = createAdminClient();
 

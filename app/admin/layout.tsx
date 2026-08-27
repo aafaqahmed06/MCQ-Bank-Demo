@@ -1,13 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 
-// The only real gate: server-side is_admin() check via the cookie-based
-// client (needs the caller's own session for auth.uid()). Everything under
-// app/admin/* also enforces itself again at the RPC layer (set_mcq_status,
-// set_question_report_status), since this layout check is UX, not the
-// security boundary -- Postgres is.
+// Server-side is_admin() gate (requireAdmin). Every app/admin page and
+// server action re-runs the same check -- layouts don't re-render on client
+// navigation between admin tabs -- and Postgres (RLS + SECURITY DEFINER
+// RPCs: set_mcq_status, set_question_report_status, assert_can_delete_user)
+// remains the real security boundary.
 const TABS = [
   { href: "/admin/reports", label: "Reports" },
   { href: "/admin/review", label: "Review Queue" },
@@ -20,15 +19,7 @@ export default async function AdminLayout({
 }: {
   children: ReactNode;
 }) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) redirect("/auth");
-
-  const { data: isAdmin, error } = await supabase.rpc("is_admin");
-  if (error || !isAdmin) redirect("/");
+  await requireAdmin();
 
   return (
     <div className="flex min-h-full flex-1 flex-col">

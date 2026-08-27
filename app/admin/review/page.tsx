@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdmin } from "@/lib/auth/requireAdmin";
 import ReviewTable, { type ReviewMcqRow } from "./ReviewTable";
 
 // Service-role client for the same reason as app/admin/reports/page.tsx:
@@ -19,6 +20,7 @@ interface RawMcqRow {
 }
 
 export default async function AdminReviewPage() {
+  await requireAdmin();
   const supabase = createAdminClient();
 
   const { data, error } = await supabase
