@@ -4,7 +4,8 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import CaptchaWidget, { isCaptchaConfigured } from "@/components/CaptchaWidget";
+import CaptchaWidget, { type CaptchaWidgetHandle } from "@/components/CaptchaWidget";
+import { useCaptchaToken } from "@/components/CaptchaProvider";
 import { MIN_PASSWORD_LENGTH, validatePassword } from "@/lib/auth/password";
 
 type Mode = "signin" | "signup";
@@ -20,8 +21,27 @@ export default function AuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
-  const captchaReady = !isCaptchaConfigured || !!captchaToken;
+
+  // Usually already solved by the time this form is reached -- see
+  // CaptchaProvider, mounted at the app root, which pre-warms a hidden
+  // Turnstile widget as soon as an anonymous visitor lands on any page.
+  const { status: captchaStatus, consumeToken } = useCaptchaToken();
+  const fallbackWidgetRef = useRef<CaptchaWidgetHandle | null>(null);
+  const [fallbackToken, setFallbackToken] = useState<string | undefined>();
+  const captchaReady =
+    captchaStatus === "disabled" ||
+    captchaStatus === "ready" ||
+    (captchaStatus === "unavailable" && !!fallbackToken);
+
+  function getCaptchaToken(): string | undefined {
+    if (captchaStatus === "unavailable") {
+      const token = fallbackToken;
+      setFallbackToken(undefined);
+      fallbackWidgetRef.current?.reset();
+      return token;
+    }
+    return consumeToken();
+  }
 
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
@@ -37,6 +57,7 @@ export default function AuthForm() {
     setError(null);
     setInfo(null);
     const supabase = supabaseRef.current!;
+    const captchaToken = getCaptchaToken();
 
     try {
       if (mode === "signup") {
@@ -82,7 +103,6 @@ export default function AuthForm() {
       }
     } finally {
       setLoading(false);
-      setCaptchaToken(undefined);
     }
   }
 
@@ -119,6 +139,7 @@ export default function AuthForm() {
     setError(null);
     setInfo(null);
     const supabase = supabaseRef.current!;
+    const captchaToken = getCaptchaToken();
 
     try {
       const { error: err } = await supabase.auth.signInAnonymously({
@@ -132,7 +153,6 @@ export default function AuthForm() {
       router.refresh();
     } finally {
       setLoading(false);
-      setCaptchaToken(undefined);
     }
   }
 
@@ -263,11 +283,20 @@ export default function AuthForm() {
         )}
       </div>
 
-      <CaptchaWidget onToken={setCaptchaToken} />
-      {!captchaReady && !loading && (
+      {captchaStatus === "pending" && !loading && (
         <p className="text-sm text-[var(--text-muted)]" role="status">
-          Complete the verification above to continue.
+          Verifying your browser…
         </p>
+      )}
+      {captchaStatus === "unavailable" && (
+        <>
+          <CaptchaWidget ref={fallbackWidgetRef} onToken={setFallbackToken} />
+          {!fallbackToken && !loading && (
+            <p className="text-sm text-[var(--text-muted)]" role="status">
+              Complete the verification above to continue.
+            </p>
+          )}
+        </>
       )}
 
       {error && (

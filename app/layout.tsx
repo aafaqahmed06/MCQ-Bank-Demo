@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/components/AuthProvider";
+import { CaptchaProvider } from "@/components/CaptchaProvider";
 import PageTransition from "@/components/PageTransition";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -53,9 +54,11 @@ export default function RootLayout({
           }}
         />
         <AuthProvider>
-          <ThemeProvider>
-            <PageTransition>{children}</PageTransition>
-          </ThemeProvider>
+          <CaptchaProvider>
+            <ThemeProvider>
+              <PageTransition>{children}</PageTransition>
+            </ThemeProvider>
+          </CaptchaProvider>
         </AuthProvider>
       </body>
     </html>

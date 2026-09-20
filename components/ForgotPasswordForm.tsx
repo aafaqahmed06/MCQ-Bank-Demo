@@ -3,7 +3,8 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import CaptchaWidget, { isCaptchaConfigured } from "@/components/CaptchaWidget";
+import CaptchaWidget, { type CaptchaWidgetHandle } from "@/components/CaptchaWidget";
+import { useCaptchaToken } from "@/components/CaptchaProvider";
 
 export default function ForgotPasswordForm() {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -11,8 +12,26 @@ export default function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState<string | undefined>();
-  const captchaReady = !isCaptchaConfigured || !!captchaToken;
+
+  // See components/CaptchaProvider.tsx -- usually already solved by the
+  // time this form is reached.
+  const { status: captchaStatus, consumeToken } = useCaptchaToken();
+  const fallbackWidgetRef = useRef<CaptchaWidgetHandle | null>(null);
+  const [fallbackToken, setFallbackToken] = useState<string | undefined>();
+  const captchaReady =
+    captchaStatus === "disabled" ||
+    captchaStatus === "ready" ||
+    (captchaStatus === "unavailable" && !!fallbackToken);
+
+  function getCaptchaToken(): string | undefined {
+    if (captchaStatus === "unavailable") {
+      const token = fallbackToken;
+      setFallbackToken(undefined);
+      fallbackWidgetRef.current?.reset();
+      return token;
+    }
+    return consumeToken();
+  }
 
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
@@ -23,6 +42,7 @@ export default function ForgotPasswordForm() {
     setLoading(true);
     setError(null);
     setInfo(null);
+    const captchaToken = getCaptchaToken();
 
     try {
       const { error: err } = await supabaseRef.current!.auth.resetPasswordForEmail(
@@ -42,7 +62,6 @@ export default function ForgotPasswordForm() {
       setEmail("");
     } finally {
       setLoading(false);
-      setCaptchaToken(undefined);
     }
   }
 
@@ -70,11 +89,20 @@ export default function ForgotPasswordForm() {
         />
       </div>
 
-      <CaptchaWidget onToken={setCaptchaToken} />
-      {!captchaReady && !loading && (
+      {captchaStatus === "pending" && !loading && (
         <p className="text-sm text-[var(--text-muted)]" role="status">
-          Complete the verification above to continue.
+          Verifying your browser…
         </p>
+      )}
+      {captchaStatus === "unavailable" && (
+        <>
+          <CaptchaWidget ref={fallbackWidgetRef} onToken={setFallbackToken} />
+          {!fallbackToken && !loading && (
+            <p className="text-sm text-[var(--text-muted)]" role="status">
+              Complete the verification above to continue.
+            </p>
+          )}
+        </>
       )}
 
       {error && (
