@@ -25,6 +25,7 @@ export interface AdminUserRow {
   full_name: string | null;
   email: string | null;
   role: "student" | "reviewer" | "admin" | "super_admin";
+  isGuest: boolean;
   collegeName: string | null;
   programName: string | null;
   academicYearName: string | null;

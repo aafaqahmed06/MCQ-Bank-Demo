@@ -31,34 +31,36 @@ const ROLE_STYLE: Record<string, string> = {
   super_admin: "bg-red-500/10 text-error",
 };
 
-async function fetchAllUserEmails(
+type AuthUserMeta = { email: string | null; isGuest: boolean };
+
+async function fetchAllUserMeta(
   admin: ReturnType<typeof createAdminClient>
-): Promise<Map<string, string>> {
-  const emailById = new Map<string, string>();
+): Promise<Map<string, AuthUserMeta>> {
+  const metaById = new Map<string, AuthUserMeta>();
   const perPage = 1000;
   for (let page = 1; ; page++) {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
     if (error || !data?.users?.length) break;
     for (const u of data.users) {
-      if (u.email) emailById.set(u.id, u.email);
+      metaById.set(u.id, { email: u.email ?? null, isGuest: !!u.is_anonymous });
     }
     if (data.users.length < perPage) break;
   }
-  return emailById;
+  return metaById;
 }
 
 export default async function AdminUsersPage() {
   await requireAdmin();
   const admin = createAdminClient();
 
-  const [{ data, error }, emailById] = await Promise.all([
+  const [{ data, error }, metaById] = await Promise.all([
     admin
       .from("profiles")
       .select(
         "id, full_name, role, last_active_at, created_at, colleges ( name ), programs ( name ), academic_years ( name )"
       )
       .order("full_name", { ascending: true }),
-    fetchAllUserEmails(admin),
+    fetchAllUserMeta(admin),
   ]);
 
   if (error) {
@@ -77,8 +79,9 @@ export default async function AdminUsersPage() {
     (p) => ({
       id: p.id,
       full_name: p.full_name,
-      email: emailById.get(p.id) ?? null,
+      email: metaById.get(p.id)?.email ?? null,
       role: p.role,
+      isGuest: metaById.get(p.id)?.isGuest ?? false,
       collegeName: p.colleges?.name ?? null,
       programName: p.programs?.name ?? null,
       academicYearName: p.academic_years?.name ?? null,
@@ -122,6 +125,11 @@ export default async function AdminUsersPage() {
                   >
                     {row.full_name ?? "(no name)"}
                   </Link>
+                  {row.isGuest && (
+                    <span className="ml-2 inline-flex rounded-full bg-[var(--bg-card-alt)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">
+                      Guest
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-3 text-[var(--text-muted)]">
                   {row.email ?? "—"}
