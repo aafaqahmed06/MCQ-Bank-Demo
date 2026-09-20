@@ -5,20 +5,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import CaptchaWidget, { isCaptchaConfigured } from "@/components/CaptchaWidget";
+import { MIN_PASSWORD_LENGTH, validatePassword } from "@/lib/auth/password";
 
 type Mode = "signin" | "signup";
-
-const MIN_PASSWORD_LENGTH = 10;
-
-function validatePassword(pw: string): string | null {
-  if (pw.length < MIN_PASSWORD_LENGTH) {
-    return `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`;
-  }
-  if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) {
-    return "Password must include both letters and numbers.";
-  }
-  return null;
-}
 
 export default function AuthForm() {
   const router = useRouter();
@@ -122,6 +111,28 @@ export default function AuthForm() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGuest() {
+    setLoading(true);
+    setError(null);
+    setInfo(null);
+    const supabase = supabaseRef.current!;
+
+    try {
+      const { error: err } = await supabase.auth.signInAnonymously({
+        options: { captchaToken },
+      });
+      if (err) {
+        setError(err.message);
+        return;
+      }
+      router.replace("/onboarding");
+      router.refresh();
+    } finally {
+      setLoading(false);
+      setCaptchaToken(undefined);
     }
   }
 
@@ -318,6 +329,31 @@ export default function AuthForm() {
             </button>
           </>
         )}
+      </p>
+
+      <div className="flex items-center gap-3" aria-hidden="true">
+        <span className="h-px flex-1 bg-cyan-300/20" />
+        <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">
+          or
+        </span>
+        <span className="h-px flex-1 bg-cyan-300/20" />
+      </div>
+
+      <button
+        type="button"
+        disabled={loading || !captchaReady}
+        onClick={() => void handleGuest()}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          if (!loading && captchaReady) void handleGuest();
+        }}
+        className="w-full rounded-xl border border-cyan-300/25 px-5 py-3 text-sm font-medium text-[var(--text-muted)] transition-colors hover:border-cyan-300/40 hover:text-[var(--text-body)] active:border-cyan-300/40 active:text-[var(--text-body)] disabled:opacity-60"
+      >
+        Continue as guest
+      </button>
+      <p className="text-center text-xs text-[var(--text-muted)]">
+        Try DiagKnow without an account. You can save your progress to a real
+        account any time from Account settings.
       </p>
 
       <p className="text-center">

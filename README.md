@@ -6,6 +6,8 @@ for MBBS students in Pakistan. Live at
 
 ## Features
 
+- Sign up with email/password or Google, or try the app instantly with "Continue as guest"
+  (Supabase anonymous auth), with an in-app path to save guest progress to a real account
 - College / program / academic-year onboarding, with a block → module → topic curriculum
   hierarchy
 - Practice sessions with instant correct/incorrect feedback and explanations
@@ -32,6 +34,9 @@ for MBBS students in Pakistan. Live at
      — the Turnstile secret must also be set in the Supabase Dashboard under
      Authentication → Attack Protection, since Supabase's own auth server calls Turnstile's
      verification endpoint, not this app's server.
+   - Anonymous sign-ins ("Continue as guest") must also be enabled separately on the hosted
+     Supabase project under Authentication → Sign In / Providers → Anonymous Sign-Ins; the
+     `enable_anonymous_sign_ins` flag in `supabase/config.toml` only affects local dev.
 2. Install dependencies and start the dev server:
 
    ```bash

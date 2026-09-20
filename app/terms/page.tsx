@@ -52,10 +52,12 @@ export default function TermsPage() {
 
           <Section id="account" title="2. Accounts">
             <p>
-              You may create an account with an email address and password, or by signing in
-              with Google. You agree to provide accurate information and to keep it current.
-              Email-based signups require confirmation of your email address before you can
-              sign in.
+              You may create an account with an email address and password, by signing in
+              with Google, or by continuing as a guest. You agree to provide accurate
+              information and to keep it current. Email-based signups require confirmation of
+              your email address before you can sign in. Guest accounts are tied to your
+              current browser session only — if you sign out or clear your browser data
+              without adding an email and password, your progress cannot be recovered.
             </p>
           </Section>
 

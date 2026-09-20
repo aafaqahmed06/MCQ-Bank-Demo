@@ -177,7 +177,11 @@ refresh_token_reuse_interval = 0
 # Allow/disallow new user signups to your project.
 enable_signup = true
 # Allow/disallow anonymous sign-ins to your project.
-enable_anonymous_sign_ins = false
+# Powers the "Continue as guest" option on /auth (components/AuthForm.tsx).
+# This only affects local dev -- the hosted project's Dashboard
+# (Authentication -> Sign In / Providers -> Anonymous Sign-Ins) needs the
+# same toggle set separately for production/preview.
+enable_anonymous_sign_ins = true
 # Allow/disallow testing manual linking of accounts
 enable_manual_linking = false
 # Passwords shorter than this value will be rejected as weak. Minimum 6, recommended 8 or more.

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
+import { validatePassword } from "@/lib/auth/password";
 
 const inputClass =
   "w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25";
@@ -23,6 +24,12 @@ export default function AccountSecurityForm() {
   const [pwInfo, setPwInfo] = useState<string | null>(null);
   const [pwError, setPwError] = useState<string | null>(null);
 
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPassword, setGuestPassword] = useState("");
+  const [guestSaving, setGuestSaving] = useState(false);
+  const [guestInfo, setGuestInfo] = useState<string | null>(null);
+  const [guestError, setGuestError] = useState<string | null>(null);
+
   if (supabaseRef.current == null) {
     supabaseRef.current = createClient();
   }
@@ -30,6 +37,106 @@ export default function AccountSecurityForm() {
   const signedInWithPassword = (user?.identities ?? []).some(
     (ident) => ident.provider === "email",
   );
+
+  async function handleGuestUpgrade(e: React.FormEvent) {
+    e.preventDefault();
+    setGuestSaving(true);
+    setGuestError(null);
+    setGuestInfo(null);
+
+    const pwError = validatePassword(guestPassword);
+    if (pwError) {
+      setGuestError(pwError);
+      setGuestSaving(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabaseRef.current!.auth.updateUser({
+        email: guestEmail,
+        password: guestPassword,
+      });
+      if (error) {
+        setGuestError(error.message);
+        return;
+      }
+      setGuestInfo(
+        "Check your inbox for a confirmation link to finish saving your account. Your progress stays on this guest session until you confirm.",
+      );
+      setGuestEmail("");
+      setGuestPassword("");
+    } finally {
+      setGuestSaving(false);
+    }
+  }
+
+  if (user?.is_anonymous) {
+    return (
+      <div className="space-y-4">
+        <p className="hud-muted text-sm">
+          You&apos;re using a guest account. Your progress is saved, but only
+          on this device/browser -- signing out or clearing your browser data
+          will lose it. Add an email and password to keep your progress
+          permanently.
+        </p>
+        <form onSubmit={handleGuestUpgrade} className="space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="guestEmail"
+              className="block text-sm font-medium text-[var(--text-label)]"
+            >
+              Email
+            </label>
+            <input
+              id="guestEmail"
+              type="email"
+              autoComplete="email"
+              required
+              value={guestEmail}
+              onChange={(e) => setGuestEmail(e.target.value)}
+              placeholder="you@example.com"
+              className={inputClass}
+            />
+          </div>
+          <div className="space-y-2">
+            <label
+              htmlFor="guestPassword"
+              className="block text-sm font-medium text-[var(--text-label)]"
+            >
+              Password
+            </label>
+            <input
+              id="guestPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={guestPassword}
+              onChange={(e) => setGuestPassword(e.target.value)}
+              placeholder="At least 10 characters, letters + numbers"
+              className={inputClass}
+            />
+          </div>
+          {guestError && (
+            <p className="alert-error rounded-lg px-3 py-2 text-sm" role="alert">
+              {guestError}
+            </p>
+          )}
+          {guestInfo && (
+            <p className="alert-info rounded-lg px-3 py-2 text-sm" role="status">
+              {guestInfo}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={guestSaving}
+            className="hud-primary-btn w-full rounded-xl px-5 py-3 font-medium disabled:opacity-60"
+          >
+            {guestSaving ? "Saving…" : "Save my account"}
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   async function handleEmailChange(e: React.FormEvent) {
     e.preventDefault();

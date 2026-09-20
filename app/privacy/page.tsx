@@ -45,7 +45,10 @@ export default function PrivacyPage() {
             <p>
               <strong className="text-[var(--text-body)]">Account information.</strong> When you
               sign up, we collect your email address and the full name you provide. If you sign
-              in with Google, we receive the name and email address Google shares with us.
+              in with Google, we receive the name and email address Google shares with us. If you
+              use &quot;Continue as guest&quot;, we do not collect an email address or password —
+              a random account identifier is created to store your practice data until you either
+              add an email and password to keep it permanently or stop using the service.
             </p>
             <p>
               <strong className="text-[var(--text-body)]">Profile information.</strong> To tailor

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import EasterEggTrigger from "@/components/EasterEgg";
 import LogoMark from "@/components/LogoMark";
+import ConfirmModal from "@/components/ConfirmModal";
 import { useAuth } from "@/components/AuthProvider";
 
 const navLinks = [
@@ -21,12 +22,21 @@ export default function Navbar() {
   const router = useRouter();
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmSignOut, setConfirmSignOut] = useState(false);
 
-  const handleSignOut = () => {
+  const doSignOut = () => {
     void signOut().then(() => {
       router.replace("/");
       router.refresh();
     });
+  };
+
+  const handleSignOut = () => {
+    if (user?.is_anonymous) {
+      setConfirmSignOut(true);
+      return;
+    }
+    doSignOut();
   };
 
   const closeMenu = () => setMenuOpen(false);
@@ -151,6 +161,19 @@ export default function Navbar() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={confirmSignOut}
+        title="Sign out of guest account?"
+        message="You're using a guest account. Signing out will permanently lose your progress unless you've saved it to an email/password account from Account settings."
+        confirmLabel="Sign out anyway"
+        cancelLabel="Stay signed in"
+        onConfirm={() => {
+          setConfirmSignOut(false);
+          doSignOut();
+        }}
+        onCancel={() => setConfirmSignOut(false)}
+      />
     </nav>
   );
 }
