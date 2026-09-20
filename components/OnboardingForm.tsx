@@ -1,25 +1,23 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
-
-type College = { id: string; name: string; short_name: string | null };
-type Program = { id: string; college_id: string; name: string };
-type AcademicYear = { id: string; program_id: string; year_number: number; name: string };
-
-const HIDDEN_COLLEGE_IDS = new Set(["diagnknow-qb"]);
+import { useCollegeOptions } from "@/components/useCollegeOptions";
+import CollegeCombobox from "@/components/CollegeCombobox";
 
 export default function OnboardingForm() {
   const router = useRouter();
   const { user, refreshProfile } = useAuth();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const { colleges, programs, years, loading } = useCollegeOptions();
 
-  const [colleges, setColleges] = useState<College[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [years, setYears] = useState<AcademicYear[]>([]);
-
+  // Full name carries over from whatever the person already gave us at
+  // sign-up -- Google's profile name, or the name typed on the email/
+  // password sign-up form (AuthForm.tsx sets the same user_metadata field).
+  // College/program/year intentionally start blank: no field should be
+  // silently pre-selected on profile creation.
   const [fullName, setFullName] = useState(() => {
     const raw = user?.user_metadata?.full_name;
     if (typeof raw === "string") return raw;
@@ -30,7 +28,6 @@ export default function OnboardingForm() {
   const [programId, setProgramId] = useState("");
   const [yearId, setYearId] = useState("");
 
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,63 +35,14 @@ export default function OnboardingForm() {
     supabaseRef.current = createClient();
   }
 
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      const supabase = supabaseRef.current!;
-
-      const { data: cols } = await supabase
-        .from("colleges")
-        .select("id, name, short_name")
-        .order("name");
-      if (!active) return;
-      const visibleCols = (cols ?? []).filter(
-        (c) => !HIDDEN_COLLEGE_IDS.has(c.id as string),
-      );
-      if (visibleCols.length) {
-        setColleges(visibleCols as College[]);
-        setCollegeId((visibleCols[0] as College).id);
-      }
-
-      const visibleCollegeIds = new Set(visibleCols.map((c) => c.id as string));
-      const { data: progs } = await supabase
-        .from("programs")
-        .select("id, college_id, name")
-        .order("name");
-      if (!active) return;
-      const visibleProgs = (progs ?? []).filter((p) =>
-        visibleCollegeIds.has(p.college_id as string),
-      );
-      if (visibleProgs.length) {
-        setPrograms(visibleProgs as Program[]);
-        const first = visibleProgs[0] as Program;
-        setProgramId(first.id);
-      }
-
-      const visibleProgramIds = new Set(visibleProgs.map((p) => p.id as string));
-      const { data: ys } = await supabase
-        .from("academic_years")
-        .select("id, program_id, year_number, name")
-        .order("year_number");
-      if (!active) return;
-      const visibleYears = (ys ?? []).filter((y) =>
-        visibleProgramIds.has(y.program_id as string),
-      );
-      if (visibleYears.length) {
-        setYears(visibleYears as AcademicYear[]);
-        setYearId((visibleYears[0] as AcademicYear).id);
-      }
-
-      if (active) setLoading(false);
-    }
-    void load();
-    return () => {
-      active = false;
-    };
-  }, []);
-
   async function saveProfile() {
     if (!user) return;
+
+    if (!fullName.trim() || !collegeId || !programId || !yearId) {
+      setError("Please fill in your name, college, program, and academic year.");
+      return;
+    }
+
     setSaving(true);
     setError(null);
     const supabase = supabaseRef.current!;
@@ -102,10 +50,10 @@ export default function OnboardingForm() {
     const { error: err } = await supabase
       .from("profiles")
       .update({
-        full_name: fullName,
-        college_id: collegeId || null,
-        program_id: programId || null,
-        academic_year_id: yearId || null,
+        full_name: fullName.trim(),
+        college_id: collegeId,
+        program_id: programId,
+        academic_year_id: yearId,
       })
       .eq("id", user.id);
 
@@ -130,6 +78,7 @@ export default function OnboardingForm() {
     return <p className="hud-muted py-6 text-center">Loading…</p>;
   }
 
+  const filteredPrograms = programs.filter((p) => p.college_id === collegeId);
   const filteredYears = years.filter((y) => y.program_id === programId);
 
   return (
@@ -159,23 +108,18 @@ export default function OnboardingForm() {
         >
           College
         </label>
-        <select
-          id="college"
+        <CollegeCombobox
+          inputId="college"
+          colleges={colleges}
           value={collegeId}
-          onChange={(e) => {
-            const id = e.target.value;
+          onChange={(id) => {
             setCollegeId(id);
-            const prog = programs.find((p) => p.college_id === id);
-            setProgramId(prog ? prog.id : programs[0]?.id ?? "");
+            setProgramId("");
+            setYearId("");
           }}
+          placeholder="Search by college name, acronym, or city…"
           className={selectClass}
-        >
-          {colleges.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       <div className="space-y-3">
@@ -188,16 +132,19 @@ export default function OnboardingForm() {
         <select
           id="program"
           value={programId}
-          onChange={(e) => setProgramId(e.target.value)}
+          onChange={(e) => {
+            setProgramId(e.target.value);
+            setYearId("");
+          }}
+          disabled={!collegeId}
           className={selectClass}
         >
-          {programs
-            .filter((p) => p.college_id === collegeId)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+          <option value="">Select program</option>
+          {filteredPrograms.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -212,8 +159,10 @@ export default function OnboardingForm() {
           id="year"
           value={yearId}
           onChange={(e) => setYearId(e.target.value)}
+          disabled={!programId}
           className={selectClass}
         >
+          <option value="">Select academic year</option>
           {filteredYears.map((y) => (
             <option key={y.id} value={y.id}>
               {y.name}

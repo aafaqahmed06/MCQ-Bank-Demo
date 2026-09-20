@@ -1,29 +1,24 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
-
-type College = { id: string; name: string; short_name: string | null };
-type Program = { id: string; college_id: string; name: string };
-type AcademicYear = { id: string; program_id: string; year_number: number; name: string };
-
-const HIDDEN_COLLEGE_IDS = new Set(["diagnknow-qb"]);
+import { useCollegeOptions } from "@/components/useCollegeOptions";
+import CollegeCombobox from "@/components/CollegeCombobox";
 
 export default function ProfileEditor() {
   const { user, profile, refreshProfile } = useAuth();
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
+  const { colleges, programs, years, loading: optionsLoading } = useCollegeOptions();
 
-  const [colleges, setColleges] = useState<College[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
-  const [years, setYears] = useState<AcademicYear[]>([]);
+  // ProfileEditor only ever renders inside RequireProfile (app/account/page.tsx),
+  // which already waits for the profile to finish loading -- so it's safe to
+  // read it directly on first render, not just after some later effect.
+  const [fullName, setFullName] = useState(() => profile?.full_name ?? "");
+  const [collegeId, setCollegeId] = useState(() => profile?.college_id ?? "");
+  const [programId, setProgramId] = useState(() => profile?.program_id ?? "");
+  const [yearId, setYearId] = useState(() => profile?.academic_year_id ?? "");
 
-  const [fullName, setFullName] = useState("");
-  const [collegeId, setCollegeId] = useState("");
-  const [programId, setProgramId] = useState("");
-  const [yearId, setYearId] = useState("");
-
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -32,58 +27,40 @@ export default function ProfileEditor() {
     supabaseRef.current = createClient();
   }
 
-  useEffect(() => {
-    let active = true;
-    async function load() {
-      const supabase = supabaseRef.current!;
-      const [cols, progs, ys] = await Promise.all([
-        supabase.from("colleges").select("id, name, short_name").order("name"),
-        supabase.from("programs").select("id, college_id, name").order("name"),
-        supabase
-          .from("academic_years")
-          .select("id, program_id, year_number, name")
-          .order("year_number"),
-      ]);
-      if (!active) return;
-      const visibleCols = (cols.data ?? []).filter(
-        (c) => !HIDDEN_COLLEGE_IDS.has(c.id as string),
-      );
-      const visibleCollegeIds = new Set(visibleCols.map((c) => c.id as string));
-      const visibleProgs = (progs.data ?? []).filter((p) =>
-        visibleCollegeIds.has(p.college_id as string),
-      );
-      const visibleProgramIds = new Set(visibleProgs.map((p) => p.id as string));
-      const visibleYears = (ys.data ?? []).filter((y) =>
-        visibleProgramIds.has(y.program_id as string),
-      );
-      setColleges(visibleCols as College[]);
-      setPrograms(visibleProgs as Program[]);
-      setYears(visibleYears as AcademicYear[]);
-
-      setFullName(profile?.full_name ?? "");
-      setCollegeId(profile?.college_id ?? "");
-      setProgramId(profile?.program_id ?? "");
-      setYearId(profile?.academic_year_id ?? "");
-      setLoading(false);
-    }
-    if (user) void load();
-    return () => {
-      active = false;
-    };
-  }, [user, profile]);
+  // Re-syncs if `profile` is ever refetched as a new object (e.g. after
+  // refreshProfile() below) -- unlike onboarding, this is an edit screen, so
+  // carrying over the current values is correct here. Adjusted during render
+  // (guarded by `syncedProfile`) rather than in an effect, per React's
+  // guidance for "reset state when a prop changes"
+  // (react.dev/learn/you-might-not-need-an-effect).
+  const [syncedProfile, setSyncedProfile] = useState(profile);
+  if (profile !== syncedProfile) {
+    setSyncedProfile(profile);
+    setFullName(profile?.full_name ?? "");
+    setCollegeId(profile?.college_id ?? "");
+    setProgramId(profile?.program_id ?? "");
+    setYearId(profile?.academic_year_id ?? "");
+  }
 
   async function saveProfile() {
     if (!user) return;
+
+    if (!fullName.trim() || !collegeId || !programId || !yearId) {
+      setSaved(false);
+      setError("Please fill in your name, college, program, and academic year.");
+      return;
+    }
+
     setSaving(true);
     setSaved(false);
     setError(null);
     const { error: err } = await supabaseRef.current!
       .from("profiles")
       .update({
-        full_name: fullName,
-        college_id: collegeId || null,
-        program_id: programId || null,
-        academic_year_id: yearId || null,
+        full_name: fullName.trim(),
+        college_id: collegeId,
+        program_id: programId,
+        academic_year_id: yearId,
       })
       .eq("id", user.id);
 
@@ -104,10 +81,11 @@ export default function ProfileEditor() {
   const selectClass =
     "w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25";
 
-  if (loading) {
+  if (optionsLoading) {
     return <p className="hud-muted py-6 text-center">Loading…</p>;
   }
 
+  const filteredPrograms = programs.filter((p) => p.college_id === collegeId);
   const filteredYears = years.filter((y) => y.program_id === programId);
 
   return (
@@ -136,25 +114,19 @@ export default function ProfileEditor() {
         >
           College
         </label>
-        <select
-          id="profileCollege"
+        <CollegeCombobox
+          inputId="profileCollege"
+          colleges={colleges}
           value={collegeId}
-          onChange={(e) => {
-            const id = e.target.value;
+          onChange={(id) => {
             setCollegeId(id);
             const prog = programs.find((p) => p.college_id === id);
             setProgramId(prog ? prog.id : "");
             setYearId("");
           }}
+          placeholder="Search by college name, acronym, or city…"
           className={selectClass}
-        >
-          <option value="">Select college</option>
-          {colleges.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       <div className="space-y-3">
@@ -171,16 +143,15 @@ export default function ProfileEditor() {
             setProgramId(e.target.value);
             setYearId("");
           }}
+          disabled={!collegeId}
           className={selectClass}
         >
           <option value="">Select program</option>
-          {programs
-            .filter((p) => p.college_id === collegeId)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
+          {filteredPrograms.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -195,6 +166,7 @@ export default function ProfileEditor() {
           id="profileYear"
           value={yearId}
           onChange={(e) => setYearId(e.target.value)}
+          disabled={!programId}
           className={selectClass}
         >
           <option value="">Select year</option>

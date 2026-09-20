@@ -1,6 +1,12 @@
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createClient } from "@supabase/supabase-js";
+import { PAKISTAN_MEDICAL_COLLEGES } from "./seed/data/user-data";
+
+// +1 for the hidden canonical "DiagnKnow Question Bank" college
+// (scripts/seed-mcqs.ts's CANONICAL_COLLEGE) that seed-mcqs.ts always adds
+// alongside the real colleges.
+const EXPECTED_COLLEGE_COUNT = PAKISTAN_MEDICAL_COLLEGES.length + 1;
 // ---------------------------------------------------------------------------
 // Phase 8 — live security & functional verification against Supabase.
 // Runs the §42 checklist; prints one line per check; exits non-zero on failure.
@@ -129,7 +135,7 @@ async function main(): Promise<void> {
       const collegeNames = (collegeRows ?? []).map((r) => (r as { name: string }).name);
       record(
         "seed college names correct (no 'Colleg' typo)",
-        collegeNames.length === 6 &&
+        collegeNames.length === EXPECTED_COLLEGE_COUNT &&
           collegeNames.includes("Foundation University Medical College") &&
           !collegeNames.some((n) => n === "Foundation University Medical Colleg"),
         `count=${collegeNames.length}`,

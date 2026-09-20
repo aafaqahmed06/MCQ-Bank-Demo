@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { mcqs as rawMcqs } from "./seed/data/mcqs-data";
 import { blocks } from "./seed/data/blocks-data";
 import { modules } from "./seed/data/modules-data";
-import { MOCK_COLLEGES, YEAR_OPTIONS } from "./seed/data/user-data";
+import { PAKISTAN_MEDICAL_COLLEGES, YEAR_OPTIONS } from "./seed/data/user-data";
 
 // ---------------------------------------------------------------------------
 // Expected content shape (drift guard — fail loudly if the bank changes shape).
@@ -227,12 +227,14 @@ async function main(): Promise<void> {
 
 async function seedAll(db: SupabaseClient, jobId: string): Promise<void> {
   // --- Colleges -------------------------------------------------------------
+  const shortNames = resolveShortNames(PAKISTAN_MEDICAL_COLLEGES);
   const colleges = [
     CANONICAL_COLLEGE,
-    ...MOCK_COLLEGES.map((name) => ({
+    ...PAKISTAN_MEDICAL_COLLEGES.map(({ name, city }) => ({
       id: slugify(name),
       name,
-      short_name: shortName(name),
+      short_name: shortNames.get(name)!,
+      city,
     })),
   ];
   await upsertBatched(db, "colleges", colleges);
@@ -241,7 +243,7 @@ async function seedAll(db: SupabaseClient, jobId: string): Promise<void> {
   // --- Programs -------------------------------------------------------------
   const programs = [
     { ...CANONICAL_PROGRAM, college_id: CANONICAL_COLLEGE.id },
-    ...MOCK_COLLEGES.map((name) => ({
+    ...PAKISTAN_MEDICAL_COLLEGES.map(({ name }) => ({
       id: `${slugify(name)}-mbbs`,
       college_id: slugify(name),
       name: "MBBS",
@@ -253,7 +255,7 @@ async function seedAll(db: SupabaseClient, jobId: string): Promise<void> {
   // --- Academic years -------------------------------------------------------
   const academicYears = [
     { ...CANONICAL_YEAR, program_id: CANONICAL_PROGRAM.id },
-    ...MOCK_COLLEGES.flatMap((name) =>
+    ...PAKISTAN_MEDICAL_COLLEGES.flatMap(({ name }) =>
       YEAR_OPTIONS.map((yearNumber) => ({
         id: `${slugify(name)}-mbbs-year-${yearNumber}`,
         program_id: `${slugify(name)}-mbbs`,
@@ -407,14 +409,69 @@ async function seedAll(db: SupabaseClient, jobId: string): Promise<void> {
   }
 }
 
+// Connector words conventionally skipped when abbreviating an institution
+// name (e.g. "NUST School of Health Sciences" -> "NSHS", not "NSOHS").
+const ACRONYM_STOP_WORDS = new Set(["of", "for", "and", "the", "in", "at"]);
+
 function shortName(name: string): string {
   if (name === CANONICAL_COLLEGE.name) return CANONICAL_COLLEGE.short_name;
+  // Strip punctuation from each word before taking its initial, so
+  // connectors like "&" or a parenthetical like "(PGMI)" don't leak stray
+  // symbols into the acronym (e.g. "Ameer-ud-Din Medical College (PGMI)"
+  // should reduce to "AMCP", not "AMC(").
   const initials = name
     .split(/\s+/)
+    .filter((word) => !ACRONYM_STOP_WORDS.has(word.toLowerCase()))
+    .map((word) => word.replace(/[^A-Za-z]/g, ""))
     .filter(Boolean)
-    .map((word) => word[0]?.toUpperCase() ?? "")
+    .map((word) => word[0]!.toUpperCase())
     .join("");
   return (initials || name.slice(0, 4)).toUpperCase();
+}
+
+/**
+ * Resolves a final short_name per college: curated values win outright;
+ * everything else falls back to the mechanical initials-based shortName()
+ * above. With ~125 colleges, mechanical initials collide often (several
+ * distinct "___ Medical College"s reduce to the same letters, and some
+ * mechanically collide with a *curated* acronym for an unrelated college,
+ * e.g. Ayub Medical College -> "AMC" collides with Army Medical College's
+ * curated "AMC"). Curated values are reserved first; every fallback value
+ * is then checked against everything reserved so far and, on collision,
+ * disambiguated with a suffix derived from the college's city so the result
+ * stays deterministic, readable, and traceable back to a real place name
+ * rather than an arbitrary counter.
+ */
+function resolveShortNames(
+  seeds: { name: string; city: string; shortName?: string }[],
+): Map<string, string> {
+  const resolved = new Map<string, string>();
+  const used = new Set<string>();
+
+  for (const { name, shortName: curated } of seeds) {
+    if (!curated) continue;
+    resolved.set(name, curated);
+    used.add(curated);
+  }
+
+  for (const { name, city, shortName: curated } of seeds) {
+    if (curated) continue;
+    let candidate = shortName(name);
+    if (used.has(candidate)) {
+      const citySuffix = city.replace(/[^A-Za-z]/g, "").slice(0, 2).toUpperCase();
+      let withSuffix = `${candidate}-${citySuffix}`;
+      let n = 2;
+      while (used.has(withSuffix)) {
+        withSuffix = `${candidate}-${citySuffix}${n}`;
+        n += 1;
+      }
+      candidate = withSuffix;
+    }
+    resolved.set(name, candidate);
+    used.add(candidate);
+  }
+
+  return resolved;
 }
 
 main().catch((err) => {
