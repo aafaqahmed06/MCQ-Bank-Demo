@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import DkBot from "@/components/DkBot";
@@ -12,13 +12,15 @@ import type { DkBotState } from "@/lib/dkBotAssets";
  * the app after onboarding.
  *
  * - Larger Dex floats bottom-left with a speech bubble.
- * - On steps that reference a dashboard section, a spotlight dims the
- *   whole dashboard and forms a glowing window over the target.
+ * - The dashboard behind the tutorial is darkened and blocked from clicks
+ *   at all times. On steps that reference a dashboard section, a spotlight
+ *   punches a real (clickable, undimmed) hole over the target.
  * - Uses framer-motion for cross-fades and smooth spotlight movement.
- * - Renders nothing if the user has completed/skipped the tutorial
- *   (stored in localStorage per user under "dk-tutorial-completed-<userId>").
- *   A brand-new account always starts the tutorial because that flag has not
- *   been written yet for the new user id.
+ * - Mandatory: there is no skip. Renders nothing only once the user has
+ *   completed every step (stored in localStorage per user under
+ *   "dk-tutorial-completed-<userId>"). A brand-new account always starts
+ *   the tutorial because that flag has not been written yet for the new
+ *   user id.
  */
 
 const STORAGE_KEY_PREFIX = "dk-tutorial-completed";
@@ -93,18 +95,21 @@ const STEPS: Step[] = [
 
 type Rect = { top: number; left: number; width: number; height: number };
 
-/* ── Spotlight ────────────────────────────────────────────────────
-   A fixed overlay that dims the dashboard and forms a glowing window
-   over the currently highlighted element. Moves smoothly between
-   targets and fades in/out on mount/unmount via AnimatePresence.
+/* ── Target measurement ───────────────────────────────────────────
+   Tracks the bounding rect of the currently highlighted element (if
+   any), keeping it in sync across resize/scroll so both the spotlight
+   ring and the click-blocking overlay stay aligned with it.
    ───────────────────────────────────────────────────────────────── */
 
-function Spotlight({ selector }: { selector?: string }) {
+function useTargetRect(selector?: string): Rect | null {
   const [rect, setRect] = useState<Rect | null>(null);
   const lastSelector = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!selector) return;
+    if (!selector) {
+      lastSelector.current = null;
+      return;
+    }
 
     const measure = () => {
       const el = document.querySelector(selector);
@@ -142,6 +147,67 @@ function Spotlight({ selector }: { selector?: string }) {
     };
   }, [selector]);
 
+  // No selector → no target, regardless of any stale measurement left
+  // over from a previous highlighted step.
+  return selector ? rect : null;
+}
+
+/* ── Dashboard blocker ────────────────────────────────────────────
+   Four fixed panels that tile the viewport around the spotlight hole
+   (or a single full-viewport panel when nothing is highlighted). Each
+   panel is a real, pointer-events:auto element, so the dashboard
+   underneath is genuinely unclickable — not just visually dimmed —
+   everywhere except the punched-out target rect.
+   ───────────────────────────────────────────────────────────────── */
+
+function DashboardBlocker({ rect }: { rect: Rect | null }) {
+  if (!rect) {
+    return (
+      <div
+        className="tutorial-block-overlay"
+        aria-hidden="true"
+        style={{ top: 0, left: 0, right: 0, bottom: 0 }}
+      />
+    );
+  }
+
+  const top = Math.max(rect.top, 0);
+  const bottom = rect.top + rect.height;
+  const left = Math.max(rect.left, 0);
+  const right = rect.left + rect.width;
+
+  return (
+    <>
+      <div
+        className="tutorial-block-overlay"
+        aria-hidden="true"
+        style={{ top: 0, left: 0, right: 0, height: top }}
+      />
+      <div
+        className="tutorial-block-overlay"
+        aria-hidden="true"
+        style={{ top: bottom, left: 0, right: 0, bottom: 0 }}
+      />
+      <div
+        className="tutorial-block-overlay"
+        aria-hidden="true"
+        style={{ top, left: 0, width: left, height: rect.height }}
+      />
+      <div
+        className="tutorial-block-overlay"
+        aria-hidden="true"
+        style={{ top, left: right, right: 0, height: rect.height }}
+      />
+    </>
+  );
+}
+
+/* ── Spotlight ring ───────────────────────────────────────────────
+   Purely visual glowing border around the highlighted element. The
+   actual dimming/blocking is handled by DashboardBlocker.
+   ───────────────────────────────────────────────────────────────── */
+
+function SpotlightRing({ rect }: { rect: Rect | null }) {
   return (
     <AnimatePresence>
       {rect && (
@@ -177,7 +243,7 @@ export default function TutorialOverlay({
     return readCompleted(userId);
   });
 
-  function dismiss() {
+  function complete() {
     setCompleted(true);
     if (!userId) return;
     try {
@@ -187,85 +253,31 @@ export default function TutorialOverlay({
     }
   }
 
-  /** Replay the tutorial from step zero, e.g. via the dev shortcuts. */
-  const replay = useCallback(() => {
-    if (userId) {
-      try {
-        localStorage.removeItem(storageKeyFor(userId));
-      } catch {
-        // ignore
-      }
-    }
-    setCompleted(false);
-    setStep(0);
-  }, [userId]);
-
-  // Dev shortcuts — registered before the early return so they stay live
-  // even after the tutorial is dismissed (only mounted on /home).
-  // Desktop: Ctrl+Shift+Alt+R. Mobile: 5 quick taps anywhere within 2s.
-  // NOTE: the tap shortcut only counts taps while the tutorial is hidden;
-  // otherwise tapping the tutorial's own buttons 5 times would restart it.
-  const completedRef = useRef(completed);
-  useEffect(() => {
-    completedRef.current = completed;
-  }, [completed]);
-
-  useEffect(() => {
-    let taps = 0;
-    let timer: ReturnType<typeof setTimeout> | null = null;
-
-    function onKey(e: KeyboardEvent) {
-      if (e.ctrlKey && e.shiftKey && e.altKey && e.key.toLowerCase() === "r") {
-        e.preventDefault();
-        replay();
-      }
-    }
-
-    function onTap() {
-      if (!completedRef.current) return; // tutorial visible — don't replay
-      taps += 1;
-      if (timer) clearTimeout(timer);
-      if (taps >= 5) {
-        taps = 0;
-        replay();
-      } else {
-        timer = setTimeout(() => {
-          taps = 0;
-        }, 2000);
-      }
-    }
-
-    window.addEventListener("keydown", onKey);
-    window.addEventListener("pointerdown", onTap);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("pointerdown", onTap);
-      if (timer) clearTimeout(timer);
-    };
-  }, [replay]);
-
   function advance() {
     const next = step + 1;
     if (next >= STEPS.length) {
-      // Final step — navigate and dismiss
-      dismiss();
+      // Final step — navigate and mark complete
+      complete();
       router.push("/blocks");
       return;
     }
     setStep(next);
   }
 
-  // Don't render if tutorial is completed
-  if (completed) return <>{children}</>;
+  const current = completed ? undefined : STEPS[step];
+  const rect = useTargetRect(current?.highlight);
 
-  const current = STEPS[step];
+  // Don't render if tutorial is completed
+  if (completed || !current) return <>{children}</>;
 
   return (
     <MotionConfig reducedMotion="user">
       {children}
 
-      {/* Spotlight over the highlighted dashboard section */}
-      {current.highlight && <Spotlight selector={current.highlight} />}
+      {/* Darken + block the entire dashboard, punching a clickable hole
+          over the highlighted element (if any). */}
+      <DashboardBlocker rect={current.highlight ? rect : null} />
+      <SpotlightRing rect={current.highlight ? rect : null} />
 
       {/* Floating bot + bubble */}
       <div className="fixed bottom-4 left-4 z-50 sm:bottom-6 sm:left-6">
@@ -315,15 +327,8 @@ export default function TutorialOverlay({
                 ))}
               </div>
 
-              {/* Actions */}
+              {/* Actions — no skip; the tutorial is mandatory */}
               <div className="mt-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={dismiss}
-                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-heading)]"
-                >
-                  Skip
-                </button>
                 <button
                   type="button"
                   onClick={advance}

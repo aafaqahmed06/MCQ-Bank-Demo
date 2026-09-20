@@ -446,14 +446,34 @@ body {
   transform: scale(1.3);
 }
 
-/* Spotlight — dims the dashboard with a hole over the highlighted element.
-   The 9999px box-shadow darkens everything except the target → spotlight. */
+/* Dashboard blocker — real, pointer-events:auto panels that tile the
+   viewport around the spotlight hole (or cover it entirely when nothing
+   is highlighted), so the dashboard underneath is genuinely unclickable
+   and darkened, not just visually dimmed. */
+.tutorial-block-overlay {
+  position: fixed;
+  background: rgba(3, 8, 12, 0.6);
+  pointer-events: auto;
+  z-index: 40;
+  transition:
+    top 0.3s ease-in-out,
+    left 0.3s ease-in-out,
+    right 0.3s ease-in-out,
+    bottom 0.3s ease-in-out,
+    width 0.3s ease-in-out,
+    height 0.3s ease-in-out;
+}
+
+/* Spotlight ring — glowing outline over the highlighted element. Purely
+   visual; the hole underneath is already undimmed and clickable because
+   DashboardBlocker leaves that rect uncovered. */
 .tutorial-spotlight {
   position: fixed;
   border: 2px solid var(--accent-cyan);
   border-radius: 0.75rem;
-  box-shadow: 0 0 0 9999px rgba(3, 8, 12, 0.6);
+  box-shadow: 0 0 24px rgba(6, 182, 212, 0.45);
   pointer-events: none;
+  z-index: 41;
 }
 
 /* Reduced motion */
