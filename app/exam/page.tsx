@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Clock } from "lucide-react";
 import { startExam, getPublishedCount, submitExam } from "@/lib/exam";
 import type {
   ExamAnswerSubmission,
@@ -13,9 +14,11 @@ import RequireProfile from "@/components/RequireProfile";
 import ExamSession from "@/components/ExamSession";
 import ExamResult from "@/components/ExamResult";
 import ConfirmModal from "@/components/ConfirmModal";
+import { Button, Icon, cn } from "@/components/ui";
 
 type Phase = "select" | "exam" | "result";
 
+// Copy communicates commitment, not just length (§ Exam mode "Exam selection").
 const EXAM_OPTIONS: {
   count: number;
   label: string;
@@ -24,20 +27,20 @@ const EXAM_OPTIONS: {
 }[] = [
   {
     count: 20,
-    label: "Concise",
-    description: "A short, focused check",
+    label: "Quick Check",
+    description: "Rapid revision",
     timeLimitSeconds: 20 * 60,
   },
   {
     count: 50,
-    label: "Standard",
-    description: "A full practice paper",
+    label: "Standard Exam",
+    description: "Balanced simulation",
     timeLimitSeconds: 50 * 60,
   },
   {
     count: 100,
-    label: "Extended",
-    description: "An intensive session",
+    label: "Full Simulation",
+    description: "Exam endurance",
     timeLimitSeconds: 100 * 60,
   },
 ];
@@ -127,6 +130,11 @@ export default function ExamPage() {
     setTimeLimitSeconds(null);
     setPhase("select");
     setConfirmTarget(null);
+    // handleStart only clears `starting` on failure (transitioning to phase
+    // "exam" on success left it permanently true) -- without this, quitting
+    // or starting a new exam re-shows the "select" screen with the Start
+    // button stuck disabled on "Starting exam…".
+    setStarting(false);
   };
 
   const doQuit = () => {
@@ -253,10 +261,10 @@ export default function ExamPage() {
           {phase === "select" && (
             <div className="mx-auto w-full max-w-lg space-y-6">
               <header className="space-y-2 text-center">
-                <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">
+                <h1 className="text-h1 font-bold tracking-tight text-text-primary">
                   Exam Simulation
                 </h1>
-                <p className="text-[var(--text-muted)]">
+                <p className="text-text-tertiary">
                   {availableCount === null
                     ? "Loading question bank…"
                     : `${availableCount} questions available. Select the length of your exam.`}
@@ -264,10 +272,7 @@ export default function ExamPage() {
               </header>
 
               {error && (
-                <p
-                  className="rounded-xl border border-[var(--error)]/40 bg-[var(--error-soft)] px-4 py-3 text-sm text-[var(--error-text)]"
-                  role="alert"
-                >
+                <p className="alert-error rounded-control px-4 py-3 text-sm" role="alert">
                   {error}
                 </p>
               )}
@@ -281,74 +286,53 @@ export default function ExamPage() {
                       type="button"
                       onClick={() => setSelectedCount(opt.count)}
                       aria-pressed={isSelected}
-                      className={`flex items-center justify-between gap-4 rounded-xl border bg-[var(--bg-card)] p-5 text-left transition-colors ${
+                      className={cn(
+                        "flex items-center justify-between gap-4 rounded-card border bg-surface p-5 text-left transition-colors duration-150",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                         isSelected
-                          ? "border-[var(--accent-cyan)] ring-1 ring-[var(--accent-cyan)]/40"
-                          : "border-[var(--border-color)] hover:border-[var(--accent-cyan)]/50"
-                      }`}
+                          ? "border-primary ring-1 ring-primary/40"
+                          : "border-border-default hover:border-primary/50"
+                      )}
                     >
                       <div className="flex items-center gap-4">
                         <span
-                          className={`flex size-12 items-center justify-center rounded-lg text-xl font-bold tabular-nums ${
+                          className={cn(
+                            "flex size-12 items-center justify-center rounded-card text-xl font-bold tabular-nums",
                             isSelected
-                              ? "bg-[var(--primary-btn-bg)] text-[var(--primary-btn-text)]"
-                              : "bg-[var(--bg-card-alt)] text-[var(--text-heading)]"
-                          }`}
+                              ? "bg-primary text-white"
+                              : "bg-surface-secondary text-text-primary"
+                          )}
                         >
                           {opt.count}
                         </span>
                         <div>
                           <p
-                            className={`text-base font-semibold ${
-                              isSelected
-                                ? "text-[var(--accent-cyan-strong)]"
-                                : "text-[var(--text-heading)]"
-                            }`}
+                            className={cn(
+                              "text-base font-semibold",
+                              isSelected ? "text-primary" : "text-text-primary"
+                            )}
                           >
                             {opt.label}
                           </p>
-                          <p className="text-sm text-[var(--text-muted)]">
+                          <p className="text-sm text-text-tertiary">
+                            {opt.count} questions · ~{Math.round(opt.timeLimitSeconds / 60)} min ·{" "}
                             {opt.description}
                           </p>
                         </div>
                       </div>
-                      <div
-                        className={`flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-medium tabular-nums ${
-                          isSelected
-                            ? "bg-cyan-500/10 text-[var(--accent-cyan-strong)]"
-                            : "text-[var(--text-muted)]"
-                        }`}
-                      >
-                        <svg
-                          aria-hidden="true"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="size-3.5"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <path d="M12 6v6l4 2" />
-                        </svg>
-                        {Math.round(opt.timeLimitSeconds / 60)} min
-                      </div>
+                      <Icon
+                        icon={Clock}
+                        size="sm"
+                        className={isSelected ? "text-primary" : "text-text-tertiary"}
+                      />
                     </button>
                   );
                 })}
               </div>
 
-              <button
-                type="button"
-                onClick={() => handleStart(selectedCount)}
-                disabled={starting}
-                className="hud-primary-btn w-full rounded-xl px-6 py-4 text-base font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {starting
-                  ? "Starting exam…"
-                  : `Start ${selectedCount} Question Exam`}
-              </button>
+              <Button onClick={() => handleStart(selectedCount)} loading={starting} fullWidth size="lg">
+                {starting ? "Starting exam…" : `Start ${selectedCount} Question Exam`}
+              </Button>
             </div>
           )}
 

@@ -1,3 +1,6 @@
+import { CheckCircle2 } from "lucide-react";
+import { Badge, Icon } from "@/components/ui";
+
 type CompletionStatusProps = {
   completed: number;
   total: number;
@@ -5,8 +8,8 @@ type CompletionStatusProps = {
 
 /**
  * Shows practice progress for a topic group / subject / block.
- * - fully completed  -> teal "✓ Completed" chip (option A)
- * - partially done   -> small progress ring with completed/total (option B)
+ * - fully completed  -> success "Completed" badge
+ * - partially done   -> small progress ring with completed/total
  * - not started      -> nothing
  */
 export default function CompletionStatus({ completed, total }: CompletionStatusProps) {
@@ -14,18 +17,10 @@ export default function CompletionStatus({ completed, total }: CompletionStatusP
 
   if (completed >= total) {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-[var(--accent-cyan)]/10 px-2.5 py-0.5 text-xs font-semibold text-[var(--accent-cyan-strong)]">
-        <svg viewBox="0 0 16 16" className="h-3 w-3" fill="none" aria-hidden="true">
-          <path
-            d="M3 8.5 6.5 12 13 4.5"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+      <Badge variant="success" size="sm">
+        <Icon icon={CheckCircle2} size="xs" />
         Completed
-      </span>
+      </Badge>
     );
   }
 
@@ -44,7 +39,7 @@ export default function CompletionStatus({ completed, total }: CompletionStatusP
             cy="12"
             r={radius}
             fill="none"
-            stroke="var(--border-color)"
+            stroke="var(--border-default)"
             strokeWidth="2.5"
           />
           <circle
@@ -52,7 +47,7 @@ export default function CompletionStatus({ completed, total }: CompletionStatusP
             cy="12"
             r={radius}
             fill="none"
-            stroke="var(--accent-cyan)"
+            stroke="var(--primary)"
             strokeWidth="2.5"
             strokeLinecap="round"
             strokeDasharray={circumference}
@@ -60,7 +55,7 @@ export default function CompletionStatus({ completed, total }: CompletionStatusP
             transform="rotate(-90 12 12)"
           />
         </svg>
-        <span className="text-xs font-medium tabular-nums text-[var(--text-muted)]">
+        <span className="text-caption font-medium tabular-nums text-text-tertiary">
           {completed}/{total}
         </span>
       </div>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 id={id} className="text-xl font-semibold text-[var(--text-heading)]">
+      <h2 id={id} className="text-xl font-semibold text-text-primary">
         {title}
       </h2>
       <div className="hud-muted mt-3 space-y-3 leading-relaxed">{children}</div>
@@ -23,11 +23,11 @@ export default function TermsPage() {
   return (
     <LayoutWrapper>
       <div className="flex flex-1 flex-col py-8 md:py-12">
-        <article className="hud-card fade-in w-full rounded-xl p-6 sm:p-8">
-          <p className="text-sm font-medium uppercase tracking-wide text-[var(--accent-cyan)]">
+        <article className="fade-in w-full rounded-card border border-border-default bg-surface p-6 sm:p-8">
+          <p className="text-sm font-medium uppercase tracking-wide text-primary">
             Legal
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-[var(--text-heading)]">
+          <h1 className="mt-2 text-3xl font-bold text-text-primary">
             Terms of Service
           </h1>
           <p className="hud-muted mt-2 text-sm">
@@ -94,7 +94,7 @@ export default function TermsPage() {
               You may request deletion of your account at any time by contacting us at{" "}
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+                className="font-medium text-primary hover:underline active:underline"
               >
                 {SUPPORT_EMAIL}
               </a>
@@ -151,7 +151,7 @@ export default function TermsPage() {
               Questions about these Terms can be sent to{" "}
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+                className="font-medium text-primary hover:underline active:underline"
               >
                 {SUPPORT_EMAIL}
               </a>
@@ -162,7 +162,7 @@ export default function TermsPage() {
           <p className="mt-8 text-sm">
             <Link
               href="/"
-              className="text-[var(--text-muted)] hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)]"
+              className="text-text-tertiary hover:text-primary active:text-primary"
             >
               &larr; Back to home
             </Link>

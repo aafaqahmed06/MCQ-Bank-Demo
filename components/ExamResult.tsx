@@ -1,11 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { CheckCircle2, XCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { getExamReview } from "@/lib/exam";
 import type { ExamReviewItem, SubmitExamResponse } from "@/types";
 import BookmarkButton from "@/components/BookmarkButton";
 import ReportQuestionButton from "@/components/ReportQuestionButton";
 import DkBot from "@/components/DkBot";
+import { Card, Button, Progress, Icon, cn } from "@/components/ui";
 
 type ExamResultProps = {
   examId: string;
@@ -53,31 +55,23 @@ export default function ExamResult({
 
   if (showReview && review) {
     const item = review[reviewIndex];
+    const isCorrect = item.selected_answer !== null && item.is_correct;
+    const isAnswered = item.selected_answer !== null;
 
     return (
-      <div className="space-y-6">
-        <div className="hud-card rounded-xl p-4">
-          <div className="flex items-center justify-between gap-4 text-sm text-[var(--text-muted-light)]">
-            <p>
-              Question {reviewIndex + 1} of {review.length}
-            </p>
-            {item.selected_answer !== null && (
-              <p className={item.is_correct ? "text-success" : "text-error"}>
-                {item.is_correct ? "Correct" : "Incorrect"}
-              </p>
-            )}
-          </div>
-          <div className="mt-3 h-2 rounded-full bg-[var(--bg-progress-track)]">
-            <div
-              className="h-2 rounded-full bg-[var(--accent-cyan)] transition-all duration-300"
-              style={{ width: `${((reviewIndex + 1) / review.length) * 100}%` }}
-            />
-          </div>
-        </div>
+      <div className="mx-auto w-full max-w-[800px] space-y-6">
+        <Progress
+          value={reviewIndex + 1}
+          max={review.length}
+          label={`Reviewing question ${reviewIndex + 1} of ${review.length}`}
+        />
+        <p className="text-sm text-text-secondary">
+          Question {reviewIndex + 1} of {review.length}
+        </p>
 
-        <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
+        <div className="fade-in">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="inline-flex rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
+            <p className="text-caption font-semibold tracking-wide text-primary uppercase">
               Question {item.question_order + 1}
             </p>
             <div className="flex items-center gap-2">
@@ -85,150 +79,131 @@ export default function ExamResult({
               <ReportQuestionButton mcqId={item.mcq_id} />
             </div>
           </div>
-          <h2 className="mt-4 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
+          <h2 className="mt-3 text-h2 leading-relaxed font-semibold text-text-primary">
             {item.question}
           </h2>
 
-          <div className="my-5 border-t border-[var(--border-color)]" />
-
-          <div className="space-y-3">
+          <div className="mt-6 space-y-3">
             {item.options.map((option, index) => {
               const isUserAnswer = item.selected_answer === index;
               const isCorrectAnswer = index === item.correct_answer;
-              let classes = "opt-base p-3 sm:p-4 text-base sm:text-lg ";
-
-              if (isCorrectAnswer) {
-                classes += "opt-correct";
-              } else if (isUserAnswer && !isCorrectAnswer) {
-                classes += "opt-wrong";
-              } else {
-                classes += "opt-neutral";
-              }
-
               return (
-                <div key={index} className={classes}>
-                  <span className="font-semibold">
-                    {String.fromCharCode(65 + index)}.
-                  </span>{" "}
+                <div
+                  key={index}
+                  className={cn(
+                    "opt-base p-4 text-base sm:p-5 sm:text-lg",
+                    isCorrectAnswer ? "opt-correct" : isUserAnswer ? "opt-wrong" : "opt-neutral"
+                  )}
+                >
+                  <span className="font-semibold">{String.fromCharCode(65 + index)}.</span>{" "}
                   {option}
                   {isCorrectAnswer && (
-                    <span className="ml-2 text-xs text-success">
-                      ✓ Correct answer
-                    </span>
+                    <span className="ml-2 text-caption text-success">Correct answer</span>
                   )}
                   {isUserAnswer && !isCorrectAnswer && (
-                    <span className="ml-2 text-xs text-error">
-                      ✗ Your answer
-                    </span>
+                    <span className="ml-2 text-caption text-error">Your answer</span>
                   )}
                 </div>
               );
             })}
           </div>
 
-          <div className="mt-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] p-4 fade-in">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-violet)]">
-              Explanation
+          {isAnswered && (
+            <div
+              className={cn(
+                "mt-6 flex items-center gap-2 text-base font-semibold",
+                isCorrect ? "text-success" : "text-error"
+              )}
+              role="status"
+            >
+              <Icon icon={isCorrect ? CheckCircle2 : XCircle} size="md" />
+              {isCorrect ? "Correct" : "Incorrect"}
+            </div>
+          )}
+          <div className="mt-3 border-l-2 border-primary/30 pl-4">
+            <p className="text-caption font-semibold tracking-wide text-text-tertiary uppercase">
+              Why this is correct
             </p>
-            <p className="mt-1 text-sm text-[var(--text-body-alt)] sm:text-base">
+            <p className="mt-1 text-sm leading-relaxed text-text-secondary sm:text-base">
               {item.explanation}
             </p>
           </div>
 
-          <div className="mt-5 flex justify-between">
-            <button
-              type="button"
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <Button
+              variant="ghost"
               onClick={() => setReviewIndex((prev) => Math.max(0, prev - 1))}
               disabled={reviewIndex === 0}
-              className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)] disabled:cursor-not-allowed disabled:opacity-40"
             >
-              ← Previous
-            </button>
+              <Icon icon={ArrowLeft} size="sm" />
+              Previous
+            </Button>
             {reviewIndex < review.length - 1 ? (
-              <button
-                type="button"
-                onClick={() =>
-                  setReviewIndex((prev) => Math.min(review.length - 1, prev + 1))
-                }
-                className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)]"
-              >
-                Next →
-              </button>
+              <Button onClick={() => setReviewIndex((prev) => Math.min(review.length - 1, prev + 1))}>
+                Next
+                <Icon icon={ArrowRight} size="sm" />
+              </Button>
             ) : (
-              <button
-                type="button"
-                onClick={() => setShowReview(false)}
-                className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium"
-              >
-                Back to Results
-              </button>
+              <Button onClick={() => setShowReview(false)}>Back to Results</Button>
             )}
           </div>
-        </section>
+        </div>
       </div>
     );
   }
 
   return (
-    <section className="hud-card fade-in rounded-xl p-6">
+    <Card variant="elevated" padding="lg" className="mx-auto w-full max-w-[800px] text-center">
       <div className="flex justify-center">
         <DkBot state={botState} size="medium" alt={null} />
       </div>
-      <h2 className="mt-4 text-3xl font-bold tracking-tight text-[var(--text-heading)]">Exam Complete</h2>
-      <p className="mt-1 text-[var(--text-muted)]">
-        Here&apos;s how you performed.
-      </p>
+      <h2 className="mt-4 text-display font-bold tracking-tight text-text-primary">
+        Exam Complete
+      </h2>
+      <p className="mt-1 text-text-tertiary">Here&apos;s how you performed.</p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
-          <p className="text-sm text-[var(--text-muted)]">Total score</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">
-            {correct} <span className="text-lg text-[var(--text-muted)]">/ {total}</span>
+      <div className="mt-5 grid gap-4 text-left sm:grid-cols-2">
+        <div className="rounded-card border border-border-default bg-surface p-5">
+          <p className="text-sm text-text-tertiary">Total score</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums text-text-primary">
+            {correct} <span className="text-lg text-text-tertiary">/ {total}</span>
           </p>
         </div>
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
-          <p className="text-sm text-[var(--text-muted)]">Percentage</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">
+        <div className="rounded-card border border-border-default bg-surface p-5">
+          <p className="text-sm text-text-tertiary">Percentage</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums text-text-primary">
             {percentage}%
           </p>
         </div>
-        <div className="box-success rounded-xl p-5">
+        <div className="box-success rounded-card p-5">
           <p className="text-sm">Correct</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{correct}</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums">{correct}</p>
         </div>
-        <div className="box-error rounded-xl p-5">
+        <div className="box-error rounded-card p-5">
           <p className="text-sm">Incorrect / Unanswered</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{incorrect}</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums">{incorrect}</p>
         </div>
       </div>
 
       {reviewError && (
-        <p className="alert-error mt-4 rounded-xl px-4 py-3 text-sm">
-          {reviewError}
-        </p>
+        <p className="alert-error mt-4 rounded-control px-4 py-3 text-sm">{reviewError}</p>
       )}
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
-          onClick={loadReview}
-          disabled={loadingReview}
-          className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loadingReview ? "Loading…" : "Review Answers"}
-        </button>
-        <button
-          type="button"
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Button onClick={loadReview} loading={loadingReview}>
+          Review Answers
+        </Button>
+        <Button
+          variant="secondary"
           onClick={onStartNew}
           onTouchEnd={(e) => {
             e.preventDefault();
             onStartNew();
           }}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)]"
         >
           Start New Exam
-        </button>
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }

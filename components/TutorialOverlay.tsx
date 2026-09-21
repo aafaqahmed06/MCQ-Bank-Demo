@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import DkBot from "@/components/DkBot";
 import { useAuth } from "@/components/AuthProvider";
+import { Button } from "@/components/ui";
 import type { DkBotState } from "@/lib/dkBotAssets";
 
 /**
@@ -307,10 +308,10 @@ export default function TutorialOverlay({
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.2, ease: "easeOut" }}
                   >
-                    <h3 className="font-semibold text-[var(--text-heading)]">
+                    <h3 className="font-semibold text-text-primary">
                       {current.title}
                     </h3>
-                    <p className="mt-1 text-[var(--text-muted)]">
+                    <p className="mt-1 text-text-secondary">
                       {current.message}
                     </p>
                   </motion.div>
@@ -329,13 +330,9 @@ export default function TutorialOverlay({
 
               {/* Actions — no skip; the tutorial is mandatory */}
               <div className="mt-3 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={advance}
-                  className="hud-primary-btn rounded-lg px-4 py-1.5 text-xs font-medium sm:text-sm"
-                >
+                <Button type="button" size="sm" onClick={advance}>
                   {current.cta ?? "Next"}
-                </button>
+                </Button>
               </div>
             </motion.div>
 

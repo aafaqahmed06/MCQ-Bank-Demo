@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { BookOpen } from "lucide-react";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ModuleCard from "@/components/ModuleCard";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import RequireProfile from "@/components/RequireProfile";
+import { EmptyState } from "@/components/ui";
 import { getBlockById } from "@/lib/curriculum";
 import { getModulesByBlockId } from "@/lib/curriculum";
 
@@ -26,17 +28,15 @@ export default async function ModulesPage({ params }: PageProps) {
         <div className="space-y-6">
           <header className="space-y-2">
             <Breadcrumbs items={[{ label: "Blocks", href: "/blocks" }, { label: block.name }]} />
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">
-              {block.name}
-            </h1>
-            <p className="text-[var(--text-muted)]">
-              Year {block.year} · Select a subject
-            </p>
+            <h1 className="text-h1 font-bold tracking-tight text-text-primary">{block.name}</h1>
+            <p className="text-text-tertiary">Year {block.year} · Select a subject</p>
           </header>
           {blockModules.length === 0 ? (
-            <p className="hud-card rounded-xl border-dashed p-6 text-center text-[var(--text-muted)]">
-              No subjects available for this block yet.
-            </p>
+            <EmptyState
+              icon={BookOpen}
+              title="No subjects available yet"
+              description="This block doesn't have any subjects set up yet."
+            />
           ) : (
             <ul className="grid gap-4 sm:grid-cols-2">
               {blockModules.map((mod) => (

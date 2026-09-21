@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import DkBot from "@/components/DkBot";
+import { AlertTriangle } from "lucide-react";
+import { Button, ErrorState } from "@/components/ui";
 
 export default function Error({
   error,
@@ -16,29 +17,22 @@ export default function Error({
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="hud-card w-full max-w-md rounded-xl p-8 text-center">
-        <div className="flex justify-center">
-          <DkBot state="concerned" size="small" alt={null} />
-        </div>
-        <h1 className="mt-4 text-2xl font-bold text-[var(--text-heading)]">
-          Something went wrong
-        </h1>
-        <p className="mt-3 text-sm text-[var(--text-muted)]">
-          An unexpected error occurred while loading this page. Please try
-          again.
-        </p>
-        {error.digest && (
-          <p className="mt-2 text-xs text-[var(--text-option-dim)]">
-            Reference: {error.digest}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={() => unstable_retry()}
-          className="hud-primary-btn mt-6 rounded-xl px-6 py-3 font-semibold"
-        >
-          Try again
-        </button>
+      <div className="w-full max-w-md rounded-card border border-border-default bg-surface-elevated p-8 shadow-elevated">
+        <ErrorState
+          icon={AlertTriangle}
+          title="Something went wrong"
+          description={
+            <>
+              <p>An unexpected error occurred while loading this page. Your progress up to this point is safe.</p>
+              {error.digest && (
+                <p className="mt-2 text-xs text-text-tertiary">Reference: {error.digest}</p>
+              )}
+            </>
+          }
+          action={
+            <Button onClick={() => unstable_retry()}>Try again</Button>
+          }
+        />
       </div>
     </div>
   );

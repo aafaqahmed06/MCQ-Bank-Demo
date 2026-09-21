@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MCQ } from "@/types";
 import MCQCard from "@/components/MCQCard";
-import QuestionProgress from "@/components/QuestionProgress";
+import QuestionProgress, { type QuestionDotState } from "@/components/QuestionProgress";
 import ResultSummary from "@/components/ResultSummary";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/AuthProvider";
 
 type PracticeSessionProps = {
   questions: MCQ[];
@@ -31,17 +32,49 @@ export default function PracticeSession({
   completionModuleId,
   completionTopicIds,
 }: PracticeSessionProps) {
+  const { user } = useAuth();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answered, setAnswered] = useState(false);
   const [finished, setFinished] = useState(false);
   const [score, setScore] = useState(0);
   const [restartCount, setRestartCount] = useState(0);
+  const [results, setResults] = useState<QuestionDotState[]>(() =>
+    Array(questions.length).fill("unanswered")
+  );
+  const [bookmarked, setBookmarked] = useState<boolean[]>(() =>
+    Array(questions.length).fill(false)
+  );
 
   // `questions` arrives in a deliberately weighted order (miss rate +
   // recency, see lib/practiceRanking.ts) -- it must NOT be reshuffled
   // client-side, or the ranking is erased before the student ever sees it.
   const orderedQuestions = questions;
+
+  // Bulk bookmark lookup for the dot strip (§ MCQ interface "Question
+  // progress" -- bookmarked is one of the states each dot encodes).
+  useEffect(() => {
+    if (!user || orderedQuestions.length === 0) return;
+    let active = true;
+    createClient()
+      .from("bookmarks")
+      .select("mcq_id")
+      .eq("user_id", user.id)
+      .in(
+        "mcq_id",
+        orderedQuestions.map((q) => q.id)
+      )
+      .then(({ data }) => {
+        if (!active || !data) return;
+        const bookmarkedIds = new Set(data.map((r) => r.mcq_id as string));
+        setBookmarked(orderedQuestions.map((q) => bookmarkedIds.has(q.id)));
+      });
+    return () => {
+      active = false;
+    };
+    // orderedQuestions is stable for the life of a session (never reshuffled).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const displayedQuestion = useMemo(() => {
     const q = orderedQuestions[currentIndex];
@@ -63,12 +96,6 @@ export default function PracticeSession({
   const totalQuestions = orderedQuestions.length;
   const completed = finished;
 
-  const answeredCount = useMemo(() => {
-    if (finished) return totalQuestions;
-    if (answered) return currentIndex + 1;
-    return currentIndex;
-  }, [finished, answered, currentIndex, totalQuestions]);
-
   const recordAttempt = async (mcqId: string, selectedOptionIndex: number) => {
     try {
       await createClient().rpc("record_practice_attempt", {
@@ -87,13 +114,27 @@ export default function PracticeSession({
 
     setAnswered(true);
 
-    if (selectedAnswer === displayedQuestion.correctAnswer) {
+    const correct = selectedAnswer === displayedQuestion.correctAnswer;
+    if (correct) {
       setScore((prev) => prev + 1);
     }
+    setResults((prev) => {
+      const next = [...prev];
+      next[currentIndex] = correct ? "correct" : "incorrect";
+      return next;
+    });
 
     // p_selected_option_index must be in the original (unshuffled) option
     // space -- selectedAnswer is in shuffled-option space.
     void recordAttempt(displayedQuestion.id, displayedQuestion.optionIndices[selectedAnswer]);
+  };
+
+  const handleBookmarkToggle = (value: boolean) => {
+    setBookmarked((prev) => {
+      const next = [...prev];
+      next[currentIndex] = value;
+      return next;
+    });
   };
 
   const recordCompletion = async () => {
@@ -134,16 +175,19 @@ export default function PracticeSession({
     setFinished(false);
     setScore(0);
     setRestartCount((c) => c + 1);
+    setResults(Array(totalQuestions).fill("unanswered"));
   };
 
   return (
     <div className="space-y-6">
-      <QuestionProgress
-        current={currentIndex + 1}
-        answered={answeredCount}
-        total={totalQuestions}
-        score={score}
-      />
+      <div className="mx-auto w-full max-w-[800px]">
+        <QuestionProgress
+          current={currentIndex + 1}
+          total={totalQuestions}
+          states={results}
+          bookmarked={bookmarked}
+        />
+      </div>
 
       {completed ? (
         <ResultSummary
@@ -160,6 +204,7 @@ export default function PracticeSession({
           onSelect={setSelectedAnswer}
           onSubmit={handleSubmit}
           onNext={handleNext}
+          onBookmarkToggle={handleBookmarkToggle}
           isLastQuestion={currentIndex === totalQuestions - 1}
         />
       )}

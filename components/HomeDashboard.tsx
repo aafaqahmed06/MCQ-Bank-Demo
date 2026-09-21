@@ -2,11 +2,26 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import {
+  ListChecks,
+  Target,
+  ClipboardCheck,
+  TrendingUp,
+  ArrowRight,
+  Lock,
+  Trophy,
+  AlertTriangle,
+} from "lucide-react";
 import { useAuth } from "@/components/AuthProvider";
 import { useProfileInfo } from "@/components/useProfileInfo";
+import ContinueCard from "@/components/ContinueCard";
 import DkBot from "@/components/DkBot";
 import { createClient } from "@/lib/supabase/client";
 import { getSmartPracticeEligibility, type SmartPracticeEligibility } from "@/lib/smartPractice";
+import { formatLastActive } from "@/lib/activity";
+import { isWeakTopic } from "@/lib/weakness";
+import type { Module } from "@/types";
+import { Card, Badge, Progress, Button, Icon, Skeleton, EmptyState } from "@/components/ui";
 
 type PracticeStats = {
   questionsAttempted: number;
@@ -18,64 +33,69 @@ type ExamStats = {
   avgScore: number | null;
 };
 
+type WeakTopic = {
+  topicId: string;
+  name: string;
+  moduleId: string;
+  accuracy: number;
+};
+
+type ActivityEvent =
+  | { type: "exam"; key: string; at: string; score: number; correctCount: number; totalQuestions: number }
+  | { type: "practice"; key: string; at: string; topicName: string; moduleId: string; accuracy: number | null };
+
 type Tab = "practice" | "exam";
 
-function StatIcon({ label }: { label: string }) {
-  const common = "size-5 text-[var(--accent-cyan)]";
-  if (label === "Questions practiced") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden="true">
-        <path d="M9 3h6M10 3v6.5L5.2 18a2 2 0 0 0 1.8 3h10a2 2 0 0 0 1.8-3L14 9.5V3" />
-      </svg>
-    );
-  }
-  if (label === "Accuracy") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className={common} aria-hidden="true">
-        <circle cx="12" cy="12" r="9" />
-        <path d="M12 7v5l3 2" />
-      </svg>
-    );
-  }
-  if (label === "Exams completed") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={common} aria-hidden="true">
-        <path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className={common} aria-hidden="true">
-      <path d="M4 6h16M4 12h16M4 18h10" />
-    </svg>
-  );
+const STAT_ICONS = {
+  "Questions practiced": ListChecks,
+  Accuracy: Target,
+  "Exams completed": ClipboardCheck,
+  "Avg exam score": TrendingUp,
+} as const;
+
+function greeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
-export default function HomeDashboard() {
+function dayLabel(iso: string): string {
+  const d = new Date(iso);
+  const now = new Date();
+  const startOfDay = (date: Date) =>
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(now) - startOfDay(d)) / 86_400_000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return d.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+export default function HomeDashboard({ subjects }: { subjects: Module[] }) {
   const { profile } = useAuth();
   const info = useProfileInfo();
   const [tab, setTab] = useState<Tab>("practice");
   const [practiceStats, setPracticeStats] = useState<PracticeStats | null>(null);
   const [examStats, setExamStats] = useState<ExamStats | null>(null);
   const [smartEligibility, setSmartEligibility] = useState<SmartPracticeEligibility | null>(null);
+  const [weakTopics, setWeakTopics] = useState<WeakTopic[] | null>(null);
+  const [activity, setActivity] = useState<ActivityEvent[] | null>(null);
 
   useEffect(() => {
     let active = true;
 
     async function load() {
       const supabase = createClient();
-      // Two genuinely separate sources: practice_questions_attempted/correct
-      // are written only by record_practice_attempt (practice mode), while
-      // the exams query is untouched -- exam mode's numbers here are
-      // byte-for-byte the same as before this feature existed.
       const [progRes, examRes, eligibilityRes] = await Promise.all([
         supabase
           .from("user_topic_progress")
-          .select("practice_questions_attempted, practice_questions_correct")
-          .order("updated_at", { ascending: false }),
+          .select(
+            "topic_id, practice_questions_attempted, practice_questions_correct, practice_accuracy, practice_last_attempted_at"
+          )
+          .order("practice_last_attempted_at", { ascending: false, nullsFirst: false }),
         supabase
           .from("exams")
-          .select("status, score, correct_count, total_questions")
+          .select("id, status, score, correct_count, total_questions, submitted_at")
           .eq("status", "submitted")
           .order("submitted_at", { ascending: false })
           .limit(1000),
@@ -88,12 +108,12 @@ export default function HomeDashboard() {
 
       const rows = progRes.data ?? [];
       const attempted = rows.reduce(
-        (sum, r) => sum + (r.practice_questions_attempted as number),
-        0,
+        (sum, r) => sum + ((r.practice_questions_attempted as number) ?? 0),
+        0
       );
       const correct = rows.reduce(
-        (sum, r) => sum + (r.practice_questions_correct as number),
-        0,
+        (sum, r) => sum + ((r.practice_questions_correct as number) ?? 0),
+        0
       );
 
       const exams = examRes.data ?? [];
@@ -101,9 +121,7 @@ export default function HomeDashboard() {
       const avgScore =
         examsCompleted > 0
           ? Math.round(
-              (exams.reduce((sum, e) => sum + Number(e.score ?? 0), 0) /
-                examsCompleted) *
-                10,
+              (exams.reduce((sum, e) => sum + Number(e.score ?? 0), 0) / examsCompleted) * 10
             ) / 10
           : null;
 
@@ -112,6 +130,84 @@ export default function HomeDashboard() {
         accuracy: attempted > 0 ? Math.round((correct / attempted) * 100) : null,
       });
       setExamStats({ examsCompleted, avgScore });
+
+      // Weakest practiced topics (min attempt count, worst accuracy first).
+      const weakRows = rows
+        .filter(
+          (r) =>
+            isWeakTopic(
+              r.practice_accuracy as number | null,
+              (r.practice_questions_attempted as number) ?? 0
+            )
+        )
+        .sort((a, b) => (a.practice_accuracy as number) - (b.practice_accuracy as number))
+        .slice(0, 3);
+
+      // Rows are already ordered by practice_last_attempted_at desc.
+      const recentPracticeRows = rows.filter((r) => r.practice_last_attempted_at).slice(0, 6);
+
+      const neededTopicIds = [
+        ...new Set(
+          [...weakRows, ...recentPracticeRows].map((r) => r.topic_id as string)
+        ),
+      ];
+      const { data: topicRows } = neededTopicIds.length
+        ? await supabase.from("topics").select("id, name, module_id").in("id", neededTopicIds)
+        : { data: [] as { id: string; name: string; module_id: string }[] };
+
+      if (!active) return;
+
+      const topicById = new Map(
+        (topicRows ?? []).map((t) => [t.id as string, t as { id: string; name: string; module_id: string }])
+      );
+
+      setWeakTopics(
+        weakRows
+          .map((r) => {
+            const topic = topicById.get(r.topic_id as string);
+            if (!topic) return null;
+            return {
+              topicId: r.topic_id as string,
+              name: topic.name,
+              moduleId: topic.module_id,
+              accuracy: Math.round(r.practice_accuracy as number),
+            };
+          })
+          .filter((t): t is WeakTopic => t !== null)
+      );
+
+      const examEvents: ActivityEvent[] = exams
+        .filter((e) => e.submitted_at)
+        .map((e) => ({
+          type: "exam" as const,
+          key: e.id as string,
+          at: e.submitted_at as string,
+          score: Number(e.score ?? 0),
+          correctCount: (e.correct_count as number) ?? 0,
+          totalQuestions: (e.total_questions as number) ?? 0,
+        }));
+
+      const practiceEvents: ActivityEvent[] = recentPracticeRows
+        .map((r): ActivityEvent | null => {
+          const topic = topicById.get(r.topic_id as string);
+          if (!topic) return null;
+          return {
+            type: "practice" as const,
+            key: r.topic_id as string,
+            at: r.practice_last_attempted_at as string,
+            topicName: topic.name,
+            moduleId: topic.module_id,
+            accuracy:
+              r.practice_accuracy != null ? Math.round(r.practice_accuracy as number) : null,
+          };
+        })
+        .filter((e): e is ActivityEvent => e !== null);
+
+      setActivity(
+        [...examEvents, ...practiceEvents]
+          .sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime())
+          .slice(0, 8)
+      );
     }
 
     void load();
@@ -122,15 +218,13 @@ export default function HomeDashboard() {
 
   const display =
     info && profile
-      ? [info.collegeName, info.programName, info.yearName]
-          .filter(Boolean)
-          .join(" · ")
+      ? [info.collegeName, info.programName, info.yearName].filter(Boolean).join(" · ")
       : null;
 
-  const practiceCards: { label: string; value: string; isSet: boolean }[] = [
+  const practiceCards: { label: keyof typeof STAT_ICONS; value: string; isSet: boolean }[] = [
     {
       label: "Questions practiced",
-      value: practiceStats ? String(practiceStats.questionsAttempted) : "…",
+      value: practiceStats ? String(practiceStats.questionsAttempted) : "",
       isSet: practiceStats ? practiceStats.questionsAttempted > 0 : false,
     },
     {
@@ -139,52 +233,41 @@ export default function HomeDashboard() {
         ? practiceStats.accuracy === null
           ? "—"
           : `${practiceStats.accuracy}%`
-        : "…",
+        : "",
       isSet: practiceStats ? practiceStats.accuracy !== null : false,
     },
   ];
 
-  const examCards: { label: string; value: string; isSet: boolean }[] = [
+  const examCards: { label: keyof typeof STAT_ICONS; value: string; isSet: boolean }[] = [
     {
       label: "Exams completed",
-      value: examStats ? String(examStats.examsCompleted) : "…",
+      value: examStats ? String(examStats.examsCompleted) : "",
       isSet: examStats ? examStats.examsCompleted > 0 : false,
     },
     {
       label: "Avg exam score",
-      value: examStats
-        ? examStats.avgScore === null
-          ? "—"
-          : `${examStats.avgScore}%`
-        : "…",
+      value: examStats ? (examStats.avgScore === null ? "—" : `${examStats.avgScore}%`) : "",
       isSet: examStats ? examStats.avgScore !== null : false,
     },
   ];
 
   const statCards = tab === "practice" ? practiceCards : examCards;
-
-  const hasActivity =
-    (practiceStats ? practiceStats.questionsAttempted > 0 : false) ||
-    (examStats ? examStats.examsCompleted > 0 : false);
+  const statsLoading = tab === "practice" ? !practiceStats : !examStats;
 
   return (
-    <div className="space-y-8">
-      {/* Welcome header — prominent but not oversized */}
+    <div className="space-y-10">
+      {/* Header */}
       <header className="space-y-1.5">
-        <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)] sm:text-4xl">
-          Welcome back
+        <h1 className="text-display font-bold tracking-tight text-text-primary">
+          {greeting()}
+          {profile?.full_name ? `, ${profile.full_name.split(" ")[0]}` : ""}
         </h1>
         {profile?.full_name ? (
-          <p className="text-[var(--text-muted)]">
-            <span className="font-medium text-[var(--text-body)]">
-              {profile.full_name}
-            </span>
-            {display ? <span className="text-[var(--text-muted)]"> · {display}</span> : null}
-          </p>
+          display && <p className="text-text-tertiary">{display}</p>
         ) : (
-          <p className="text-[var(--text-muted)]">
+          <p className="text-text-tertiary">
             Complete{" "}
-            <Link href="/onboarding" className="text-[var(--accent-cyan)] hover:underline">
+            <Link href="/onboarding" className="text-primary hover:underline">
               onboarding
             </Link>{" "}
             to save your details.
@@ -192,173 +275,273 @@ export default function HomeDashboard() {
         )}
       </header>
 
-      {/* Statistics — scannable white cards, toggled between practice and exam */}
-      <section data-tutorial="stats" className="space-y-4">
-        <div
-          role="tablist"
-          aria-label="Statistics view"
-          className="inline-flex rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-1"
-        >
-          {(["practice", "exam"] as const).map((t) => (
-            <button
-              key={t}
-              type="button"
-              role="tab"
-              aria-selected={tab === t}
-              onClick={() => setTab(t)}
-              className={`rounded-lg px-4 py-1.5 text-sm font-medium capitalize transition-colors ${
-                tab === t
-                  ? "bg-[var(--primary-btn-bg)] text-[var(--primary-btn-text)]"
-                  : "text-[var(--text-muted)] hover:text-[var(--text-body)]"
-              }`}
-            >
-              {t}
-            </button>
-          ))}
+      {/* Continue (hero) + This Week — dominant action, per §1 the only
+          Level-3 elevated pair on the page. */}
+      <section className="grid gap-4 md:grid-cols-5">
+        <div className="md:col-span-3">
+          <ContinueCard />
         </div>
 
-        <div className="grid grid-cols-2 gap-4" aria-label="Your statistics">
-        {statCards.map((card) => (
-          <div
-            key={card.label}
-            className="hud-card rounded-xl p-5"
-          >
+        <div data-tutorial="stats" className="md:col-span-2">
+          <Card variant="elevated" padding="lg" className="h-full">
             <div className="flex items-center justify-between">
-              <StatIcon label={card.label} />
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
-                  card.isSet
-                    ? "bg-cyan-500/10 text-[var(--accent-cyan-strong)]"
-                    : "bg-[var(--bg-card-alt)] text-[var(--text-muted)]"
-                }`}
+              <p className="text-caption font-semibold tracking-wide text-text-tertiary uppercase">
+                This week
+              </p>
+              <div
+                role="tablist"
+                aria-label="Statistics view"
+                className="inline-flex rounded-control border border-border-default bg-surface-secondary p-0.5"
               >
-                {card.isSet ? "Active" : "Pending"}
-              </span>
+                {(["practice", "exam"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === t}
+                    onClick={() => setTab(t)}
+                    className={`rounded-control px-2.5 py-1 text-caption font-medium capitalize transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                      tab === t
+                        ? "bg-primary text-white"
+                        : "text-text-tertiary hover:text-text-primary"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
             </div>
-            <p
-              className={`mt-4 text-3xl font-semibold tabular-nums ${
-                card.isSet
-                  ? "text-[var(--text-heading)]"
-                  : "text-[var(--text-muted)]"
-              }`}
-            >
-              {card.value}
-            </p>
-            <p className="mt-1 text-sm text-[var(--text-muted)]">{card.label}</p>
-          </div>
-        ))}
+
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              {statCards.map((card) => {
+                const StatIconComponent = STAT_ICONS[card.label];
+                return (
+                  <div key={card.label}>
+                    <Icon icon={StatIconComponent} size="sm" className="text-primary" />
+                    {statsLoading ? (
+                      <Skeleton className="mt-2 h-7 w-12" />
+                    ) : (
+                      <p
+                        className={`mt-2 text-h2 font-semibold tabular-nums ${
+                          card.isSet ? "text-text-primary" : "text-text-tertiary"
+                        }`}
+                      >
+                        {card.value}
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-caption text-text-tertiary">{card.label}</p>
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
         </div>
       </section>
 
-      {!hasActivity && (
-        <section className="hud-card rounded-xl border-dashed p-6 text-center sm:p-8">
-          <div className="flex justify-center">
-            <DkBot state="thumbsUp" size="small" alt={null} />
+      {/* Your Curriculum — Level 1, no card wrapper (§1). */}
+      {subjects.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="text-caption font-semibold tracking-wide text-text-tertiary uppercase">
+            Your curriculum
+          </h2>
+          <div className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+            {subjects.map((s) => {
+              const pct =
+                s.topicsTotal && s.topicsTotal > 0
+                  ? Math.round(((s.topicsCompleted ?? 0) / s.topicsTotal) * 100)
+                  : 0;
+              return (
+                <div key={s.id} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-text-primary">{s.name}</span>
+                    <span className="tabular-nums text-text-tertiary">{pct}%</span>
+                  </div>
+                  <Progress value={pct} size="sm" label={`${s.name} completion`} />
+                </div>
+              );
+            })}
           </div>
-          <p className="mt-3 text-[var(--text-muted)]">
-            No activity yet — start practicing or take your first exam simulation
-            to build your stats.
-          </p>
         </section>
       )}
 
-      {/* Primary actions — teal primary, outlined secondary, quieter leaderboard */}
-      <section className="grid gap-4 md:grid-cols-3" aria-label="Quick actions">
-        <Link
-          data-tutorial="practice"
-          href="/blocks"
-          className="group flex items-center justify-between rounded-xl bg-[var(--primary-btn-bg)] p-6 text-[var(--primary-btn-text)] transition hover:-translate-y-0.5 hover:bg-[var(--primary-btn-bg-hover)]"
-        >
-          <div>
-            <p className="text-base font-semibold">Start Practice</p>
-            <p className="mt-0.5 text-sm text-[var(--primary-btn-text)]/80">
-              Revise by block, module and topic
-            </p>
+      {/* Focus Next — weaknesses, only shown when there's a real signal. */}
+      {weakTopics && weakTopics.length > 0 && (
+        <section className="space-y-3">
+          <h2 className="flex items-center gap-1.5 text-caption font-semibold tracking-wide text-warning-text uppercase">
+            <Icon icon={AlertTriangle} size="xs" />
+            Focus next — {weakTopics.length} topic{weakTopics.length === 1 ? "" : "s"} need
+            review
+          </h2>
+          <div className="space-y-2">
+            {weakTopics.map((t) => (
+              <Link
+                key={t.topicId}
+                href={`/practice/${t.moduleId}`}
+                className="flex items-center justify-between rounded-interactive border border-border-default bg-surface px-4 py-3 text-sm transition-colors duration-150 hover:border-warning/40"
+              >
+                <span className="font-medium text-text-primary">{t.name}</span>
+                <Badge variant="warning">{t.accuracy}% accuracy</Badge>
+              </Link>
+            ))}
           </div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 transition-transform group-hover:translate-x-0.5" aria-hidden="true">
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </Link>
-
-        <Link
-          data-tutorial="exam"
-          href="/exam"
-          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:-translate-y-0.5 hover:border-[var(--accent-cyan)]"
-        >
-          <div>
-            <p className="text-base font-semibold text-[var(--text-heading)]">Exam Simulation</p>
-            <p className="mt-0.5 text-sm text-[var(--text-muted)]">
-              Timed, graded exam under real conditions
-            </p>
+          <div className="flex flex-wrap gap-3">
+            <Button href="/practice/smart" variant="secondary" size="sm">
+              Practice weak topics
+            </Button>
+            <Button href="/mistakes" variant="ghost" size="sm">
+              View all mistakes
+            </Button>
           </div>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 text-[var(--accent-cyan)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">
-            <path d="M5 12h14M13 6l6 6-6 6" />
-          </svg>
-        </Link>
+        </section>
+      )}
 
-        {smartEligibility && !smartEligibility.eligible ? (
-          <Link
-            data-tutorial="smart-practice"
-            href="/practice/smart"
-            className="flex flex-col justify-between gap-3 rounded-xl border border-dashed border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:border-[var(--accent-violet)]/40"
-          >
-            <div className="flex items-center justify-between">
-              <p className="text-base font-semibold text-[var(--text-heading)]">Smart Practice</p>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5 text-[var(--text-muted)]" aria-hidden="true">
-                <rect x="5" y="11" width="14" height="9" rx="2" />
-                <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm text-[var(--text-muted)]">
-                {smartEligibility.attempts} of {smartEligibility.minAttempts} questions answered
-              </p>
-              <div className="mt-2 h-2 rounded-full bg-[var(--bg-progress-track)]">
-                <div
-                  className="h-2 rounded-full bg-[var(--accent-violet)] transition-all duration-300"
-                  style={{
-                    width: `${Math.min(100, (smartEligibility.attempts / smartEligibility.minAttempts) * 100)}%`,
-                  }}
-                />
+      {/* Quick actions — secondary now that Continue is the dominant action. */}
+      <section className="space-y-3" aria-label="Quick actions">
+        <h2 className="text-caption font-semibold tracking-wide text-text-tertiary uppercase">
+          Quick actions
+        </h2>
+        <div className="grid gap-3 md:grid-cols-3">
+          <Link data-tutorial="practice" href="/blocks" className="block h-full">
+            <Card variant="interactive" padding="md" className="h-full">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-text-primary">Start Practice</p>
+                <Icon icon={ArrowRight} size="sm" className="text-text-tertiary" />
               </div>
-            </div>
-          </Link>
-        ) : (
-          <Link
-            data-tutorial="smart-practice"
-            href="/practice/smart"
-            className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-6 text-[var(--text-body)] transition hover:-translate-y-0.5 hover:border-[var(--accent-violet)]"
-          >
-            <div>
-              <p className="text-base font-semibold text-[var(--text-heading)]">Smart Practice</p>
-              <p className="mt-0.5 text-sm text-[var(--text-muted)]">
-                A mix weighted toward your weakest topics
+              <p className="mt-1 text-sm text-text-tertiary">
+                Revise by block, module and topic
               </p>
-            </div>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-6 text-[var(--accent-violet)] transition-transform group-hover:translate-x-0.5" aria-hidden="true">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
+            </Card>
           </Link>
+
+          <Link data-tutorial="exam" href="/exam" className="block h-full">
+            <Card variant="interactive" padding="md" className="h-full">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-text-primary">Exam Simulation</p>
+                <Icon icon={ArrowRight} size="sm" className="text-text-tertiary" />
+              </div>
+              <p className="mt-1 text-sm text-text-tertiary">
+                Timed, graded exam under real conditions
+              </p>
+            </Card>
+          </Link>
+
+          <Link href="/practice/smart" className="block h-full">
+            <Card variant="interactive" padding="md" className="h-full">
+              <div className="flex items-center justify-between">
+                <p className="font-semibold text-text-primary">Smart Practice</p>
+                {smartEligibility && !smartEligibility.eligible ? (
+                  <Icon icon={Lock} size="sm" className="text-text-tertiary" />
+                ) : (
+                  <Icon icon={ArrowRight} size="sm" className="text-text-tertiary" />
+                )}
+              </div>
+              {smartEligibility && !smartEligibility.eligible ? (
+                <div className="mt-2 space-y-1.5">
+                  <p className="text-sm text-text-tertiary">
+                    {smartEligibility.attempts} of {smartEligibility.minAttempts} questions
+                    answered
+                  </p>
+                  <Progress
+                    value={(smartEligibility.attempts / smartEligibility.minAttempts) * 100}
+                    size="sm"
+                    label="Smart Practice eligibility"
+                  />
+                </div>
+              ) : (
+                <p className="mt-1 text-sm text-text-tertiary">
+                  A mix weighted toward your weakest topics
+                </p>
+              )}
+            </Card>
+          </Link>
+        </div>
+      </section>
+
+      {/* Recent activity — compact, supporting information (§ Dashboard). */}
+      <section className="space-y-3">
+        <h2 className="text-caption font-semibold tracking-wide text-text-tertiary uppercase">
+          Recent activity
+        </h2>
+
+        {activity === null ? (
+          <div className="space-y-2">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        ) : activity.length === 0 ? (
+          <EmptyState
+            illustration={<DkBot state="thumbsUp" size="small" alt={null} />}
+            title="No activity yet"
+            description="Start practicing or take your first exam simulation to build your stats."
+            action={<Button href="/blocks">Start practicing</Button>}
+          />
+        ) : (
+          <ul className="divide-y divide-border-subtle">
+            {activity.map((event, i) => {
+              const showDayHeader =
+                i === 0 || dayLabel(event.at) !== dayLabel(activity[i - 1].at);
+              const row =
+                event.type === "exam" ? (
+                  <div className="flex items-center justify-between py-3 text-sm">
+                    <div className="flex items-center gap-2.5">
+                      <Icon icon={ClipboardCheck} size="sm" className="text-text-tertiary" />
+                      <span className="text-text-primary">
+                        Exam completed &middot; {event.correctCount}/{event.totalQuestions} (
+                        {Math.round(event.score)}%)
+                      </span>
+                    </div>
+                    <span className="text-text-tertiary">{formatLastActive(event.at)}</span>
+                  </div>
+                ) : (
+                  <Link
+                    href={`/practice/${event.moduleId}`}
+                    className="flex items-center justify-between py-3 text-sm hover:text-primary"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon icon={ListChecks} size="sm" className="text-text-tertiary" />
+                      <span className="text-text-primary">
+                        Practiced {event.topicName}
+                        {event.accuracy !== null ? ` · ${event.accuracy}%` : ""}
+                      </span>
+                    </div>
+                    <span className="text-text-tertiary">{formatLastActive(event.at)}</span>
+                  </Link>
+                );
+              return (
+                <li key={event.key}>
+                  {showDayHeader && (
+                    <p className="pt-3 text-caption font-semibold text-text-tertiary first:pt-0">
+                      {dayLabel(event.at)}
+                    </p>
+                  )}
+                  {row}
+                </li>
+              );
+            })}
+          </ul>
         )}
       </section>
 
+      {/* Leaderboard — secondary, per §1 not another dominant surface. */}
       <section data-tutorial="leaderboard">
-        <Link
-          href="/leaderboard"
-          className="group flex items-center justify-between rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5 transition hover:-translate-y-0.5 hover:border-[var(--accent-cyan)]"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-[var(--accent-violet)]">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
-                <path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4ZM4 4v1a3 3 0 0 0 3 3M20 4v1a3 3 0 0 1-3 3" />
-              </svg>
-            </span>
-            <div>
-              <p className="text-base font-semibold text-[var(--text-heading)]">Leaderboard</p>
-              <p className="text-sm text-[var(--text-muted)]">See how you compare with your cohort</p>
+        <Link href="/leaderboard" className="block">
+          <Card
+            variant="interactive"
+            padding="md"
+            className="flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <Icon icon={Trophy} size="md" className="text-primary" />
+              <div>
+                <p className="font-semibold text-text-primary">Leaderboard</p>
+                <p className="text-sm text-text-tertiary">
+                  See how you compare with your cohort
+                </p>
+              </div>
             </div>
-          </div>
-          <span className="text-[var(--text-muted-light)] transition-transform group-hover:translate-x-0.5">→</span>
+            <Icon icon={ArrowRight} size="sm" className="text-text-tertiary" />
+          </Card>
         </Link>
       </section>
     </div>

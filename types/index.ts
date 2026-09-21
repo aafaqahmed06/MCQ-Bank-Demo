@@ -55,6 +55,9 @@ export interface Block {
   subjectCount?: number;
   topicsCompleted?: number;
   topicsTotal?: number;
+  questionCount?: number;
+  weakTopicCount?: number;
+  lastActivityAt?: string | null;
 }
 
 export interface Module {
@@ -63,6 +66,15 @@ export interface Module {
   name: string;
   topicsCompleted?: number;
   topicsTotal?: number;
+  questionCount?: number;
+  weakTopicCount?: number;
+  lastActivityAt?: string | null;
+  /** Weighted practice accuracy across this module's attempted topics
+   * (sum correct / sum attempted), null when nothing has been attempted. */
+  accuracy?: number | null;
+  /** Sum of practice attempts across the module's topics — the reliability
+   * gate for `accuracy` (see lib/weakness.ts getTopicHealthState). */
+  questionsAttempted?: number;
 }
 
 /** Per-topic-group completion state (derived from user_topic_progress). */

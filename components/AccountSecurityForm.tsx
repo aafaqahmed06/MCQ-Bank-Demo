@@ -4,9 +4,10 @@ import { useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { validatePassword } from "@/lib/auth/password";
+import { Button } from "@/components/ui";
 
 const inputClass =
-  "w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25";
+  "w-full rounded-control border border-border-default bg-surface px-4 py-3.5 text-base text-text-primary transition-colors duration-150 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25";
 
 export default function AccountSecurityForm() {
   const { user } = useAuth();
@@ -73,7 +74,7 @@ export default function AccountSecurityForm() {
   if (user?.is_anonymous) {
     return (
       <div className="space-y-4">
-        <p className="hud-muted text-sm">
+        <p className="text-sm text-text-tertiary">
           You&apos;re using a guest account. Your progress is saved, but only
           on this device/browser -- signing out or clearing your browser data
           will lose it. Add an email and password to keep your progress
@@ -83,7 +84,7 @@ export default function AccountSecurityForm() {
           <div className="space-y-2">
             <label
               htmlFor="guestEmail"
-              className="block text-sm font-medium text-[var(--text-label)]"
+              className="block text-sm font-medium text-text-secondary"
             >
               Email
             </label>
@@ -101,7 +102,7 @@ export default function AccountSecurityForm() {
           <div className="space-y-2">
             <label
               htmlFor="guestPassword"
-              className="block text-sm font-medium text-[var(--text-label)]"
+              className="block text-sm font-medium text-text-secondary"
             >
               Password
             </label>
@@ -126,13 +127,9 @@ export default function AccountSecurityForm() {
               {guestInfo}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={guestSaving}
-            className="hud-primary-btn w-full rounded-xl px-5 py-3 font-medium disabled:opacity-60"
-          >
+          <Button type="submit" loading={guestSaving} fullWidth>
             {guestSaving ? "Saving…" : "Save my account"}
-          </button>
+          </Button>
         </form>
       </div>
     );
@@ -209,18 +206,18 @@ export default function AccountSecurityForm() {
   return (
     <div className="space-y-8">
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-[var(--text-heading)]">
+        <h2 className="text-lg font-semibold text-text-primary">
           Change email
         </h2>
-        <p className="hud-muted text-sm">
+        <p className="text-sm text-text-tertiary">
           Your current sign-in email is{" "}
-          <span className="font-medium text-[var(--text-body)]">{user?.email}</span>.
+          <span className="font-medium text-text-secondary">{user?.email}</span>.
         </p>
         <form onSubmit={handleEmailChange} className="space-y-4">
           <div className="space-y-2">
             <label
               htmlFor="newEmail"
-              className="block text-sm font-medium text-[var(--text-label)]"
+              className="block text-sm font-medium text-text-secondary"
             >
               New email
             </label>
@@ -251,24 +248,20 @@ export default function AccountSecurityForm() {
               {emailInfo}
             </p>
           )}
-          <button
-            type="submit"
-            disabled={emailSaving}
-            className="hud-primary-btn w-full rounded-xl px-5 py-3 font-medium disabled:opacity-60"
-          >
+          <Button type="submit" loading={emailSaving} fullWidth>
             {emailSaving ? "Sending…" : "Change email"}
-          </button>
+          </Button>
         </form>
       </section>
 
-      <hr className="border-cyan-300/10" />
+      <hr className="border-border-subtle" />
 
       <section className="space-y-4">
-        <h2 className="text-lg font-semibold text-[var(--text-heading)]">
+        <h2 className="text-lg font-semibold text-text-primary">
           Change password
         </h2>
         {!signedInWithPassword ? (
-          <p className="hud-muted text-sm">
+          <p className="text-sm text-text-tertiary">
             You signed in with Google, so no password is set for this account.
           </p>
         ) : (
@@ -276,7 +269,7 @@ export default function AccountSecurityForm() {
             <div className="space-y-2">
               <label
                 htmlFor="currentPassword"
-                className="block text-sm font-medium text-[var(--text-label)]"
+                className="block text-sm font-medium text-text-secondary"
               >
                 Current password
               </label>
@@ -293,7 +286,7 @@ export default function AccountSecurityForm() {
             <div className="space-y-2">
               <label
                 htmlFor="newPassword"
-                className="block text-sm font-medium text-[var(--text-label)]"
+                className="block text-sm font-medium text-text-secondary"
               >
                 New password
               </label>
@@ -312,7 +305,7 @@ export default function AccountSecurityForm() {
             <div className="space-y-2">
               <label
                 htmlFor="confirmPassword"
-                className="block text-sm font-medium text-[var(--text-label)]"
+                className="block text-sm font-medium text-text-secondary"
               >
                 Confirm new password
               </label>
@@ -329,28 +322,18 @@ export default function AccountSecurityForm() {
               />
             </div>
             {pwError && (
-              <p
-                className="rounded-lg border border-red-400/30 bg-red-400/10 px-3 py-2 text-sm text-red-300"
-                role="alert"
-              >
+              <p className="alert-error rounded-control px-3 py-2 text-sm" role="alert">
                 {pwError}
               </p>
             )}
             {pwInfo && (
-              <p
-                className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-sm text-[var(--accent-cyan)]"
-                role="status"
-              >
+              <p className="alert-info rounded-control px-3 py-2 text-sm" role="status">
                 {pwInfo}
               </p>
             )}
-            <button
-              type="submit"
-              disabled={pwSaving}
-              className="hud-primary-btn w-full rounded-xl px-5 py-3 font-medium disabled:opacity-60"
-            >
+            <Button type="submit" loading={pwSaving} fullWidth>
               {pwSaving ? "Updating…" : "Change password"}
-            </button>
+            </Button>
           </form>
         )}
       </section>

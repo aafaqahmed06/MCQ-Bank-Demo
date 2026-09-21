@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
     <section className="mt-8">
-      <h2 id={id} className="text-xl font-semibold text-[var(--text-heading)]">
+      <h2 id={id} className="text-xl font-semibold text-text-primary">
         {title}
       </h2>
       <div className="hud-muted mt-3 space-y-3 leading-relaxed">{children}</div>
@@ -23,11 +23,11 @@ export default function PrivacyPage() {
   return (
     <LayoutWrapper>
       <div className="flex flex-1 flex-col py-8 md:py-12">
-        <article className="hud-card fade-in w-full rounded-xl p-6 sm:p-8">
-          <p className="text-sm font-medium uppercase tracking-wide text-[var(--accent-cyan)]">
+        <article className="fade-in w-full rounded-card border border-border-default bg-surface p-6 sm:p-8">
+          <p className="text-sm font-medium uppercase tracking-wide text-primary">
             Legal
           </p>
-          <h1 className="mt-2 text-3xl font-bold text-[var(--text-heading)]">
+          <h1 className="mt-2 text-3xl font-bold text-text-primary">
             Privacy Policy
           </h1>
           <p className="hud-muted mt-2 text-sm">
@@ -43,7 +43,7 @@ export default function PrivacyPage() {
 
           <Section id="info-we-collect" title="1. Information We Collect">
             <p>
-              <strong className="text-[var(--text-body)]">Account information.</strong> When you
+              <strong className="text-text-secondary">Account information.</strong> When you
               sign up, we collect your email address and the full name you provide. If you sign
               in with Google, we receive the name and email address Google shares with us. If you
               use &quot;Continue as guest&quot;, we do not collect an email address or password —
@@ -51,22 +51,22 @@ export default function PrivacyPage() {
               add an email and password to keep it permanently or stop using the service.
             </p>
             <p>
-              <strong className="text-[var(--text-body)]">Profile information.</strong> To tailor
+              <strong className="text-text-secondary">Profile information.</strong> To tailor
               your practice, you may provide your college, program, and academic year. This is
               stored on your profile.
             </p>
             <p>
-              <strong className="text-[var(--text-body)]">Practice data.</strong> We record your
+              <strong className="text-text-secondary">Practice data.</strong> We record your
               progress across topics, quiz and exam results, question bookmarks, and any
               question reports you submit. This data is associated with your account.
             </p>
             <p>
-              <strong className="text-[var(--text-body)]">Technical data.</strong> Our hosting
+              <strong className="text-text-secondary">Technical data.</strong> Our hosting
               provider (Vercel) and database provider (Supabase) may collect standard logs such
               as IP addresses and browser information to operate and secure the service.
             </p>
             <p>
-              <strong className="text-[var(--text-body)]">CAPTCHA data.</strong> We use
+              <strong className="text-text-secondary">CAPTCHA data.</strong> We use
               Cloudflare Turnstile to protect sign-up, sign-in, and password recovery from
               automated abuse. Turnstile runs in your browser and processes limited device and
               browser signals on Cloudflare&apos;s servers to verify you are human; we do not
@@ -75,7 +75,7 @@ export default function PrivacyPage() {
                 href="https://www.cloudflare.com/privacypolicy/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+                className="font-medium text-primary hover:underline active:underline"
               >
                 Cloudflare&apos;s Privacy Policy
               </a>{" "}
@@ -93,14 +93,14 @@ export default function PrivacyPage() {
               <li>Maintain the security, safety, and integrity of the service.</li>
             </ul>
             <p>
-              <strong className="text-[var(--text-body)]">Leaderboard visibility.</strong> If you
+              <strong className="text-text-secondary">Leaderboard visibility.</strong> If you
               use the leaderboard, your full name, college, program, exams completed, correct
               answers, and accuracy are visible to other signed-in users of the Service. This
               information is not anonymized or aggregated — it identifies you by name. If you do
               not want this information visible to other users, contact us at{" "}
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+                className="font-medium text-primary hover:underline active:underline"
               >
                 {SUPPORT_EMAIL}
               </a>
@@ -129,7 +129,7 @@ export default function PrivacyPage() {
             <p>
               We keep your account and practice data for as long as your account is active.
               Account deletion is handled by our team on request (see{" "}
-              <a href="#your-rights" className="font-medium text-[var(--accent-cyan)] hover:underline active:underline">
+              <a href="#your-rights" className="font-medium text-primary hover:underline active:underline">
                 Your Rights
               </a>{" "}
               below) rather than as a self-service action in the app. Once processed, your
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
               request account deletion or data access, contact us at{" "}
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+                className="font-medium text-primary hover:underline active:underline"
               >
                 {SUPPORT_EMAIL}
               </a>
@@ -187,7 +187,7 @@ export default function PrivacyPage() {
               Questions about this Privacy Policy can be sent to{" "}
               <a
                 href={`mailto:${SUPPORT_EMAIL}`}
-                className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+                className="font-medium text-primary hover:underline active:underline"
               >
                 {SUPPORT_EMAIL}
               </a>
@@ -198,7 +198,7 @@ export default function PrivacyPage() {
           <p className="mt-8 text-sm">
             <Link
               href="/"
-              className="text-[var(--text-muted)] hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)]"
+              className="text-text-tertiary hover:text-primary active:text-primary"
             >
               &larr; Back to home
             </Link>

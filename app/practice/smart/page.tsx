@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Lock } from "lucide-react";
 import LayoutWrapper from "@/components/LayoutWrapper";
 import RequireProfile from "@/components/RequireProfile";
 import PracticeSession from "@/components/PracticeSession";
@@ -12,6 +12,7 @@ import {
   type SmartPracticeEligibility,
 } from "@/lib/smartPractice";
 import type { MCQ } from "@/types";
+import { Card, Button, Progress, Icon, cn } from "@/components/ui";
 
 type Phase = "select" | "practice";
 
@@ -85,56 +86,44 @@ export default function SmartPracticePage() {
                 items={[{ label: "Blocks", href: "/blocks" }, { label: "Smart Practice" }]}
               />
               <header className="space-y-2 text-center">
-                <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">
+                <h1 className="text-h1 font-bold tracking-tight text-text-primary">
                   Smart Practice
                 </h1>
-                <p className="text-[var(--text-muted)]">
+                <p className="text-text-tertiary">
                   A mix of questions across your topics, weighted toward the ones
                   you&apos;re weakest on.
                 </p>
               </header>
 
               {error && (
-                <p
-                  className="rounded-xl border border-[var(--error)]/40 bg-[var(--error-soft)] px-4 py-3 text-sm text-[var(--error-text)]"
-                  role="alert"
-                >
+                <p className="alert-error rounded-control px-4 py-3 text-sm" role="alert">
                   {error}
                 </p>
               )}
 
               {eligibilityLoading ? null : locked && eligibility ? (
-                <div className="hud-card space-y-4 rounded-xl border-dashed p-6 text-center sm:p-8">
-                  <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-[var(--accent-violet)]/10 text-[var(--accent-violet)]">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
-                      <rect x="5" y="11" width="14" height="9" rx="2" />
-                      <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                    </svg>
+                <Card variant="default" padding="lg" className="space-y-4 text-center">
+                  <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <Icon icon={Lock} size="sm" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-[var(--text-heading)]">
+                    <p className="text-sm font-medium text-text-primary">
                       {eligibility.attempts} of {eligibility.minAttempts} questions answered
                     </p>
-                    <div className="mx-auto mt-2 h-2 w-full max-w-xs rounded-full bg-[var(--bg-progress-track)]">
-                      <div
-                        className="h-2 rounded-full bg-[var(--accent-violet)] transition-all duration-300"
-                        style={{
-                          width: `${Math.min(100, (eligibility.attempts / eligibility.minAttempts) * 100)}%`,
-                        }}
-                      />
-                    </div>
+                    <Progress
+                      value={(eligibility.attempts / eligibility.minAttempts) * 100}
+                      label="Smart Practice eligibility"
+                      className="mx-auto mt-2 max-w-xs"
+                    />
                   </div>
-                  <p className="text-sm text-[var(--text-muted)]">
+                  <p className="text-sm text-text-tertiary">
                     Smart Practice needs enough attempt history to actually target your
                     weak topics — right now there isn&apos;t enough to personalize against.
                   </p>
-                  <Link
-                    href="/blocks"
-                    className="hud-primary-btn inline-flex rounded-xl px-6 py-3 text-sm font-semibold"
-                  >
+                  <Button href="/blocks" fullWidth>
                     Go Practice
-                  </Link>
-                </div>
+                  </Button>
+                </Card>
               ) : (
                 <>
                   <div className="flex justify-center gap-3">
@@ -146,11 +135,13 @@ export default function SmartPracticePage() {
                           type="button"
                           onClick={() => setSelectedCount(count)}
                           aria-pressed={isSelected}
-                          className={`rounded-xl border px-5 py-3 text-sm font-medium transition-colors ${
+                          className={cn(
+                            "rounded-control border px-5 py-3 text-sm font-medium transition-colors duration-150",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                             isSelected
-                              ? "border-[var(--accent-cyan)] bg-[var(--primary-btn-bg)] text-[var(--primary-btn-text)]"
-                              : "border-[var(--border-color)] bg-[var(--bg-card)] text-[var(--text-body)] hover:border-[var(--accent-cyan)]/50"
-                          }`}
+                              ? "border-primary bg-primary text-white"
+                              : "border-border-default bg-surface text-text-secondary hover:border-primary/50"
+                          )}
                         >
                           {count} questions
                         </button>
@@ -158,14 +149,9 @@ export default function SmartPracticePage() {
                     })}
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={handleStart}
-                    disabled={loading}
-                    className="hud-primary-btn w-full rounded-xl px-6 py-4 text-base font-semibold disabled:cursor-not-allowed disabled:opacity-60"
-                  >
+                  <Button onClick={handleStart} loading={loading} fullWidth size="lg">
                     {loading ? "Building your set…" : "Start Smart Practice"}
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -174,7 +160,7 @@ export default function SmartPracticePage() {
           {phase === "practice" && questions && (
             <div className="space-y-4">
               {topicsIncluded !== null && (
-                <p className="text-center text-sm text-[var(--text-muted)]">
+                <p className="text-center text-sm text-text-tertiary">
                   Drawing from {topicsIncluded} topic{topicsIncluded === 1 ? "" : "s"}
                 </p>
               )}

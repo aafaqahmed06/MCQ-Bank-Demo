@@ -1,9 +1,13 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { CheckCircle2, XCircle, ArrowRight } from "lucide-react";
 import type { MCQ } from "@/types";
-import BookmarkButton from "@/components/BookmarkButton";
-import ReportQuestionButton from "@/components/ReportQuestionButton";
+import BookmarkButton, { type BookmarkButtonHandle } from "@/components/BookmarkButton";
+import ReportQuestionButton, {
+  type ReportQuestionButtonHandle,
+} from "@/components/ReportQuestionButton";
+import { Button, Icon, cn } from "@/components/ui";
 
 type MCQCardProps = {
   mcq: MCQ;
@@ -12,6 +16,7 @@ type MCQCardProps = {
   onSelect: (index: number) => void;
   onSubmit: () => void;
   onNext: () => void;
+  onBookmarkToggle?: (bookmarked: boolean) => void;
   isLastQuestion: boolean;
 };
 
@@ -21,23 +26,31 @@ function getOptionClasses(
   answered: boolean,
   correctAnswer: number
 ) {
-  const base = "opt-base p-3 sm:p-4 text-base sm:text-lg";
+  const base =
+    "opt-base p-4 sm:p-5 text-base sm:text-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
   if (!answered) {
-    return `${base} ${
-      selectedAnswer === index ? "opt-selected" : ""
-    }`;
+    return cn(base, selectedAnswer === index && "opt-selected");
   }
 
   if (index === correctAnswer) {
-    return `${base} opt-correct`;
+    return cn(base, "opt-correct");
   }
 
   if (selectedAnswer === index && selectedAnswer !== correctAnswer) {
-    return `${base} opt-wrong`;
+    return cn(base, "opt-wrong");
   }
 
-  return `${base} opt-neutral`;
+  return cn(base, "opt-neutral");
+}
+
+// This app has no editable text field on the practice screen, but the
+// report modal does (a textarea) -- shortcuts must never fire while it's open.
+function isTypingTarget(target: EventTarget | null): boolean {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
 }
 
 export default function MCQCard({
@@ -47,97 +60,173 @@ export default function MCQCard({
   onSelect,
   onSubmit,
   onNext,
+  onBookmarkToggle,
   isLastQuestion,
 }: MCQCardProps) {
   const touchStartY = useRef(0);
+  const bookmarkRef = useRef<BookmarkButtonHandle>(null);
+  const reportRef = useRef<ReportQuestionButtonHandle>(null);
+  const isCorrect = answered && selectedAnswer === mcq.correctAnswer;
+
+  // Keyboard shortcuts (§ MCQ interface): A-E select, Enter submit/next,
+  // -> next question, B bookmark, R report.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (isTypingTarget(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+
+      const key = e.key.toLowerCase();
+
+      if (key === "b") {
+        e.preventDefault();
+        bookmarkRef.current?.toggle();
+        return;
+      }
+      if (key === "r") {
+        e.preventDefault();
+        reportRef.current?.open();
+        return;
+      }
+
+      if (!answered) {
+        const optionIndex = "abcde".indexOf(key);
+        if (optionIndex !== -1 && optionIndex < mcq.options.length) {
+          e.preventDefault();
+          onSelect(optionIndex);
+          return;
+        }
+        if (key === "enter" && selectedAnswer !== null) {
+          e.preventDefault();
+          onSubmit();
+        }
+      } else if (key === "enter" || e.key === "ArrowRight") {
+        e.preventDefault();
+        onNext();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [answered, selectedAnswer, mcq.options.length, onSelect, onSubmit, onNext]);
 
   return (
-    <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
+    <div className="fade-in mx-auto w-full max-w-[800px]">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="inline-flex rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
-          Topic: {mcq.topic}
+        <p className="text-caption font-semibold tracking-wide text-primary uppercase">
+          {mcq.topic}
         </p>
         <div className="flex items-center gap-2">
-          <BookmarkButton mcqId={mcq.id} />
-          <ReportQuestionButton mcqId={mcq.id} />
+          <BookmarkButton ref={bookmarkRef} mcqId={mcq.id} onToggle={onBookmarkToggle} />
+          <ReportQuestionButton ref={reportRef} mcqId={mcq.id} />
         </div>
       </div>
-      <h2 className="mt-4 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
+
+      <h2 className="mt-4 text-h2 leading-relaxed font-semibold text-text-primary">
         {mcq.question}
       </h2>
 
-      <div className="my-5 border-t border-[var(--border-color)]" />
-
-      <div className="space-y-3">
+      <div className="mt-6 space-y-3">
         {mcq.options.map((option, index) => (
           <button
             key={`${mcq.id}-${index}`}
             type="button"
-            className={getOptionClasses(
-              index,
-              selectedAnswer,
-              answered,
-              mcq.correctAnswer
-            )}
+            className={getOptionClasses(index, selectedAnswer, answered, mcq.correctAnswer)}
             onClick={() => {
               if (Math.abs(touchStartY.current) < 10) onSelect(index);
               touchStartY.current = 0;
             }}
-            onTouchStart={(e) => { touchStartY.current = e.changedTouches[0].clientY; }}
+            onTouchStart={(e) => {
+              touchStartY.current = e.changedTouches[0].clientY;
+            }}
             onTouchEnd={(e) => {
               const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-              if (!answered && dy < 10) { e.preventDefault(); onSelect(index); }
+              if (!answered && dy < 10) {
+                e.preventDefault();
+                onSelect(index);
+              }
               touchStartY.current = 0;
             }}
             disabled={answered}
           >
-            <span className="font-semibold">{String.fromCharCode(65 + index)}.</span>{" "}
-            {option}
+            <span className="flex items-center gap-2">
+              <span className="flex-1">
+                <span className="font-semibold">{String.fromCharCode(65 + index)}.</span> {option}
+              </span>
+              {answered && index === mcq.correctAnswer && (
+                <Icon icon={CheckCircle2} size="sm" className="shrink-0 text-success" />
+              )}
+              {answered && selectedAnswer === index && selectedAnswer !== mcq.correctAnswer && (
+                <Icon icon={XCircle} size="sm" className="shrink-0 text-error" />
+              )}
+            </span>
           </button>
         ))}
       </div>
 
       {answered && (
-        <div className="mt-5 rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] p-4 fade-in">
-          <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-violet)]">
-            Explanation
-          </p>
-          <p className="mt-1 text-sm text-[var(--text-body-alt)] sm:text-base">{mcq.explanation}</p>
+        <div className="fade-in mt-6">
+          <div
+            className={cn(
+              "flex items-center gap-2 text-base font-semibold",
+              isCorrect ? "text-success" : "text-error"
+            )}
+            role="status"
+          >
+            <Icon icon={isCorrect ? CheckCircle2 : XCircle} size="md" />
+            {isCorrect ? "Correct" : "Incorrect"}
+          </div>
+          <div className="mt-3 border-l-2 border-primary/30 pl-4">
+            <p className="text-caption font-semibold tracking-wide text-text-tertiary uppercase">
+              Why this is correct
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-text-secondary sm:text-base">
+              {mcq.explanation}
+            </p>
+          </div>
         </div>
       )}
 
-      <div className="mt-5 flex justify-end">
+      <div className="mt-6 flex items-center justify-between gap-3">
+        <p className="hidden text-caption text-text-tertiary sm:block">
+          {!answered ? "A–E select · Enter submit · B bookmark" : "Enter or → next question"}
+        </p>
         {!answered ? (
-          <button
-            type="button"
+          <Button
             onClick={onSubmit}
-            onTouchStart={(e) => { touchStartY.current = e.changedTouches[0].clientY; }}
+            onTouchStart={(e) => {
+              touchStartY.current = e.changedTouches[0].clientY;
+            }}
             onTouchEnd={(e) => {
               const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-              if (selectedAnswer !== null && !answered && dy < 10) { e.preventDefault(); onSubmit(); }
+              if (selectedAnswer !== null && !answered && dy < 10) {
+                e.preventDefault();
+                onSubmit();
+              }
               touchStartY.current = 0;
             }}
             disabled={selectedAnswer === null}
-            className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium disabled:cursor-not-allowed"
           >
             Submit Answer
-          </button>
+          </Button>
         ) : (
-          <button
-            type="button"
+          <Button
             onClick={onNext}
-            onTouchStart={(e) => { touchStartY.current = e.changedTouches[0].clientY; }}
+            onTouchStart={(e) => {
+              touchStartY.current = e.changedTouches[0].clientY;
+            }}
             onTouchEnd={(e) => {
               const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-              if (dy < 10) { e.preventDefault(); onNext(); }
+              if (dy < 10) {
+                e.preventDefault();
+                onNext();
+              }
               touchStartY.current = 0;
             }}
-            className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium"
           >
             {isLastQuestion ? "Finish" : "Next Question"}
-          </button>
+            <Icon icon={ArrowRight} size="sm" />
+          </Button>
         )}
       </div>
-    </section>
+    </div>
   );
 }

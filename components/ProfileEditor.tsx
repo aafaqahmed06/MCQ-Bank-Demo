@@ -5,6 +5,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { createClient } from "@/lib/supabase/client";
 import { useCollegeOptions } from "@/components/useCollegeOptions";
 import CollegeCombobox from "@/components/CollegeCombobox";
+import { Button, Skeleton } from "@/components/ui";
 
 export default function ProfileEditor() {
   const { user, profile, refreshProfile } = useAuth();
@@ -79,10 +80,19 @@ export default function ProfileEditor() {
   }
 
   const selectClass =
-    "w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25";
+    "w-full rounded-control border border-border-default bg-surface px-4 py-3.5 text-base text-text-primary transition-colors duration-150 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25";
 
   if (optionsLoading) {
-    return <p className="hud-muted py-6 text-center">Loading…</p>;
+    return (
+      <div className="space-y-6">
+        {["Full name", "College", "Program", "Academic year"].map((label) => (
+          <div key={label} className="space-y-3">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-[52px] w-full" />
+          </div>
+        ))}
+      </div>
+    );
   }
 
   const filteredPrograms = programs.filter((p) => p.college_id === collegeId);
@@ -93,7 +103,7 @@ export default function ProfileEditor() {
       <div className="space-y-3">
         <label
           htmlFor="profileFullName"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           Full name
         </label>
@@ -110,7 +120,7 @@ export default function ProfileEditor() {
       <div className="space-y-3">
         <label
           htmlFor="profileCollege"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           College
         </label>
@@ -132,7 +142,7 @@ export default function ProfileEditor() {
       <div className="space-y-3">
         <label
           htmlFor="profileProgram"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           Program
         </label>
@@ -158,7 +168,7 @@ export default function ProfileEditor() {
       <div className="space-y-3">
         <label
           htmlFor="profileYear"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           Academic year
         </label>
@@ -196,13 +206,9 @@ export default function ProfileEditor() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={saving}
-        className="hud-primary-btn w-full rounded-xl px-5 py-3.5 font-medium disabled:opacity-60"
-      >
+      <Button type="submit" loading={saving} fullWidth size="lg">
         {saving ? "Saving…" : "Save Changes"}
-      </button>
+      </Button>
     </form>
   );
 }

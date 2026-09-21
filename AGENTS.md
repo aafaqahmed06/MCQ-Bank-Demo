@@ -113,3 +113,28 @@ Moved on from the Demo stage. DiagKnow is in active development toward a complet
 - `npm run db:seed` and `npm run db:verify` must stay green; builds/lint/typecheck must be clean before commit.
 - Secrets stay out of the repo; env lives in `.env.local` (ignored) and Vercel project variables.
 - Email/password signups require email confirmation (autoconfirm is off in production); Google OAuth users are verified by Google.
+
+## UI / frontend work
+
+DiagKnow has a formal design-system spec for the ongoing UI upgrade:
+
+- `.claude/rules/ui-design-system.md` — tokens, component variants, icon
+  system, motion, loading/empty/error states, accessibility, and the
+  pre-edit guardrails. Auto-attaches when you touch `components/**`,
+  `app/**/*.tsx`, or `styles/**`.
+- `.claude/rules/ui-upgrade-plan.md` — north star, page-by-page specs
+  (dashboard, MCQ interface, exam mode, results, etc.), and the phased
+  rollout order. Not auto-loaded — read it explicitly when starting a UI
+  phase, e.g. "implement Phase 3 (Dashboard) per ui-upgrade-plan.md."
+- `docs/UI_UPGRADE.md` — the full original spec, kept for human reference.
+
+Rules for any UI change:
+- Before touching a component, read `.claude/rules/ui-design-system.md` if
+  it isn't already in context.
+- Inventory existing components before writing new ones — extend, don't
+  duplicate.
+- Never restyle ad hoc. Use an existing token/variant, or propose adding
+  one to the design system — don't invent one-off values.
+- Preserve existing functionality, backend contracts, data structures,
+  auth, and routing. Don't introduce fake data or change product
+  semantics while restyling.

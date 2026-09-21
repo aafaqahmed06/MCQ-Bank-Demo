@@ -15,12 +15,14 @@ export default async function OnboardingPage() {
   return (
     <LayoutWrapper>
       <div className="space-y-6">
-        <section className="hud-card fade-in mx-auto w-full max-w-2xl rounded-xl p-6 sm:p-8">
+        <section className="fade-in mx-auto w-full max-w-2xl rounded-card border border-border-default bg-surface p-6 sm:p-8">
           <div className="flex justify-center">
             <DkBot state="happy" size="medium" alt={null} />
           </div>
-          <h1 className="mt-4 text-3xl font-bold text-[var(--text-heading)]">Set up your profile</h1>
-          <p className="hud-muted mt-1">
+          <h1 className="mt-4 text-center text-h1 font-bold text-text-primary">
+            Set up your profile
+          </h1>
+          <p className="mt-1 text-center text-text-tertiary">
             Tell us who you are to personalize your dashboard.
           </p>
           <div className="mt-6">

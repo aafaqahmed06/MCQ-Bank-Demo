@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getTopicGroupsByModuleId } from "@/lib/topicGroups";
+import { isWeakTopic } from "@/lib/weakness";
 import type {
   Block,
   MCQ,
@@ -48,14 +49,25 @@ export async function getBlocks(): Promise<Block[]> {
   }
 
   const progress = await getTopicProgressByModule(moduleIds);
-  const progressByBlock = new Map<string, { completed: number; total: number }>();
+  const progressByBlock = new Map<string, BlockAggregate>();
   for (const m of moduleRows ?? []) {
     const p = progress[m.id as string];
     if (!p) continue;
     const bid = m.block_id as string;
-    const cur = progressByBlock.get(bid) ?? { completed: 0, total: 0 };
+    const cur = progressByBlock.get(bid) ?? {
+      completed: 0,
+      total: 0,
+      questionCount: 0,
+      weakTopicCount: 0,
+      lastActivityAt: null,
+    };
     cur.completed += p.completed;
     cur.total += p.total;
+    cur.questionCount += p.questionCount;
+    cur.weakTopicCount += p.weakTopicCount;
+    if (p.lastActivityAt && (!cur.lastActivityAt || p.lastActivityAt > cur.lastActivityAt)) {
+      cur.lastActivityAt = p.lastActivityAt;
+    }
     progressByBlock.set(bid, cur);
   }
 
@@ -68,9 +80,20 @@ export async function getBlocks(): Promise<Block[]> {
       subjectCount: subjectCountByBlock.get(row.id as string) ?? 0,
       topicsCompleted: p?.completed ?? 0,
       topicsTotal: p?.total ?? 0,
+      questionCount: p?.questionCount ?? 0,
+      weakTopicCount: p?.weakTopicCount ?? 0,
+      lastActivityAt: p?.lastActivityAt ?? null,
     };
   });
 }
+
+type BlockAggregate = {
+  completed: number;
+  total: number;
+  questionCount: number;
+  weakTopicCount: number;
+  lastActivityAt: string | null;
+};
 
 export async function getBlockById(blockId: string): Promise<Block | null> {
   const blocks = await getBlocks();
@@ -89,16 +112,28 @@ export async function getModulesByBlockId(blockId: string): Promise<Module[]> {
   const ids = (data ?? []).map((m) => m.id as string);
   const progress = await getTopicProgressByModule(ids);
 
-  return (data ?? []).map((m) => {
-    const p = progress[m.id as string];
-    return {
-      id: m.id as string,
-      blockId: m.block_id as string,
-      name: m.name as string,
-      topicsCompleted: p?.completed ?? 0,
-      topicsTotal: p?.total ?? 0,
-    };
-  });
+  return (data ?? []).map((m) => moduleFromProgress(m, progress[m.id as string]));
+}
+
+function moduleFromProgress(
+  row: { id: string; name: string; block_id: string },
+  p: ModuleProgress | undefined
+): Module {
+  return {
+    id: row.id,
+    blockId: row.block_id,
+    name: row.name,
+    topicsCompleted: p?.completed ?? 0,
+    topicsTotal: p?.total ?? 0,
+    questionCount: p?.questionCount ?? 0,
+    weakTopicCount: p?.weakTopicCount ?? 0,
+    lastActivityAt: p?.lastActivityAt ?? null,
+    accuracy:
+      p && p.questionsAttempted > 0
+        ? Math.round((p.questionsCorrect / p.questionsAttempted) * 100)
+        : null,
+    questionsAttempted: p?.questionsAttempted ?? 0,
+  };
 }
 
 /**
@@ -169,6 +204,27 @@ export async function getSampleQuestion(): Promise<SampleQuestion | null> {
   };
 }
 
+/**
+ * Every module (subject) across all blocks, with per-user topic-group
+ * progress — the "Your Curriculum" breakdown on the dashboard (Anatomy,
+ * Physiology, Biochemistry, Minor Subjects, ...). Unscoped by block: this
+ * app currently has one block, and a subject-level view shouldn't need to
+ * change if a second one is added later.
+ */
+export async function getAllModulesWithProgress(): Promise<Module[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("modules")
+    .select("id, name, block_id")
+    .order("order_index", { ascending: true });
+  if (error) throw new Error(`modules: ${error.message}`);
+
+  const ids = (data ?? []).map((m) => m.id as string);
+  const progress = await getTopicProgressByModule(ids);
+
+  return (data ?? []).map((m) => moduleFromProgress(m, progress[m.id as string]));
+}
+
 export async function getModuleById(moduleId: string): Promise<Module | null> {
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -196,20 +252,75 @@ export async function getCompletedTopicIds(): Promise<Set<string>> {
   return new Set((data ?? []).map((r) => r.topic_id as string));
 }
 
+export type ModuleProgress = {
+  completed: number;
+  total: number;
+  /** Published question count across every topic in the module. */
+  questionCount: number;
+  questionsAttempted: number;
+  questionsCorrect: number;
+  /** Topics meeting the isWeakTopic reliability + accuracy gate (lib/weakness.ts). */
+  weakTopicCount: number;
+  lastActivityAt: string | null;
+};
+
+/** Per-topic practice signal (attempts/accuracy/recency), keyed by topic_id. */
+async function getTopicHealthMap(): Promise<
+  Map<string, { attempted: number; correct: number; accuracy: number | null; lastAttemptedAt: string | null }>
+> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("user_topic_progress")
+    .select(
+      "topic_id, practice_questions_attempted, practice_questions_correct, practice_accuracy, practice_last_attempted_at"
+    );
+  if (error) throw new Error(`topic health: ${error.message}`);
+
+  const map = new Map<
+    string,
+    { attempted: number; correct: number; accuracy: number | null; lastAttemptedAt: string | null }
+  >();
+  for (const row of data ?? []) {
+    map.set(row.topic_id as string, {
+      attempted: (row.practice_questions_attempted as number) ?? 0,
+      correct: (row.practice_questions_correct as number) ?? 0,
+      accuracy: row.practice_accuracy != null ? (row.practice_accuracy as number) : null,
+      lastAttemptedAt: (row.practice_last_attempted_at as string | null) ?? null,
+    });
+  }
+  return map;
+}
+
+/** Published MCQ count per topic_id, across the whole bank. */
+async function getPublishedMcqCountsByTopic(): Promise<Map<string, number>> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("mcqs").select("topic_id").eq("status", "published");
+  if (error) throw new Error(`mcqs: ${error.message}`);
+
+  const counts = new Map<string, number>();
+  for (const row of data ?? []) {
+    const id = row.topic_id as string;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+
 /**
- * Per-module topic-group completion counts, optionally scoped to a set of
- * modules. Keyed by module_id -> { completed, total }.
+ * Per-module curriculum health, optionally scoped to a set of modules.
+ * Keyed by module_id.
  *
- * The `total` is the number of topic GROUPS defined for the module (e.g. the
+ * `total` is the number of topic GROUPS defined for the module (e.g. the
  * 11 physiology groups), not the number of granular topic rows in the topics
  * table — that is what the blocks/modules cards present to the user. A group
  * counts toward `total` only when at least one of its topics exists in the
  * bank, and toward `completed` only when every one of its topics is done
- * (same semantics as getTopicGroupCompletion).
+ * (same semantics as getTopicGroupCompletion). `questionCount`/
+ * `weakTopicCount`/`lastActivityAt` are raw per-topic aggregates instead,
+ * independent of the topic-group curation.
  */
 export async function getTopicProgressByModule(
   moduleIds?: string[],
-): Promise<Record<string, { completed: number; total: number }>> {
+): Promise<Record<string, ModuleProgress>> {
   const supabase = await createClient();
 
   let q = supabase.from("topics").select("id, name, module_id");
@@ -219,20 +330,27 @@ export async function getTopicProgressByModule(
   const { data: topicRows } = await q;
 
   const nameToIdByModule = new Map<string, Map<string, string>>();
+  const topicIdsByModule = new Map<string, string[]>();
   for (const t of topicRows ?? []) {
     const mid = t.module_id as string;
     if (!nameToIdByModule.has(mid)) nameToIdByModule.set(mid, new Map());
     nameToIdByModule.get(mid)!.set(t.name as string, t.id as string);
+    if (!topicIdsByModule.has(mid)) topicIdsByModule.set(mid, []);
+    topicIdsByModule.get(mid)!.push(t.id as string);
   }
 
-  const completed = await getCompletedTopicIds();
+  const [completed, health, mcqCounts] = await Promise.all([
+    getCompletedTopicIds(),
+    getTopicHealthMap(),
+    getPublishedMcqCountsByTopic(),
+  ]);
 
   const targetModules =
     moduleIds && moduleIds.length > 0
       ? moduleIds
       : [...nameToIdByModule.keys()];
 
-  const byModule: Record<string, { completed: number; total: number }> = {};
+  const byModule: Record<string, ModuleProgress> = {};
   for (const mid of targetModules) {
     const nameToId = nameToIdByModule.get(mid) ?? new Map<string, string>();
     let done = 0;
@@ -245,7 +363,33 @@ export async function getTopicProgressByModule(
       total += 1;
       if (ids.every((id) => completed.has(id))) done += 1;
     }
-    byModule[mid] = { completed: done, total };
+
+    let questionCount = 0;
+    let questionsAttempted = 0;
+    let questionsCorrect = 0;
+    let weakTopicCount = 0;
+    let lastActivityAt: string | null = null;
+    for (const tid of topicIdsByModule.get(mid) ?? []) {
+      questionCount += mcqCounts.get(tid) ?? 0;
+      const h = health.get(tid);
+      if (!h) continue;
+      questionsAttempted += h.attempted;
+      questionsCorrect += h.correct;
+      if (isWeakTopic(h.accuracy, h.attempted)) weakTopicCount += 1;
+      if (h.lastAttemptedAt && (!lastActivityAt || h.lastAttemptedAt > lastActivityAt)) {
+        lastActivityAt = h.lastAttemptedAt;
+      }
+    }
+
+    byModule[mid] = {
+      completed: done,
+      total,
+      questionCount,
+      questionsAttempted,
+      questionsCorrect,
+      weakTopicCount,
+      lastActivityAt,
+    };
   }
   return byModule;
 }
@@ -282,6 +426,105 @@ export async function getTopicGroupCompletion(
     };
   }
   return result;
+}
+
+/**
+ * Per-topic-group weakness signal + recency for a module (mirrors
+ * getTopicGroupCompletion's shape/scoping, but sourced from practice health
+ * instead of the completed flag).
+ */
+export async function getTopicGroupHealth(
+  moduleId: string,
+  groups: TopicGroup[],
+): Promise<Record<string, { weakTopicCount: number; lastActivityAt: string | null }>> {
+  const supabase = await createClient();
+  const { data: topicRows, error: tErr } = await supabase
+    .from("topics")
+    .select("id, name")
+    .eq("module_id", moduleId);
+  if (tErr) throw new Error(`topics: ${tErr.message}`);
+
+  const nameToId = new Map((topicRows ?? []).map((t) => [t.name as string, t.id as string]));
+  const health = await getTopicHealthMap();
+
+  const result: Record<string, { weakTopicCount: number; lastActivityAt: string | null }> = {};
+  for (const group of groups) {
+    const ids = group.topics
+      .map((name) => nameToId.get(name))
+      .filter((id): id is string => typeof id === "string");
+
+    let weakTopicCount = 0;
+    let lastActivityAt: string | null = null;
+    for (const id of ids) {
+      const h = health.get(id);
+      if (!h) continue;
+      if (isWeakTopic(h.accuracy, h.attempted)) weakTopicCount += 1;
+      if (h.lastAttemptedAt && (!lastActivityAt || h.lastAttemptedAt > lastActivityAt)) {
+        lastActivityAt = h.lastAttemptedAt;
+      }
+    }
+    result[group.id] = { weakTopicCount, lastActivityAt };
+  }
+  return result;
+}
+
+export type MissedTopic = {
+  topicId: string;
+  topicName: string;
+  moduleId: string;
+  moduleName: string;
+  accuracy: number;
+  attempted: number;
+};
+
+/**
+ * Cross-subject "Mistakes" ranking (.claude/rules/ui-upgrade-plan.md
+ * "Mistakes" -- "most-missed topics ranked"). Reuses the same weak-topic
+ * gate as the dashboard's Focus Next / Curriculum's Topic Health
+ * (lib/weakness.ts isWeakTopic), just without scoping to one module.
+ */
+export async function getMostMissedTopics(limit = 10): Promise<MissedTopic[]> {
+  const supabase = await createClient();
+  const health = await getTopicHealthMap();
+
+  const weakEntries = [...health.entries()]
+    .filter(([, h]) => isWeakTopic(h.accuracy, h.attempted))
+    .sort((a, b) => (a[1].accuracy ?? 0) - (b[1].accuracy ?? 0))
+    .slice(0, limit);
+  if (weakEntries.length === 0) return [];
+
+  const topicIds = weakEntries.map(([id]) => id);
+  const { data: topicRows, error: tErr } = await supabase
+    .from("topics")
+    .select("id, name, module_id")
+    .in("id", topicIds);
+  if (tErr) throw new Error(`topics: ${tErr.message}`);
+
+  const moduleIds = [...new Set((topicRows ?? []).map((t) => t.module_id as string))];
+  const { data: moduleRows, error: mErr } = await supabase
+    .from("modules")
+    .select("id, name")
+    .in("id", moduleIds.length ? moduleIds : [""]);
+  if (mErr) throw new Error(`modules: ${mErr.message}`);
+
+  const moduleNameById = new Map((moduleRows ?? []).map((m) => [m.id as string, m.name as string]));
+  const topicById = new Map((topicRows ?? []).map((t) => [t.id as string, t]));
+
+  return weakEntries
+    .map(([topicId, h]): MissedTopic | null => {
+      const topic = topicById.get(topicId);
+      if (!topic) return null;
+      const moduleId = topic.module_id as string;
+      return {
+        topicId,
+        topicName: topic.name as string,
+        moduleId,
+        moduleName: moduleNameById.get(moduleId) ?? "",
+        accuracy: Math.round(h.accuracy ?? 0),
+        attempted: h.attempted,
+      };
+    })
+    .filter((t): t is MissedTopic => t !== null);
 }
 
 /**

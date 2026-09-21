@@ -113,6 +113,32 @@
   --warning: #e0a94f;
   --warning-soft: rgba(224, 169, 79, 0.16);
   --warning-text: #f0cd8f;
+  --info: var(--accent-cyan);
+  --info-soft: color-mix(in srgb, var(--accent-cyan) 14%, transparent);
+  --info-text: var(--accent-cyan-strong);
+
+  /* ── Design-system semantic tokens (see .claude/rules/ui-design-system.md §2/§6) ──
+     Surface + text hierarchy use the spec's literal dark-mode values; the
+     old --bg-card / --text-heading names above stay as-is, untouched. */
+  --surface: #10181d;
+  --surface-secondary: #151f25;
+  --surface-elevated: #1a262d;
+  --text-primary: #f1f6f7;
+  --text-secondary: #a9bbc2;
+  --text-tertiary: #72858d;
+  --text-disabled: color-mix(in srgb, var(--text-tertiary) 55%, var(--surface));
+
+  --border-subtle: rgba(241, 246, 247, 0.06);
+  --border-default: var(--border-color);
+  --border-strong: rgba(163, 190, 203, 0.28);
+
+  --primary: var(--primary-btn-bg);
+  --primary-hover: var(--primary-btn-bg-hover);
+  --primary-active: color-mix(in srgb, var(--primary) 82%, black);
+
+  --shadow-level-1: 0 1px 2px rgba(0, 0, 0, 0.18);
+  --shadow-level-2: var(--card-shadow);
+  --shadow-level-3: 0 4px 10px rgba(0, 0, 0, 0.3), 0 16px 36px rgba(0, 0, 0, 0.34);
 }
 
 [data-theme="light"] {
@@ -163,6 +189,32 @@
   --warning: #b7791f;
   --warning-soft: #faf0df;
   --warning-text: #9c6a1c;
+  --info: var(--accent-cyan);
+  --info-soft: color-mix(in srgb, var(--accent-cyan) 10%, transparent);
+  --info-text: var(--accent-cyan-strong);
+
+  /* ── Design-system semantic tokens — light mode has no separate spec hex
+     for surface/text tiers, so these reuse the existing tuned clinical
+     neutrals rather than inventing new ones. */
+  --surface: #ffffff;
+  --surface-secondary: #f1f5f4;
+  --surface-elevated: #ffffff;
+  --text-primary: #0f2430;
+  --text-secondary: #24333c;
+  --text-tertiary: #5c6e78;
+  --text-disabled: color-mix(in srgb, var(--text-tertiary) 55%, var(--surface));
+
+  --border-subtle: #eaf0ef;
+  --border-default: #dce5e4;
+  --border-strong: #c3d0ce;
+
+  --primary: var(--primary-btn-bg);
+  --primary-hover: var(--primary-btn-bg-hover);
+  --primary-active: color-mix(in srgb, var(--primary) 82%, black);
+
+  --shadow-level-1: 0 1px 2px rgba(16, 33, 43, 0.03);
+  --shadow-level-2: var(--card-shadow);
+  --shadow-level-3: 0 2px 4px rgba(16, 33, 43, 0.06), 0 12px 28px rgba(16, 33, 43, 0.12);
 }
 
 html {
@@ -176,7 +228,80 @@ html {
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "Inter", ui-monospace, monospace;
   --font-serif: "Source Serif 4", Georgia, serif;
+
+  /* Design-system semantic colors (.claude/rules/ui-design-system.md §2).
+     "primary" is the accent/brand action color (text-primary / bg-primary /
+     border-primary). The neutral text hierarchy is exposed as
+     text-text-primary/secondary/tertiary/disabled to avoid colliding with
+     that accent token — components should prefer these over the legacy
+     --text-heading/--text-body/--text-muted classes going forward. */
+  --color-surface: var(--surface);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary: var(--text-tertiary);
+  --color-text-disabled: var(--text-disabled);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-success-text: var(--success-text);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-warning-text: var(--warning-text);
+  --color-error: var(--error);
+  --color-error-soft: var(--error-soft);
+  --color-error-text: var(--error-text);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-info-text: var(--info-text);
+
+  /* Radius scale (§2) — new names so the existing rounded-xl/2xl/3xl usage
+     across pages is untouched; pages migrate onto these per-component as
+     they're rebuilt in later phases. */
+  --radius-badge: 6px;
+  --radius-control: 10px;
+  --radius-surface: 12px;
+  --radius-interactive: 14px;
+  --radius-card: 16px;
+  --radius-hero: 20px;
+  --radius-compose: 24px;
+
+  /* Shadow scale (§2) — Level 1/2/3, theme-aware via the CSS vars above. */
+  --shadow-subtle: var(--shadow-level-1);
+  --shadow-default: var(--shadow-level-2);
+  --shadow-elevated: var(--shadow-level-3);
+
+  /* Typography scale (§2). --text-body intentionally matches Tailwind's
+     default --text-base (1rem/16px, within the spec's 15-16px body range). */
+  --text-display: 2.75rem;
+  --text-display--line-height: 1.1;
+  --text-h1: 2rem;
+  --text-h1--line-height: 1.2;
+  --text-h2: 1.5rem;
+  --text-h2--line-height: 1.3;
+  --text-h3: 1.0625rem;
+  --text-h3--line-height: 1.4;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.4;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.35;
 }
+
+/* Spacing scale (§2): use Tailwind's default 4px-step scale (p-1…p-24) —
+   it already equals the spec's 4/8/12/16/20/24/32/40/48/64/80/96 values.
+   Avoid arbitrary bracket spacing (p-[18px]) in new/edited components.
+
+   Motion scale (§8): Tailwind's numeric duration-* utilities take any ms
+   value natively (no token needed) — use duration-100 (instant), -150
+   (micro), -200 (standard), -300 (transition), -450 (emphasis). */
 
 body {
   background: var(--bg-page);
@@ -276,6 +401,22 @@ body {
   }
 }
 
+/* ── Toast viewport (components/ui/Toast.tsx) ─────────────────────────
+   Above the page-transition overlay (z-index 60) and the tutorial/modal
+   layers so a toast is never hidden mid-navigation or behind a dialog. */
+.toast-viewport {
+  z-index: 70;
+}
+
+/* ── Card variant surfaces (components/ui/Card.tsx) ──────────────────── */
+.card-highlight {
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+}
+
+.card-danger {
+  background: color-mix(in srgb, var(--error) 6%, var(--surface));
+}
+
 /* ── Clinical status boxes ──────────────────────────────────────────── */
 .alert-error {
   border: 1px solid color-mix(in srgb, var(--error) 40%, transparent);
@@ -366,6 +507,35 @@ body {
   animation: page-fade-in 0.28s ease-out;
 }
 
+/* ── Skeleton (components/ui/Skeleton.tsx) ───────────────────────── */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-pulse {
+    animation: none;
+    opacity: 0.75;
+  }
+}
+
+/* In-app "Reduce motion" preference (Account → Preferences), independent of
+   the OS-level media query above -- see components/MotionProvider.tsx. */
+[data-motion="reduced"] .skeleton-pulse {
+  animation: none;
+  opacity: 0.75;
+}
+
 /* ── DiagBot ─────────────────────────────────────────────────────── */
 /* Gentle idle float for the whole mascot. */
 .digibot-idle {
@@ -408,6 +578,11 @@ body {
   }
 }
 
+[data-motion="reduced"] .digibot-idle,
+[data-motion="reduced"] .digibot-eyes {
+  animation: none !important;
+}
+
 /* ── Tutorial ─────────────────────────────────────────────────── */
 
 /* Bot floating loop — slightly more pronounced than idle */
@@ -426,11 +601,11 @@ body {
 
 /* Speech bubble */
 .tutorial-bubble {
-  background: var(--bg-card);
-  border: 1px solid var(--border-color);
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border-default);
   border-radius: 0.75rem;
   padding: 1rem 1.25rem;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--shadow-elevated);
 }
 
 /* Progress dots */
@@ -438,11 +613,11 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--text-muted);
+  background: var(--color-text-tertiary);
   transition: background 200ms ease, transform 200ms ease;
 }
 .tutorial-dot-active {
-  background: var(--accent-cyan);
+  background: var(--color-primary);
   transform: scale(1.3);
 }
 
@@ -469,9 +644,9 @@ body {
    DashboardBlocker leaves that rect uncovered. */
 .tutorial-spotlight {
   position: fixed;
-  border: 2px solid var(--accent-cyan);
+  border: 2px solid var(--color-primary);
   border-radius: 0.75rem;
-  box-shadow: 0 0 24px rgba(6, 182, 212, 0.45);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-primary) 18%, transparent);
   pointer-events: none;
   z-index: 41;
 }
@@ -481,6 +656,10 @@ body {
   .tutorial-bot {
     animation: none !important;
   }
+}
+
+[data-motion="reduced"] .tutorial-bot {
+  animation: none !important;
 }
 
 .page-transition-overlay {

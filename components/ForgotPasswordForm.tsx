@@ -5,6 +5,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import CaptchaWidget, { type CaptchaWidgetHandle } from "@/components/CaptchaWidget";
 import { useCaptchaToken } from "@/components/CaptchaProvider";
+import { Button } from "@/components/ui";
 
 export default function ForgotPasswordForm() {
   const supabaseRef = useRef<ReturnType<typeof createClient> | null>(null);
@@ -66,14 +67,14 @@ export default function ForgotPasswordForm() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25";
+    "w-full rounded-control border border-border-default bg-surface px-4 py-3.5 text-base text-text-primary transition-colors duration-150 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25";
 
   return (
     <form onSubmit={run} className="space-y-5">
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           Email
         </label>
@@ -90,7 +91,7 @@ export default function ForgotPasswordForm() {
       </div>
 
       {captchaStatus === "pending" && !loading && (
-        <p className="text-sm text-[var(--text-muted)]" role="status">
+        <p className="text-sm text-text-tertiary" role="status">
           Verifying your browser…
         </p>
       )}
@@ -98,7 +99,7 @@ export default function ForgotPasswordForm() {
         <>
           <CaptchaWidget ref={fallbackWidgetRef} onToken={setFallbackToken} />
           {!fallbackToken && !loading && (
-            <p className="text-sm text-[var(--text-muted)]" role="status">
+            <p className="text-sm text-text-tertiary" role="status">
               Complete the verification above to continue.
             </p>
           )}
@@ -122,22 +123,24 @@ export default function ForgotPasswordForm() {
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
-        disabled={loading || !captchaReady}
+        disabled={!captchaReady}
+        loading={loading}
         onTouchEnd={(e) => {
           e.preventDefault();
           if (!loading && captchaReady) void run(e);
         }}
-        className="hud-primary-btn w-full rounded-xl px-5 py-3.5 font-medium disabled:opacity-60"
+        fullWidth
+        size="lg"
       >
         {loading ? "Please wait…" : "Send reset link"}
-      </button>
+      </Button>
 
       <p className="text-center">
         <Link
           href="/auth"
-          className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)]"
+          className="text-sm text-text-tertiary hover:text-primary active:text-primary"
         >
           &larr; Back to sign in
         </Link>

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { MotionProvider } from "@/components/MotionProvider";
 import { AuthProvider } from "@/components/AuthProvider";
 import { CaptchaProvider } from "@/components/CaptchaProvider";
 import PageTransition from "@/components/PageTransition";
+import { ToastProvider } from "@/components/ui";
 import { SITE_NAME, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -50,13 +52,17 @@ export default function RootLayout({
           id="theme-init"
           strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("diagnknow-theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light")}catch(e){document.documentElement.setAttribute("data-theme","light")}})();`,
+            __html: `(function(){try{var t=localStorage.getItem("diagnknow-theme");document.documentElement.setAttribute("data-theme",t==="dark"?"dark":"light")}catch(e){document.documentElement.setAttribute("data-theme","light")}try{var m=localStorage.getItem("diagnknow-motion");document.documentElement.setAttribute("data-motion",m==="reduced"?"reduced":"full")}catch(e){document.documentElement.setAttribute("data-motion","full")}})();`,
           }}
         />
         <AuthProvider>
           <CaptchaProvider>
             <ThemeProvider>
-              <PageTransition>{children}</PageTransition>
+              <MotionProvider>
+                <ToastProvider>
+                  <PageTransition>{children}</PageTransition>
+                </ToastProvider>
+              </MotionProvider>
             </ThemeProvider>
           </CaptchaProvider>
         </AuthProvider>

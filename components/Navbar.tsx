@@ -1,179 +1,85 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { Trophy } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import ProfileMenu from "@/components/ProfileMenu";
 import EasterEggTrigger from "@/components/EasterEgg";
 import LogoMark from "@/components/LogoMark";
-import ConfirmModal from "@/components/ConfirmModal";
-import { useAuth } from "@/components/AuthProvider";
+import { IconButton, cn } from "@/components/ui";
 
-const navLinks = [
+// High-frequency actions up front. Leaderboard, Theme, and Profile are
+// pushed right as secondary/utility affordances (§ application shell).
+// Bookmarks/Help/Progress aren't linked here yet — this app has no
+// dedicated pages for them (see MobileNav.tsx for the same note).
+const primaryLinks = [
   { href: "/home", label: "Home" },
-  { href: "/blocks", label: "Blocks" },
+  { href: "/blocks", label: "Practice" },
   { href: "/exam", label: "Exam" },
-  { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/account", label: "Account" },
 ];
 
 export default function Navbar() {
   const pathname = usePathname();
-  const router = useRouter();
-  const { user, signOut } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [confirmSignOut, setConfirmSignOut] = useState(false);
-
-  const doSignOut = () => {
-    void signOut().then(() => {
-      router.replace("/");
-      router.refresh();
-    });
-  };
-
-  const handleSignOut = () => {
-    if (user?.is_anonymous) {
-      setConfirmSignOut(true);
-      return;
-    }
-    doSignOut();
-  };
-
-  const closeMenu = () => setMenuOpen(false);
 
   return (
-    <nav className="border-b border-[var(--border-color)] bg-[var(--bg-nav-inner)]/90 backdrop-blur-md">
+    <nav className="border-b border-border-default bg-surface/90 backdrop-blur-md">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <EasterEggTrigger>
           <Link
             href="/home"
-            className="flex items-center gap-2.5 shrink-0"
+            className="flex shrink-0 items-center gap-2.5"
             aria-label="DiagKnow home"
           >
-            <span className="text-[var(--accent-cyan)]">
+            <span className="text-primary">
               <LogoMark className="size-7 sm:size-8" />
             </span>
-            <span className="text-base sm:text-lg font-semibold tracking-tight text-[var(--text-heading)]">
+            <span className="text-base font-semibold tracking-tight text-text-primary sm:text-lg">
               DiagKnow
             </span>
           </Link>
         </EasterEggTrigger>
 
-        <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-1">
-            <ul className="flex items-center gap-1">
-              {navLinks.map(({ href, label }) => {
-                const isActive =
-                  pathname === href || pathname.startsWith(`${href}/`);
-                return (
-                  <li key={href} className="relative">
-                    <Link
-                      href={href}
-                      aria-current={isActive ? "page" : undefined}
-                      className={`rounded-lg px-3.5 py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-                        isActive
-                          ? "bg-cyan-500/12 text-[var(--accent-cyan-strong)]"
-                          : "text-[var(--text-muted-light)] hover:bg-cyan-500/8 hover:text-[var(--text-heading)]"
-                      }`}
-                    >
-                      {label}
-                    </Link>
-                    {isActive && (
-                      <span className="absolute inset-x-3.5 -bottom-px h-0.5 rounded-full bg-[var(--accent-cyan)]" />
+        <div className="flex items-center gap-1">
+          <ul className="hidden items-center gap-1 md:flex">
+            {primaryLinks.map(({ href, label }) => {
+              const isActive = pathname === href || pathname.startsWith(`${href}/`);
+              return (
+                <li key={href} className="relative">
+                  <Link
+                    href={href}
+                    aria-current={isActive ? "page" : undefined}
+                    className={cn(
+                      "rounded-control px-3.5 py-2 text-sm font-medium whitespace-nowrap transition-colors duration-150",
+                      isActive
+                        ? "bg-primary/12 text-primary"
+                        : "text-text-secondary hover:bg-primary/8 hover:text-text-primary"
                     )}
-                  </li>
-                );
-              })}
-            </ul>
-            <span className="mx-2 h-5 w-px bg-[var(--border-color)]" />
-            <ThemeToggle />
-            {user && (
-              <button
-                type="button"
-                onClick={handleSignOut}
-                className="rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-[var(--text-muted-light)] transition-colors hover:text-[var(--error)]"
-              >
-                Sign out
-              </button>
-            )}
-          </div>
+                  >
+                    {label}
+                  </Link>
+                  {isActive && (
+                    <span className="absolute inset-x-3.5 -bottom-px h-0.5 rounded-full bg-primary" />
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-          <div className="md:hidden flex items-center gap-1.5">
-            <ThemeToggle />
-            <button
-              type="button"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((open) => !open)}
-              className="rounded-lg p-2 text-[var(--text-muted-light)] transition-colors hover:text-[var(--text-heading)]"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="size-6">
-                {menuOpen ? (
-                  <path d="M6 6l12 12M18 6L6 18" />
-                ) : (
-                  <path d="M4 7h16M4 12h16M4 17h16" />
-                )}
-              </svg>
-            </button>
-          </div>
+          <span className="mx-1 hidden h-5 w-px bg-border-default md:block" />
+
+          <IconButton
+            icon={Trophy}
+            label="Leaderboard"
+            href="/leaderboard"
+            size="sm"
+            active={pathname === "/leaderboard" || pathname.startsWith("/leaderboard/")}
+            className="hidden md:inline-flex"
+          />
+          <ThemeToggle />
+          <ProfileMenu />
         </div>
       </div>
-
-      {menuOpen && (
-        <div className="md:hidden border-t border-[var(--border-color)] bg-[var(--bg-nav-inner)]">
-          <div className="mx-auto max-w-5xl px-4 py-3">
-            <ul className="flex flex-col gap-1">
-              {navLinks.map(({ href, label }) => {
-                const isActive =
-                  pathname === href || pathname.startsWith(`${href}/`);
-                return (
-                  <li key={href}>
-                    <Link
-                      href={href}
-                      onClick={closeMenu}
-                      aria-current={isActive ? "page" : undefined}
-                      className={`block rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-cyan-500/12 text-[var(--accent-cyan-strong)]"
-                          : "text-[var(--text-muted-light)] hover:bg-cyan-500/8 hover:text-[var(--text-heading)]"
-                      }`}
-                    >
-                      {label}
-                    </Link>
-                  </li>
-                );
-              })}
-              {user && (
-                <li className="border-t border-[var(--border-color)] pt-2 mt-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeMenu();
-                      handleSignOut();
-                    }}
-                    className="block w-full rounded-lg px-3.5 py-2.5 text-left text-sm font-medium text-[var(--text-muted-light)] transition-colors hover:text-[var(--error)]"
-                  >
-                    Sign out
-                  </button>
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      )}
-
-      <ConfirmModal
-        open={confirmSignOut}
-        title="Sign out of guest account?"
-        message="You're using a guest account. Signing out will permanently lose your progress unless you've saved it to an email/password account from Account settings."
-        confirmLabel="Sign out anyway"
-        cancelLabel="Stay signed in"
-        onConfirm={() => {
-          setConfirmSignOut(false);
-          doSignOut();
-        }}
-        onCancel={() => setConfirmSignOut(false)}
-      />
     </nav>
   );
 }

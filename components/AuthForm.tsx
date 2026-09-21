@@ -3,10 +3,12 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import CaptchaWidget, { type CaptchaWidgetHandle } from "@/components/CaptchaWidget";
 import { useCaptchaToken } from "@/components/CaptchaProvider";
 import { MIN_PASSWORD_LENGTH, validatePassword } from "@/lib/auth/password";
+import { Button, Icon } from "@/components/ui";
 
 type Mode = "signin" | "signup";
 
@@ -157,19 +159,21 @@ export default function AuthForm() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25";
+    "w-full rounded-control border border-border-default bg-surface px-4 py-3.5 text-base text-text-primary transition-colors duration-150 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <button
+      <Button
         type="button"
+        variant="secondary"
         disabled={loading}
         onClick={() => void handleGoogle()}
         onTouchEnd={(e) => {
           e.preventDefault();
           if (!loading) void handleGoogle();
         }}
-        className="flex w-full items-center justify-center gap-3 rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-5 py-3.5 font-medium text-[var(--text-body)] transition-colors hover:border-cyan-300/40 hover:text-[var(--accent-cyan-strong)] active:border-cyan-300/40 active:text-[var(--accent-cyan-strong)] disabled:opacity-60"
+        fullWidth
+        size="lg"
       >
         <svg className="size-5" viewBox="0 0 48 48" aria-hidden="true">
           <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
@@ -178,21 +182,21 @@ export default function AuthForm() {
           <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
         </svg>
         Continue with Google
-      </button>
+      </Button>
 
       <div className="flex items-center gap-3" aria-hidden="true">
-        <span className="h-px flex-1 bg-cyan-300/20" />
-        <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">
+        <span className="h-px flex-1 bg-border-default" />
+        <span className="text-xs uppercase tracking-wide text-text-tertiary">
           or
         </span>
-        <span className="h-px flex-1 bg-cyan-300/20" />
+        <span className="h-px flex-1 bg-border-default" />
       </div>
 
       {mode === "signup" && (
         <div className="space-y-2">
           <label
             htmlFor="fullName"
-            className="block text-sm font-medium text-[var(--text-label)]"
+            className="block text-sm font-medium text-text-secondary"
           >
             Full name
           </label>
@@ -211,7 +215,7 @@ export default function AuthForm() {
       <div className="space-y-2">
         <label
           htmlFor="email"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           Email
         </label>
@@ -230,7 +234,7 @@ export default function AuthForm() {
       <div className="space-y-2">
         <label
           htmlFor="password"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           Password
         </label>
@@ -256,26 +260,16 @@ export default function AuthForm() {
               e.preventDefault();
               if (!loading) setShowPassword((v) => !v);
             }}
-            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-[var(--text-muted)] transition-colors hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)] disabled:opacity-60"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-text-tertiary transition-colors duration-150 hover:text-primary active:text-primary disabled:opacity-60"
           >
-            {showPassword ? (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
-                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-                <path d="M1 1l22 22" />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="size-5" aria-hidden="true">
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-            )}
+            <Icon icon={showPassword ? EyeOff : Eye} size="sm" />
           </button>
         </div>
         {mode === "signin" && (
           <div className="flex justify-end">
             <Link
               href="/forgot-password"
-              className="text-xs text-[var(--text-muted)] hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)]"
+              className="text-xs text-text-tertiary hover:text-primary active:text-primary"
             >
               Forgot password?
             </Link>
@@ -284,7 +278,7 @@ export default function AuthForm() {
       </div>
 
       {captchaStatus === "pending" && !loading && (
-        <p className="text-sm text-[var(--text-muted)]" role="status">
+        <p className="text-sm text-text-tertiary" role="status">
           Verifying your browser…
         </p>
       )}
@@ -292,7 +286,7 @@ export default function AuthForm() {
         <>
           <CaptchaWidget ref={fallbackWidgetRef} onToken={setFallbackToken} />
           {!fallbackToken && !loading && (
-            <p className="text-sm text-[var(--text-muted)]" role="status">
+            <p className="text-sm text-text-tertiary" role="status">
               Complete the verification above to continue.
             </p>
           )}
@@ -310,23 +304,21 @@ export default function AuthForm() {
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
-        disabled={loading || !captchaReady}
+        disabled={!captchaReady}
+        loading={loading}
         onTouchEnd={(e) => {
           e.preventDefault();
           if (!loading && captchaReady) handleSubmit(e);
         }}
-        className="hud-primary-btn w-full rounded-xl px-5 py-3.5 font-medium disabled:opacity-60"
+        fullWidth
+        size="lg"
       >
-        {loading
-          ? "Please wait…"
-          : mode === "signup"
-            ? "Create account"
-            : "Sign in"}
-      </button>
+        {loading ? "Please wait…" : mode === "signup" ? "Create account" : "Sign in"}
+      </Button>
 
-      <p className="text-center text-sm text-[var(--text-muted)]">
+      <p className="text-center text-sm text-text-tertiary">
         {mode === "signup" ? (
           <>
             Already have an account?{" "}
@@ -337,7 +329,7 @@ export default function AuthForm() {
                 setError(null);
                 setInfo(null);
               }}
-              className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+              className="font-medium text-primary hover:underline active:underline"
             >
               Sign in
             </button>
@@ -352,7 +344,7 @@ export default function AuthForm() {
                 setError(null);
                 setInfo(null);
               }}
-              className="font-medium text-[var(--accent-cyan)] hover:underline active:underline"
+              className="font-medium text-primary hover:underline active:underline"
             >
               Create an account
             </button>
@@ -361,32 +353,33 @@ export default function AuthForm() {
       </p>
 
       <div className="flex items-center gap-3" aria-hidden="true">
-        <span className="h-px flex-1 bg-cyan-300/20" />
-        <span className="text-xs uppercase tracking-wide text-[var(--text-muted)]">
+        <span className="h-px flex-1 bg-border-default" />
+        <span className="text-xs uppercase tracking-wide text-text-tertiary">
           or
         </span>
-        <span className="h-px flex-1 bg-cyan-300/20" />
+        <span className="h-px flex-1 bg-border-default" />
       </div>
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
         disabled={loading || !captchaReady}
         onClick={() => void handleGuest()}
         onTouchEnd={(e) => {
           e.preventDefault();
           if (!loading && captchaReady) void handleGuest();
         }}
-        className="w-full rounded-xl border border-cyan-300/25 px-5 py-3 text-sm font-medium text-[var(--text-muted)] transition-colors hover:border-cyan-300/40 hover:text-[var(--text-body)] active:border-cyan-300/40 active:text-[var(--text-body)] disabled:opacity-60"
+        fullWidth
       >
         Continue as guest
-      </button>
-      <p className="text-center text-xs text-[var(--text-muted)]">
+      </Button>
+      <p className="text-center text-xs text-text-tertiary">
         Try DiagKnow without an account. You can save your progress to a real
         account any time from Account settings.
       </p>
 
       <p className="text-center">
-        <Link href="/" className="text-sm text-[var(--text-muted)] hover:text-[var(--accent-cyan)] active:text-[var(--accent-cyan)]">
+        <Link href="/" className="text-sm text-text-tertiary hover:text-primary active:text-primary">
           &larr; Back to home
         </Link>
       </p>

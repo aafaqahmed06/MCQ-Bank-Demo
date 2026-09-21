@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import DkBot from "@/components/DkBot";
+import { Card, Button } from "@/components/ui";
 
 type ResultSummaryProps = {
   correct: number;
@@ -24,50 +24,50 @@ export default function ResultSummary({
     "thinking";
 
   return (
-    <section className="hud-card fade-in rounded-xl p-6">
+    <Card variant="elevated" padding="lg" className="mx-auto w-full max-w-[800px] text-center">
       <div className="flex justify-center">
         <DkBot state={botState} size="medium" alt={null} />
       </div>
-      <h2 className="mt-4 text-3xl font-bold tracking-tight text-[var(--text-heading)]">Session Complete</h2>
-      <p className="mt-1 text-[var(--text-muted)]">Review your performance below.</p>
+      <h2 className="mt-4 text-display font-bold tracking-tight text-text-primary">
+        Session Complete
+      </h2>
+      <p className="mt-1 text-text-tertiary">Review your performance below.</p>
 
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
-          <p className="text-sm text-[var(--text-muted)]">Total score</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">
-            {correct} <span className="text-lg text-[var(--text-muted)]">/ {total}</span>
+      <div className="mt-5 grid gap-4 text-left sm:grid-cols-2">
+        <div className="rounded-card border border-border-default bg-surface p-5">
+          <p className="text-sm text-text-tertiary">Total score</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums text-text-primary">
+            {correct} <span className="text-lg text-text-tertiary">/ {total}</span>
           </p>
         </div>
-        <div className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card)] p-5">
-          <p className="text-sm text-[var(--text-muted)]">Percentage</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums text-[var(--text-heading)]">{percentage}%</p>
+        <div className="rounded-card border border-border-default bg-surface p-5">
+          <p className="text-sm text-text-tertiary">Percentage</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums text-text-primary">{percentage}%</p>
         </div>
-        <div className="box-success rounded-xl p-5">
+        <div className="box-success rounded-card p-5">
           <p className="text-sm">Correct</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{correct}</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums">{correct}</p>
         </div>
-        <div className="box-error rounded-xl p-5">
+        <div className="box-error rounded-card p-5">
           <p className="text-sm">Incorrect</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{incorrect}</p>
+          <p className="mt-1 text-h1 font-semibold tabular-nums">{incorrect}</p>
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        <button
-          type="button"
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Button
           onClick={onRestart}
-          onTouchEnd={(e) => { e.preventDefault(); onRestart(); }}
-          className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium"
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            onRestart();
+          }}
         >
           Restart Session
-        </button>
-        <Link
-          href={backHref}
-          className="rounded-xl border border-[var(--border-color)] bg-[var(--bg-card-alt)] px-5 py-3 text-sm font-medium text-[var(--text-btn-secondary)] transition-colors hover:border-[var(--accent-cyan)] hover:text-[var(--accent-cyan-strong)]"
-        >
+        </Button>
+        <Button href={backHref} variant="secondary">
           Back to modules
-        </Link>
+        </Button>
       </div>
-    </section>
+    </Card>
   );
 }

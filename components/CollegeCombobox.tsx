@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useRef, useState } from "react";
 import type { College } from "@/components/useCollegeOptions";
+import { cn } from "@/components/ui";
 
 type CollegeComboboxProps = {
   colleges: College[];
@@ -128,10 +129,10 @@ export default function CollegeCombobox({
         <ul
           id={listboxId}
           role="listbox"
-          className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)] py-1 shadow-lg"
+          className="absolute z-10 mt-1 max-h-64 w-full overflow-y-auto rounded-control border border-border-default bg-surface-elevated py-1 shadow-elevated"
         >
           {filtered.length === 0 && (
-            <li className="px-4 py-2.5 text-sm text-[var(--text-muted)]">
+            <li className="px-4 py-2.5 text-sm text-text-tertiary">
               No colleges match &quot;{query}&quot;.
             </li>
           )}
@@ -146,15 +147,14 @@ export default function CollegeCombobox({
                 selectCollege(c);
               }}
               onMouseEnter={() => setActiveIndex(i)}
-              className={`cursor-pointer px-4 py-2.5 text-sm ${
-                i === activeIndex
-                  ? "bg-cyan-500/12 text-[var(--accent-cyan-strong)]"
-                  : "text-[var(--text-body)]"
-              }`}
+              className={cn(
+                "cursor-pointer px-4 py-2.5 text-sm",
+                i === activeIndex ? "bg-primary/12 text-primary" : "text-text-secondary"
+              )}
             >
               <span>{c.name}</span>
               {(c.short_name || c.city) && (
-                <span className="ml-1.5 text-xs text-[var(--text-muted)]">
+                <span className="ml-1.5 text-xs text-text-tertiary">
                   {[c.short_name, c.city].filter(Boolean).join(" · ")}
                 </span>
               )}

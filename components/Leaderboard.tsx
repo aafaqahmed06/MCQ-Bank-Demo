@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { Trophy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import DkBot from "@/components/DkBot";
+import { Badge, Button, Icon, Skeleton, cn } from "@/components/ui";
 
 type LeaderboardRow = {
   rank: number;
@@ -15,12 +16,11 @@ type LeaderboardRow = {
   accuracy: number;
 };
 
-function medalTone(rank: number): string {
-  if (rank === 1) return "bg-cyan-500/12 text-[var(--accent-cyan-strong)]";
-  if (rank === 2) return "bg-violet-500/10 text-[var(--accent-violet)]";
-  if (rank === 3) return "bg-[var(--bg-card-alt)] text-[var(--text-muted-light)]";
-  return "bg-transparent text-[var(--text-muted-light)]";
-}
+const MEDAL_VARIANT: Record<number, "primary" | "neutral"> = {
+  1: "primary",
+  2: "primary",
+  3: "primary",
+};
 
 export default function Leaderboard() {
   const [rows, setRows] = useState<LeaderboardRow[]>([]);
@@ -47,15 +47,17 @@ export default function Leaderboard() {
   }, []);
 
   if (loading) {
-    return <p className="hud-muted py-10 text-center">Loading leaderboard…</p>;
+    return (
+      <div className="space-y-3 py-2">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
   }
 
   if (error) {
-    return (
-      <p className="rounded-xl border border-[var(--error)]/30 bg-[var(--error-soft)] px-4 py-3 text-sm text-[var(--error-text)]">
-        Could not load leaderboard: {error}
-      </p>
-    );
+    return <p className="alert-error rounded-control px-4 py-3 text-sm">Could not load leaderboard: {error}</p>;
   }
 
   if (rows.length === 0) {
@@ -64,19 +66,14 @@ export default function Leaderboard() {
         <div className="flex justify-center">
           <DkBot state="thinking" size="small" alt={null} />
         </div>
-        <p className="mt-3 text-lg font-semibold text-[var(--text-heading)]">
-          No results yet
-        </p>
-        <p className="mx-auto mt-2 max-w-md text-sm text-[var(--text-muted)]">
+        <p className="mt-3 text-lg font-semibold text-text-primary">No results yet</p>
+        <p className="mx-auto mt-2 max-w-md text-sm text-text-tertiary">
           Rankings appear once students complete exams. Take an exam simulation
           to earn a spot on the board.
         </p>
-        <Link
-          href="/exam"
-          className="hud-primary-btn mt-5 inline-block rounded-xl px-5 py-2.5 text-sm font-medium"
-        >
+        <Button href="/exam" className="mt-5">
           Take an exam
-        </Link>
+        </Button>
       </div>
     );
   }
@@ -85,7 +82,7 @@ export default function Leaderboard() {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[540px] border-collapse text-left text-sm">
         <thead>
-          <tr className="border-b border-[var(--border-color)] text-xs uppercase tracking-wide text-[var(--text-muted-light)]">
+          <tr className="border-b border-border-default text-caption tracking-wide text-text-tertiary uppercase">
             <th className="px-3 py-3 font-medium">Rank</th>
             <th className="px-3 py-3 font-medium">Student</th>
             <th className="px-3 py-3 font-medium">College</th>
@@ -97,32 +94,30 @@ export default function Leaderboard() {
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr
-              key={row.rank}
-              className="border-b border-[var(--border-color)] text-[var(--text-body)] last:border-0"
-            >
+            <tr key={row.rank} className="border-b border-border-subtle text-text-secondary last:border-0">
               <td className="px-3 py-3">
-                <span
-                  className={`inline-flex h-7 min-w-7 items-center justify-center rounded-md px-1.5 text-xs font-semibold ${medalTone(
-                    row.rank,
-                  )}`}
-                >
-                  {row.rank}
-                </span>
+                {row.rank <= 3 ? (
+                  <Badge variant={MEDAL_VARIANT[row.rank]} size="sm">
+                    <Icon icon={Trophy} size="xs" />
+                    {row.rank}
+                  </Badge>
+                ) : (
+                  <span
+                    className={cn(
+                      "inline-flex h-6 min-w-6 items-center justify-center rounded-badge text-caption font-semibold text-text-tertiary"
+                    )}
+                  >
+                    {row.rank}
+                  </span>
+                )}
               </td>
-              <td className="px-3 py-3 font-medium text-[var(--text-heading)]">
+              <td className="px-3 py-3 font-medium text-text-primary">
                 {row.full_name || "Anonymous"}
               </td>
-              <td className="px-3 py-3 text-[var(--text-muted)]">
-                {row.college_short_name ?? "—"}
-              </td>
-              <td className="px-3 py-3 text-[var(--text-muted)]">
-                {row.program_name ?? "—"}
-              </td>
-              <td className="px-3 py-3 text-right tabular-nums">
-                {row.exams_completed}
-              </td>
-              <td className="px-3 py-3 text-right font-semibold tabular-nums text-[var(--text-heading)]">
+              <td className="px-3 py-3 text-text-tertiary">{row.college_short_name ?? "—"}</td>
+              <td className="px-3 py-3 text-text-tertiary">{row.program_name ?? "—"}</td>
+              <td className="px-3 py-3 text-right tabular-nums">{row.exams_completed}</td>
+              <td className="px-3 py-3 text-right font-semibold tabular-nums text-text-primary">
                 {row.total_correct}
               </td>
               <td className="px-3 py-3 text-right tabular-nums">

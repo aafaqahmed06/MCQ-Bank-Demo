@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Clock, ArrowLeft, ArrowRight } from "lucide-react";
 import type { ExamQuestionPayload, SubmitExamResponse } from "@/types";
+import ExamNavigator from "@/components/ExamNavigator";
+import { Card, Button, Modal, Icon, cn } from "@/components/ui";
 
 type ExamSessionProps = {
   questions: ExamQuestionPayload[];
@@ -23,12 +26,12 @@ export default function ExamSession({
   onSubmit,
 }: ExamSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [answers, setAnswers] = useState<(number | null)[]>(
     Array(questions.length).fill(null)
   );
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [confirmSubmitOpen, setConfirmSubmitOpen] = useState(false);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(
     timeLimitSeconds ?? null
   );
@@ -38,7 +41,9 @@ export default function ExamSession({
 
   const total = questions.length;
   const currentQuestion = questions[currentIndex];
+  const selectedAnswer = answers[currentIndex];
   const answeredCount = answers.filter((a) => a !== null).length;
+  const isLastQuestion = currentIndex === total - 1;
 
   // Countdown timer. Deadline is anchored to when the session mounts so the
   // displayed clock stays aligned with the server's started_at + limit.
@@ -73,9 +78,10 @@ export default function ExamSession({
     }
   };
 
-  // Auto-submit near the deadline. We fire slightly early (remaining <= 2s) so
-  // the request reaches the server before started_at + limit expires. Guarded so
-  // a failed submission doesn't re-fire the timer-expiry attempt in a loop.
+  // Auto-submit near the deadline (bypasses confirmation — time's up either
+  // way). Fires slightly early (remaining <= 2s) so the request reaches the
+  // server before started_at + limit expires. Guarded so a failed
+  // submission doesn't re-fire the timer-expiry attempt in a loop.
   useEffect(() => {
     if (
       remainingSeconds !== null &&
@@ -84,166 +90,178 @@ export default function ExamSession({
       !timeUpTriggeredRef.current
     ) {
       timeUpTriggeredRef.current = true;
-      const finalAnswers = [...answers];
-      finalAnswers[currentIndex] = selectedAnswer;
-      void submitAnswers(finalAnswers);
+      void submitAnswers(answers);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingSeconds, submitting]);
 
-  const handleNext = async () => {
-    if (selectedAnswer === null || submitting || finishedRef.current) return;
+  const selectAnswer = (index: number) => {
+    setAnswers((prev) => {
+      const next = [...prev];
+      next[currentIndex] = index;
+      return next;
+    });
+  };
 
-    const newAnswers = [...answers];
-    newAnswers[currentIndex] = selectedAnswer;
-    setAnswers(newAnswers);
-
-    if (currentIndex === total - 1) {
-      await submitAnswers(newAnswers);
-    } else {
-      setCurrentIndex((prev) => prev + 1);
-      setSelectedAnswer(null);
-    }
+  const goTo = (index: number) => {
+    if (index < 0 || index >= total || submitting) return;
+    setCurrentIndex(index);
   };
 
   const lowTime = remainingSeconds !== null && remainingSeconds <= 60;
   const criticalTime = remainingSeconds !== null && remainingSeconds <= 10;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {timeLimitSeconds && (
         <div
           aria-live="polite"
-          className={`fixed right-4 top-20 z-40 flex items-center gap-2 rounded-xl border px-3.5 py-2 text-sm font-semibold tabular-nums shadow-lg backdrop-blur-md ${
+          className={cn(
+            "fixed top-20 right-4 z-40 flex items-center gap-2 rounded-control border px-3.5 py-2 text-sm font-semibold tabular-nums shadow-elevated backdrop-blur-md",
             criticalTime
-              ? "border-[var(--error)]/60 bg-[var(--error-soft)] text-[var(--error-text)]"
+              ? "border-error/50 bg-error-soft text-error-text"
               : lowTime
-                ? "border-amber-400/50 bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-                : "hud-card bg-[var(--bg-nav-inner)]/90 text-[var(--text-heading)]"
-          }`}
+                ? "border-warning/50 bg-warning-soft text-warning-text"
+                : "border-border-default bg-surface-elevated/90 text-text-primary"
+          )}
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="size-4"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="M12 6v6l4 2" />
-          </svg>
+          <Icon icon={Clock} size="sm" />
           {formatTime(remainingSeconds ?? 0)}
         </div>
       )}
 
-      <div className="hud-card rounded-xl p-4">
-        <div className="flex items-center justify-between gap-4 text-sm text-[var(--text-muted-light)]">
-          <p>
-            Question {currentIndex + 1} of {total}
-          </p>
-          <p>Answered: {answeredCount}</p>
-          {timeLimitSeconds && (
-            <button
-              type="button"
-              onClick={onQuit}
-              className="rounded-lg px-2.5 py-1 text-xs font-medium text-[var(--text-muted-light)] transition-colors hover:text-[var(--error)]"
-            >
-              Quit
-            </button>
-          )}
-        </div>
-        <div className="mt-3 h-2 rounded-full bg-[var(--bg-progress-track)]">
-          <div
-            className="h-2 rounded-full bg-[var(--accent-cyan)] transition-all duration-300"
-            style={{ width: `${(answeredCount / total) * 100}%` }}
-          />
-        </div>
+      <div className="flex items-center justify-between gap-4">
+        <p className="text-sm text-text-secondary">
+          Question {currentIndex + 1} of {total}{" "}
+          <span className="text-text-tertiary">· Answered {answeredCount}</span>
+        </p>
+        <button
+          type="button"
+          onClick={onQuit}
+          className="rounded-control px-2.5 py-1 text-caption font-medium text-text-tertiary transition-colors duration-150 hover:text-error focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
+          Quit
+        </button>
       </div>
 
-      <section className="hud-card fade-in rounded-xl p-5 sm:p-6">
-        {currentQuestion.topic && (
-          <p className="inline-flex rounded-full bg-cyan-500/10 px-3 py-1 text-xs font-medium text-[var(--accent-cyan-strong)]">
-            Topic: {currentQuestion.topic}
-          </p>
-        )}
-        <h2 className="mt-4 text-xl font-semibold leading-relaxed text-[var(--text-heading)] sm:text-2xl">
-          {currentQuestion.question}
-        </h2>
+      <div className="grid gap-6 lg:grid-cols-[1fr_240px] lg:items-start">
+        <div className="fade-in">
+          {currentQuestion.topic && (
+            <p className="text-caption font-semibold tracking-wide text-primary uppercase">
+              {currentQuestion.topic}
+            </p>
+          )}
+          <h2 className="mt-2 text-h2 leading-relaxed font-semibold text-text-primary">
+            {currentQuestion.question}
+          </h2>
 
-        <div className="my-5 border-t border-[var(--border-color)]" />
+          <div className="mt-6 space-y-3">
+            {currentQuestion.options.map((option, index) => (
+              <button
+                key={index}
+                type="button"
+                className={cn(
+                  "opt-base p-4 text-base sm:p-5 sm:text-lg",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                  selectedAnswer === index && "opt-selected"
+                )}
+                onClick={() => {
+                  if (Math.abs(touchStartY.current) < 10) selectAnswer(index);
+                  touchStartY.current = 0;
+                }}
+                onTouchStart={(e) => {
+                  touchStartY.current = e.changedTouches[0].clientY;
+                }}
+                onTouchEnd={(e) => {
+                  const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+                  if (dy < 10) {
+                    e.preventDefault();
+                    selectAnswer(index);
+                  }
+                  touchStartY.current = 0;
+                }}
+              >
+                <span className="font-semibold">{String.fromCharCode(65 + index)}.</span>{" "}
+                {option}
+              </button>
+            ))}
+          </div>
 
-        <div className="space-y-3">
-          {currentQuestion.options.map((option, index) => (
-            <button
-              key={index}
-              type="button"
-              className={`opt-base p-3 sm:p-4 text-base sm:text-lg ${
-                selectedAnswer === index ? "opt-selected" : ""
-              }`}
-              onClick={() => {
-                if (Math.abs(touchStartY.current) < 10)
-                  setSelectedAnswer(index);
-                touchStartY.current = 0;
-              }}
-              onTouchStart={(e) => {
-                touchStartY.current = e.changedTouches[0].clientY;
-              }}
-              onTouchEnd={(e) => {
-                const dy = Math.abs(
-                  e.changedTouches[0].clientY - touchStartY.current
-                );
-                if (selectedAnswer === null && dy < 10) {
-                  e.preventDefault();
-                  setSelectedAnswer(index);
-                }
-                touchStartY.current = 0;
-              }}
+          {submitError && (
+            <p className="alert-error mt-4 rounded-control px-4 py-3 text-sm">{submitError}</p>
+          )}
+
+          <div className="mt-6 flex items-center justify-between gap-3">
+            <Button variant="ghost" onClick={() => goTo(currentIndex - 1)} disabled={currentIndex === 0}>
+              <Icon icon={ArrowLeft} size="sm" />
+              Previous
+            </Button>
+            {isLastQuestion ? (
+              <Button onClick={() => setConfirmSubmitOpen(true)} disabled={submitting}>
+                Review &amp; Submit
+              </Button>
+            ) : (
+              <Button onClick={() => goTo(currentIndex + 1)} disabled={submitting}>
+                Next Question
+                <Icon icon={ArrowRight} size="sm" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        <aside className="lg:sticky lg:top-24">
+          <Card variant="default" padding="md" className="space-y-4">
+            <p className="text-caption font-semibold tracking-wide text-text-tertiary uppercase">
+              Questions
+            </p>
+            <ExamNavigator total={total} current={currentIndex} answers={answers} onJump={goTo} />
+            <div className="space-y-1.5 text-caption text-text-tertiary">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                Answered ({answeredCount})
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full border border-border-default" />
+                Unanswered ({total - answeredCount})
+              </div>
+            </div>
+            <Button
+              onClick={() => setConfirmSubmitOpen(true)}
+              disabled={submitting}
+              fullWidth
             >
-              <span className="font-semibold">
-                {String.fromCharCode(65 + index)}.
-              </span>{" "}
-              {option}
-            </button>
-          ))}
-        </div>
+              Submit Exam
+            </Button>
+          </Card>
+        </aside>
+      </div>
 
-        {submitError && (
-          <p className="alert-error mt-4 rounded-xl px-4 py-3 text-sm">
-            {submitError}
-          </p>
-        )}
-
-        <div className="mt-5 flex justify-end">
-          <button
-            type="button"
-            onClick={() => void handleNext()}
-            onTouchStart={(e) => {
-              touchStartY.current = e.changedTouches[0].clientY;
+      <Modal
+        open={confirmSubmitOpen}
+        onClose={() => setConfirmSubmitOpen(false)}
+        title="Submit exam?"
+        size="sm"
+      >
+        <p className="text-sm text-text-secondary">
+          You&apos;ve answered {answeredCount} of {total} questions
+          {answeredCount < total ? `, ${total - answeredCount} unanswered` : ""}. Once
+          submitted, you can&apos;t change your answers.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <Button variant="ghost" onClick={() => setConfirmSubmitOpen(false)}>
+            Keep reviewing
+          </Button>
+          <Button
+            onClick={() => {
+              setConfirmSubmitOpen(false);
+              void submitAnswers(answers);
             }}
-            onTouchEnd={(e) => {
-              const dy = Math.abs(
-                e.changedTouches[0].clientY - touchStartY.current
-              );
-              if (selectedAnswer !== null && !submitting && dy < 10) {
-                e.preventDefault();
-                void handleNext();
-              }
-              touchStartY.current = 0;
-            }}
-            disabled={selectedAnswer === null || submitting}
-            className="hud-primary-btn rounded-xl px-5 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            loading={submitting}
           >
-            {submitting
-              ? "Submitting…"
-              : currentIndex === total - 1
-                ? "Finish Exam"
-                : "Next Question"}
-          </button>
+            Submit Exam
+          </Button>
         </div>
-      </section>
+      </Modal>
     </div>
   );
 }

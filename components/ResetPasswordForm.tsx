@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui";
 
 export default function ResetPasswordForm() {
   const router = useRouter();
@@ -54,14 +55,14 @@ export default function ResetPasswordForm() {
   }
 
   const inputClass =
-    "w-full rounded-xl border border-cyan-300/25 bg-[var(--bg-card-solid)]/70 px-4 py-3.5 text-base text-[var(--text-body)] focus:border-cyan-300 focus:outline-none focus:ring-2 focus:ring-cyan-300/25";
+    "w-full rounded-control border border-border-default bg-surface px-4 py-3.5 text-base text-text-primary transition-colors duration-150 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25";
 
   return (
     <form onSubmit={run} className="space-y-5">
       <div className="space-y-2">
         <label
           htmlFor="newPassword"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           New password
         </label>
@@ -81,7 +82,7 @@ export default function ResetPasswordForm() {
       <div className="space-y-2">
         <label
           htmlFor="confirmPassword"
-          className="block text-sm font-medium text-[var(--text-label)]"
+          className="block text-sm font-medium text-text-secondary"
         >
           Confirm new password
         </label>
@@ -115,17 +116,18 @@ export default function ResetPasswordForm() {
         </p>
       )}
 
-      <button
+      <Button
         type="submit"
-        disabled={loading}
+        loading={loading}
         onTouchEnd={(e) => {
           e.preventDefault();
           if (!loading) void run(e);
         }}
-        className="hud-primary-btn w-full rounded-xl px-5 py-3.5 font-medium disabled:opacity-60"
+        fullWidth
+        size="lg"
       >
         {loading ? "Updating…" : "Update password"}
-      </button>
+      </Button>
     </form>
   );
 }

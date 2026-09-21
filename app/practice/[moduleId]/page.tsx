@@ -10,6 +10,7 @@ import {
   topicGroups,
 } from "@/lib/topicGroups";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { EmptyState } from "@/components/ui";
 
 type PageProps = {
   params: Promise<{ moduleId: string }>;
@@ -41,8 +42,6 @@ export default async function PracticePage({
     ? `/topics/${moduleId}`
     : `/modules/${mod.blockId}`;
 
-  const heading = group ? `${mod.name} — ${group.name}` : mod.name;
-
   const crumbs = [
     { label: "Blocks", href: "/blocks" },
     ...(block ? [{ label: block.name, href: `/modules/${block.id}` }] : []),
@@ -56,18 +55,18 @@ export default async function PracticePage({
         <div className="space-y-6">
           <header className="space-y-2">
             <Breadcrumbs items={crumbs} />
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--text-heading)]">{heading}</h1>
+            <p className="text-h3 font-semibold tracking-wide text-text-secondary uppercase">
+              {mod.name}
+              {group ? ` · ${group.name}` : ""}
+            </p>
           </header>
 
           {moduleMcqs.length === 0 ? (
-            <div className="hud-card rounded-xl border-dashed p-6 text-center">
-              <div className="flex justify-center">
-                <DkBot state="neutral" size="small" alt={null} />
-              </div>
-              <p className="mt-3 text-[var(--text-muted)]">
-                No MCQs added for this topic yet
-              </p>
-            </div>
+            <EmptyState
+              illustration={<DkBot state="neutral" size="small" alt={null} />}
+              title="No questions yet"
+              description="This topic doesn't have any MCQs added yet."
+            />
           ) : (
             <PracticeSession
               questions={moduleMcqs}
