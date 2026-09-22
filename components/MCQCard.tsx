@@ -10,14 +10,23 @@ import ReportQuestionButton, {
 import { Button, Icon, cn } from "@/components/ui";
 
 type MCQCardProps = {
-  mcq: MCQ;
+  mcq: Pick<MCQ, "id" | "topic" | "question" | "options" | "correctAnswer" | "explanation">;
   selectedAnswer: number | null;
   answered: boolean;
   onSelect: (index: number) => void;
   onSubmit: () => void;
-  onNext: () => void;
+  /** Omit when there's nothing to advance to (e.g. a standalone sample
+   * question) -- hides the post-answer Next/Finish button, its keyboard
+   * shortcut, and the corresponding hint text. */
+  onNext?: () => void;
   onBookmarkToggle?: (bookmarked: boolean) => void;
-  isLastQuestion: boolean;
+  isLastQuestion?: boolean;
+  /** Default true. Set false where the viewer isn't authenticated (e.g. the
+   * public landing page sample) -- bookmarking/reporting require a session. */
+  enableBookmarkAndReport?: boolean;
+  /** Reflects a pending answer-check (e.g. a server round trip) on the
+   * Submit button, for callers that don't grade locally. */
+  submitLoading?: boolean;
 };
 
 function getOptionClasses(
@@ -61,7 +70,9 @@ export default function MCQCard({
   onSubmit,
   onNext,
   onBookmarkToggle,
-  isLastQuestion,
+  isLastQuestion = false,
+  enableBookmarkAndReport = true,
+  submitLoading = false,
 }: MCQCardProps) {
   const touchStartY = useRef(0);
   const bookmarkRef = useRef<BookmarkButtonHandle>(null);
@@ -76,12 +87,12 @@ export default function MCQCard({
 
       const key = e.key.toLowerCase();
 
-      if (key === "b") {
+      if (enableBookmarkAndReport && key === "b") {
         e.preventDefault();
         bookmarkRef.current?.toggle();
         return;
       }
-      if (key === "r") {
+      if (enableBookmarkAndReport && key === "r") {
         e.preventDefault();
         reportRef.current?.open();
         return;
@@ -98,7 +109,7 @@ export default function MCQCard({
           e.preventDefault();
           onSubmit();
         }
-      } else if (key === "enter" || e.key === "ArrowRight") {
+      } else if (onNext && (key === "enter" || e.key === "ArrowRight")) {
         e.preventDefault();
         onNext();
       }
@@ -106,7 +117,7 @@ export default function MCQCard({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [answered, selectedAnswer, mcq.options.length, onSelect, onSubmit, onNext]);
+  }, [answered, selectedAnswer, mcq.options.length, onSelect, onSubmit, onNext, enableBookmarkAndReport]);
 
   return (
     <div className="fade-in mx-auto w-full max-w-[800px]">
@@ -114,10 +125,12 @@ export default function MCQCard({
         <p className="text-caption font-semibold tracking-wide text-primary uppercase">
           {mcq.topic}
         </p>
-        <div className="flex items-center gap-2">
-          <BookmarkButton ref={bookmarkRef} mcqId={mcq.id} onToggle={onBookmarkToggle} />
-          <ReportQuestionButton ref={reportRef} mcqId={mcq.id} />
-        </div>
+        {enableBookmarkAndReport && (
+          <div className="flex items-center gap-2">
+            <BookmarkButton ref={bookmarkRef} mcqId={mcq.id} onToggle={onBookmarkToggle} />
+            <ReportQuestionButton ref={reportRef} mcqId={mcq.id} />
+          </div>
+        )}
       </div>
 
       <h2 className="mt-4 text-h2 leading-relaxed font-semibold text-text-primary">
@@ -187,7 +200,11 @@ export default function MCQCard({
 
       <div className="mt-6 flex items-center justify-between gap-3">
         <p className="hidden text-caption text-text-tertiary sm:block">
-          {!answered ? "A–E select · Enter submit · B bookmark" : "Enter or → next question"}
+          {!answered
+            ? `A–E select · Enter submit${enableBookmarkAndReport ? " · B bookmark" : ""}`
+            : onNext
+              ? "Enter or → next question"
+              : ""}
         </p>
         {!answered ? (
           <Button
@@ -203,28 +220,31 @@ export default function MCQCard({
               }
               touchStartY.current = 0;
             }}
-            disabled={selectedAnswer === null}
+            disabled={selectedAnswer === null || submitLoading}
+            loading={submitLoading}
           >
             Submit Answer
           </Button>
         ) : (
-          <Button
-            onClick={onNext}
-            onTouchStart={(e) => {
-              touchStartY.current = e.changedTouches[0].clientY;
-            }}
-            onTouchEnd={(e) => {
-              const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
-              if (dy < 10) {
-                e.preventDefault();
-                onNext();
-              }
-              touchStartY.current = 0;
-            }}
-          >
-            {isLastQuestion ? "Finish" : "Next Question"}
-            <Icon icon={ArrowRight} size="sm" />
-          </Button>
+          onNext && (
+            <Button
+              onClick={onNext}
+              onTouchStart={(e) => {
+                touchStartY.current = e.changedTouches[0].clientY;
+              }}
+              onTouchEnd={(e) => {
+                const dy = Math.abs(e.changedTouches[0].clientY - touchStartY.current);
+                if (dy < 10) {
+                  e.preventDefault();
+                  onNext();
+                }
+                touchStartY.current = 0;
+              }}
+            >
+              {isLastQuestion ? "Finish" : "Next Question"}
+              <Icon icon={ArrowRight} size="sm" />
+            </Button>
+          )
         )}
       </div>
     </div>

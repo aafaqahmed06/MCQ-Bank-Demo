@@ -153,37 +153,64 @@ export async function getSubjectNames(): Promise<string[]> {
 }
 
 const SAMPLE_QUESTION_ID = "heme_coag_001";
+const SAMPLE_QUESTION_DIFFICULTY = 1;
 
 /**
  * One real, published question for the landing page. Selects only columns
  * anon is granted (correct_answer/explanation are revoked at the Postgres
  * grant level for anon/authenticated -- see migration
  * 20260708000016_lock_mcq_keys.sql -- this list is explicit for clarity of
- * intent, not a workaround). Prefers a known-good, well-formed question by
- * id; falls back to any published question if that row is ever
- * removed/unpublished. Supabase-js has no way to ORDER BY random() without
- * a new RPC, so this isn't randomized.
+ * intent, not a workaround).
+ *
+ * Randomized among the easiest tier (difficulty = 1) on every call -- a
+ * representative sample, not the hardest/most obscure items. Supabase-js
+ * has no ORDER BY random(), so this counts eligible rows and fetches a
+ * random offset instead of a new RPC. Falls back to the previously
+ * hardcoded id, then to any published row, if the easy tier is ever empty.
  */
 export async function getSampleQuestion(): Promise<SampleQuestion | null> {
   const supabase = await createClient();
 
-  const preferred = await supabase
+  const { count } = await supabase
     .from("mcqs")
-    .select("id, topic_id, question, options")
-    .eq("id", SAMPLE_QUESTION_ID)
+    .select("id", { count: "exact", head: true })
     .eq("status", "published")
-    .maybeSingle();
+    .eq("difficulty", SAMPLE_QUESTION_DIFFICULTY);
 
-  const row =
-    preferred.data ??
-    (
-      await supabase
-        .from("mcqs")
-        .select("id, topic_id, question, options")
-        .eq("status", "published")
-        .limit(1)
-        .maybeSingle()
-    ).data;
+  let row: { id: string; topic_id: string | null; question: string; options: string[] } | null =
+    null;
+  if (count && count > 0) {
+    const offset = Math.floor(Math.random() * count);
+    const { data } = await supabase
+      .from("mcqs")
+      .select("id, topic_id, question, options")
+      .eq("status", "published")
+      .eq("difficulty", SAMPLE_QUESTION_DIFFICULTY)
+      .order("id", { ascending: true })
+      .range(offset, offset)
+      .maybeSingle();
+    row = data;
+  }
+
+  if (!row) {
+    const preferred = await supabase
+      .from("mcqs")
+      .select("id, topic_id, question, options")
+      .eq("id", SAMPLE_QUESTION_ID)
+      .eq("status", "published")
+      .maybeSingle();
+
+    row =
+      preferred.data ??
+      (
+        await supabase
+          .from("mcqs")
+          .select("id, topic_id, question, options")
+          .eq("status", "published")
+          .limit(1)
+          .maybeSingle()
+      ).data;
+  }
   if (!row) return null;
 
   let topicName: string | null = null;

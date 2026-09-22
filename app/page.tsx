@@ -1,6 +1,7 @@
 import LayoutWrapper from "@/components/LayoutWrapper";
 import ContinueCard from "@/components/ContinueCard";
 import HeroCTA from "@/components/HeroCTA";
+import LandingSampleQuestion from "@/components/LandingSampleQuestion";
 import { createClient } from "@/lib/supabase/server";
 import { getSubjectNames, getSampleQuestion } from "@/lib/curriculum";
 
@@ -105,24 +106,7 @@ export default async function LandingPage() {
         </div>
 
         {/* Sample question */}
-        {sample && (
-          <div className="hud-card mt-14 w-full max-w-xl rounded-xl border-l-4 border-l-[var(--accent-cyan)] p-6 md:mt-20">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--accent-cyan)]">
-              Sample question{sample.topic ? ` · ${sample.topic}` : ""}
-            </p>
-            <p className="mt-3 font-medium text-[var(--text-heading)]">{sample.question}</p>
-            <ul className="mt-4 space-y-2">
-              {sample.options.map((opt, i) => (
-                <li
-                  key={i}
-                  className="rounded-lg border border-[var(--border-color)] bg-[var(--bg-option)] px-4 py-2.5 text-left text-sm text-[var(--text-option)]"
-                >
-                  <span className="font-semibold">{String.fromCharCode(65 + i)}.</span> {opt}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {sample && <LandingSampleQuestion sample={sample} />}
 
         <div className="mt-10 w-full max-w-xl">
           <ContinueCard />

@@ -147,7 +147,7 @@ export default function OnboardingForm() {
       <StepIndicator step={step} />
 
       {step === 1 && (
-        <div className="space-y-6">
+        <div key={1} className="fade-in space-y-6">
           <div className="space-y-3">
             <label htmlFor="fullName" className="block text-sm font-medium text-text-secondary">
               Full name
@@ -181,7 +181,7 @@ export default function OnboardingForm() {
       )}
 
       {step === 2 && (
-        <div className="space-y-6">
+        <div key={2} className="fade-in space-y-6">
           <div className="space-y-3">
             <label htmlFor="college" className="block text-sm font-medium text-text-secondary">
               College
@@ -270,7 +270,7 @@ export default function OnboardingForm() {
       )}
 
       {step === 3 && (
-        <div className="space-y-6">
+        <div key={3} className="fade-in space-y-6">
           <div className="space-y-3 rounded-card border border-border-default bg-surface-secondary p-5">
             <div className="flex items-center justify-between text-sm">
               <span className="text-text-tertiary">Name</span>
